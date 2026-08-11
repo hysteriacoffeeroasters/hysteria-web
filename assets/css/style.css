@@ -593,9 +593,13 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .newsletter-inner { max-width: var(--maxw); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem; }
 .newsletter-title { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(1.5rem, 3vw, 2rem); }
 .newsletter-sub { font-size: 14px; color: rgba(0,0,0,0.65); margin-top: 8px; line-height: 1.6; }
-.newsletter-form { display: flex; flex: 1; min-width: 280px; max-width: 460px; }
+.newsletter-form {
+  display: flex; flex-wrap: wrap;      /* el mensaje baja a su propia línea */
+  flex: 1 1 380px; min-width: 280px; max-width: 520px;
+}
 .nl-input {
-  flex: 1; min-width: 0; background: transparent;
+  flex: 1 1 auto; min-width: 150px;    /* nunca se aplasta */
+  background: transparent;
   border: 1px solid rgba(0,0,0,0.28); border-right: none;
   color: var(--black); font-family: var(--body); font-size: 14px;
   padding: 14px 16px; outline: none;
@@ -603,6 +607,7 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .nl-input:focus { border-color: var(--black); }
 .nl-input::placeholder { color: rgba(0,0,0,0.42); }
 .nl-btn {
+  flex: 0 0 auto;
   background: var(--black); color: var(--white);
   font-family: var(--label); font-size: 11px;
   letter-spacing: 0.22em; text-transform: uppercase;
@@ -610,7 +615,8 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
   transition: background 0.2s var(--ease);
 }
 .nl-btn:hover { background: #262626; }
-.nl-msg { flex-basis: 100%; font-size: 13px; margin-top: 4px; }
+.nl-msg { flex: 1 0 100%; font-size: 13px; margin-top: 10px; color: rgba(0,0,0,0.7); }
+.nl-msg:empty { display: none; }   /* si no hay mensaje, no ocupa nada */
 
 /* ── VISÍTANOS ───────────────────────────────────────────────────────────── */
 .visit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.3rem; margin-top: 2.8rem; }

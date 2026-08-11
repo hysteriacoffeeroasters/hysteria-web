@@ -165,7 +165,7 @@ const COLECCIONES = [
     color: '#0068FF',
     flor: 'assets/collections/deseo.png',
     descripcion: 'Cafés que trascienden las sensaciones del deseo, haciendo posible lo imposible dejándonos en una realidad de sabores experimentales, nuevos y complejos.',
-    caracteristica: 'Naturales, Honey y fermentaciones alternativas',
+    caracteristica: 'Naturales y fermentaciones alternativas',
 
     gramos: 340,
     precios: {

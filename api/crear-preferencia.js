@@ -42,6 +42,13 @@ const MAX_UNIDADES = 50;
 // con la variable de entorno SITE_URL en Vercel.
 const SITE_URL = (process.env.SITE_URL || 'https://www.hysteriacoffeeroasters.com').replace(/\/$/, '');
 
+/* Tipos de documento admitidos. Debe coincidir con DOCUMENTOS en assets/js/datos.js.
+   Mercado Pago Colombia solo reconoce CC, CE y NIT en payer.identification; los
+   demás viajan como "Otro" en el pago, pero el tipo real se guarda en metadata
+   porque es el que necesita la factura electrónica. */
+const DOCS_VALIDOS = ['CC', 'CE', 'NIT', 'PA', 'PEP', 'PPT', 'TI'];
+const DOC_MERCADOPAGO = { CC: 'CC', CE: 'CE', NIT: 'NIT' };
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -106,12 +113,21 @@ export default async function handler(req, res) {
     const dest = {
       nombre:    limpio(e.nombre, 80),
       telefono:  limpio(e.telefono, 30),
+      correo:    limpio(e.correo, 254).toLowerCase(),
+      doctipo:   limpio(e.doctipo, 6).toUpperCase(),
+      docnum:    limpio(e.docnum, 25),
       ciudad:    limpio(e.ciudad, 60),
       direccion: limpio(e.direccion, 160),
       notas:     limpio(e.notas, 200),
     };
-    if (!dest.nombre || !dest.telefono || !dest.ciudad || !dest.direccion) {
-      return res.status(400).json({ error: 'Faltan datos de envío' });
+
+    const correoOk = /^[^\s@,;:<>()[\]\\]+@[^\s@.,;:<>()[\]\\]+\.[A-Za-z]{2,}$/.test(dest.correo);
+    if (!dest.nombre || !dest.telefono || !dest.ciudad || !dest.direccion ||
+        !correoOk || !dest.doctipo || dest.docnum.replace(/[\s.-]/g, '').length < 5) {
+      return res.status(400).json({ error: 'Faltan datos de envío o facturación' });
+    }
+    if (!DOCS_VALIDOS.includes(dest.doctipo)) {
+      return res.status(400).json({ error: 'Tipo de documento no válido' });
     }
 
     // Nº de pedido corto y legible, para cruzar el pago con el despacho
@@ -132,6 +148,11 @@ export default async function handler(req, res) {
       payer: {
         name: partes[0] || dest.nombre,
         surname: partes.slice(1).join(' '),
+        email: dest.correo,
+        identification: {
+          type: DOC_MERCADOPAGO[dest.doctipo] || 'Otro',
+          number: dest.docnum.replace(/[\s.-]/g, ''),
+        },
         phone: { area_code: '57', number: dest.telefono.replace(/\D/g, '') },
         address: { street_name: `${dest.direccion}, ${dest.ciudad}`, zip_code: '' },
       },
@@ -154,6 +175,10 @@ export default async function handler(req, res) {
         cliente_ciudad: dest.ciudad,
         cliente_direccion: dest.direccion,
         cliente_notas: dest.notas,
+        // Facturación electrónica (DIAN): tipo real de documento y correo
+        factura_documento_tipo: dest.doctipo,
+        factura_documento_numero: dest.docnum,
+        factura_correo: dest.correo,
       },
     };
 
@@ -183,6 +208,8 @@ export default async function handler(req, res) {
     console.log('Pedido creado', JSON.stringify({
       referencia, total: subtotal + costoEnvio,
       cliente: dest.nombre, ciudad: dest.ciudad, telefono: dest.telefono,
+      direccion: dest.direccion,
+      factura: `${dest.doctipo} ${dest.docnum} · ${dest.correo}`,
       items: items.map(i => `${i.quantity}x ${i.title}`).join(' | '),
     }));
 

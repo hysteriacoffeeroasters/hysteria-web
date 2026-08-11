@@ -515,7 +515,9 @@
     if (datos) {
       texto += '\n\nDatos de envío:\n' +
         `${datos.nombre}\n${datos.telefono}\n${datos.direccion}, ${datos.ciudad}` +
-        (datos.notas ? `\n${datos.notas}` : '');
+        (datos.notas ? `\n${datos.notas}` : '') +
+        '\n\nFacturación:\n' +
+        `${datos.doctipo} ${datos.docnum}\n${datos.correo}`;
     }
     const msg = encodeURIComponent(texto);
     if (puesto(NEGOCIO.whatsapp)) {
@@ -536,9 +538,9 @@
       // recuerda los datos de un pedido anterior para no volver a escribirlos
       try {
         const g = JSON.parse(localStorage.getItem(LLAVE_ENVIO) || '{}');
-        ['nombre', 'telefono', 'ciudad', 'direccion', 'notas'].forEach(k => {
+        CAMPOS_ENVIO.forEach(k => {
           const el = $('#env-' + k);
-          if (el && !el.value && g[k]) el.value = g[k];
+          if (el && g[k] && (el.tagName === 'SELECT' || !el.value)) el.value = g[k];
         });
       } catch (e) {}
       $('#env-nombre').focus();
@@ -548,25 +550,50 @@
     }
   }
 
+  const CAMPOS_ENVIO = ['nombre', 'telefono', 'correo', 'doctipo', 'docnum',
+                        'ciudad', 'direccion', 'notas'];
+
+  // Nombres legibles para el mensaje de error
+  const ROTULO = {
+    nombre: 'nombre', telefono: 'celular', correo: 'correo',
+    doctipo: 'tipo de documento', docnum: 'número de documento',
+    ciudad: 'ciudad', direccion: 'dirección',
+  };
+
   function leerEnvio() {
     const v = k => ($('#env-' + k) ? $('#env-' + k).value.trim() : '');
-    return {
-      nombre: v('nombre'), telefono: v('telefono'), ciudad: v('ciudad'),
-      direccion: v('direccion'), notas: v('notas'),
-    };
+    const d = {};
+    CAMPOS_ENVIO.forEach(k => { d[k] = v(k); });
+    return d;
   }
+
+  const correoOk = v =>
+    /^[^\s@,;:<>()[\]\\]+@[^\s@.,;:<>()[\]\\]+\.[A-Za-z]{2,}$/.test(v) && v.length <= 254;
 
   function validarEnvio(d) {
     const faltan = [];
     if (d.nombre.length < 3) faltan.push('nombre');
     if (d.telefono.replace(/\D/g, '').length < 7) faltan.push('telefono');
+    if (!correoOk(d.correo)) faltan.push('correo');
+    if (!d.doctipo) faltan.push('doctipo');
+    // pasaportes y permisos pueden llevar letras; el resto, al menos 5 caracteres
+    if (d.docnum.replace(/[\s.-]/g, '').length < 5) faltan.push('docnum');
     if (d.ciudad.length < 3) faltan.push('ciudad');
     if (d.direccion.length < 5) faltan.push('direccion');
-    ['nombre', 'telefono', 'ciudad', 'direccion'].forEach(k => {
+
+    Object.keys(ROTULO).forEach(k => {
       const el = $('#env-' + k);
       if (el) el.setAttribute('aria-invalid', String(faltan.includes(k)));
     });
     return faltan;
+  }
+
+  function pintarDocumentos() {
+    const sel = $('#env-doctipo');
+    if (!sel || typeof DOCUMENTOS === 'undefined') return;
+    sel.innerHTML = DOCUMENTOS
+      .map(t => `<option value="${esc(t.codigo)}">${esc(t.nombre)}</option>`)
+      .join('');
   }
 
   async function pagar(datos) {
@@ -619,17 +646,21 @@
     const form = $('#cart-envio');
     if (!form) return;
 
+    pintarDocumentos();
+
     $('#cart-checkout').addEventListener('click', () => {
       if (!carrito.length) return;
       mostrarPaso('envio');
     });
     $('#envio-volver').addEventListener('click', () => mostrarPaso('resumen'));
 
-    // al escribir se limpia la marca de error de ese campo
-    form.addEventListener('input', e => {
-      if (e.target.matches('input')) e.target.setAttribute('aria-invalid', 'false');
+    // al escribir o elegir se limpia la marca de error de ese campo
+    const limpiarMarca = e => {
+      if (e.target.matches('input, select')) e.target.setAttribute('aria-invalid', 'false');
       if (!$$('#cart-envio [aria-invalid="true"]').length) $('#envio-error').textContent = '';
-    });
+    };
+    form.addEventListener('input', limpiarMarca);
+    form.addEventListener('change', limpiarMarca);
 
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -637,7 +668,7 @@
       const faltan = validarEnvio(d);
       const err = $('#envio-error');
       if (faltan.length) {
-        err.textContent = 'Revisa estos datos: ' + faltan.join(', ') + '.';
+        err.textContent = 'Revisa: ' + faltan.map(k => ROTULO[k] || k).join(', ') + '.';
         const primero = $('#env-' + faltan[0]);
         if (primero) primero.focus();
         return;

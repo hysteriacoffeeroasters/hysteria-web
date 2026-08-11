@@ -613,16 +613,33 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
   color: var(--ink-3); margin-bottom: 6px;
 }
 .campo > span em { font-style: normal; color: var(--ink-4); letter-spacing: 0.1em; }
-.campo input {
+.campo input,
+.campo select {
   width: 100%; background: transparent;
   border: 1px solid var(--border); color: var(--white);
   font-family: var(--body); font-size: 14.5px;
   padding: 11px 13px; outline: none;
   transition: border-color 0.2s var(--ease);
+  border-radius: 0; -webkit-appearance: none; appearance: none;
 }
 .campo input::placeholder { color: rgba(255,255,255,0.32); }
-.campo input:focus { border-color: var(--white); }
-.campo input[aria-invalid="true"] { border-color: #FF6B6B; }
+.campo input:focus,
+.campo select:focus { border-color: var(--white); }
+.campo input[aria-invalid="true"],
+.campo select[aria-invalid="true"] { border-color: #FF6B6B; }
+
+/* el desplegable necesita su propia flecha al quitarle la del sistema */
+.campo select {
+  padding-right: 34px; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%23ffffff' fill-opacity='0.55' d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; background-size: 11px;
+}
+.campo select option { background: #111; color: #fff; }
+
+/* documento: tipo y número comparten fila */
+.campo-fila { display: grid; grid-template-columns: 1.15fr 1fr; gap: 0.7rem; }
+.campo-fila .campo { margin-bottom: 0.85rem; }
+@media (max-width: 380px) { .campo-fila { grid-template-columns: 1fr; gap: 0; } }
 .envio-error { color: #FF8A8A; font-size: 12.5px; margin: 0.2rem 0 0.8rem; min-height: 1em; }
 .envio-error:empty { display: none; }
 

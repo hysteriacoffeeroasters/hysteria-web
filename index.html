@@ -318,6 +318,24 @@
     </label>
 
     <label class="campo">
+      <span>Correo <em>(ahí llega tu factura)</em></span>
+      <input type="email" id="env-correo" name="correo" autocomplete="email"
+             inputmode="email" placeholder="tu@correo.com" required>
+    </label>
+
+    <div class="campo-fila">
+      <label class="campo">
+        <span>Documento</span>
+        <select id="env-doctipo" name="doctipo" required></select>
+      </label>
+      <label class="campo">
+        <span>Número</span>
+        <input type="text" id="env-docnum" name="docnum" inputmode="numeric"
+               autocomplete="off" placeholder="1020304050" required>
+      </label>
+    </div>
+
+    <label class="campo">
       <span>Ciudad</span>
       <input type="text" id="env-ciudad" name="ciudad" autocomplete="address-level2" required>
     </label>
@@ -335,7 +353,8 @@
 
     <p class="envio-error" id="envio-error" role="alert"></p>
     <button type="submit" class="btn btn-solid cart-checkout" id="envio-pagar">Ir a pagar</button>
-    <p class="cart-nota">Tus datos viajan cifrados. El cobro lo procesa Mercado Pago.</p>
+    <p class="cart-nota">Usamos tus datos solo para el envío y tu factura electrónica.<br>
+      El cobro lo procesa Mercado Pago.</p>
   </form>
 </aside>
 

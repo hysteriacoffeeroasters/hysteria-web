@@ -73,6 +73,26 @@ const PAGOS = {
 
 
 /* ---------------------------------------------------------------------------
+   2b) FACTURACIÓN ELECTRÓNICA
+   ---------------------------------------------------------------------------
+   Al comprar, el cliente indica su documento y el correo donde quiere recibir
+   la factura. Son los datos que exige la DIAN para el adquiriente.
+
+   Si tu contador te pide otros tipos de documento, agrégalos o quítalos aquí:
+   "codigo" es el que viaja con el pago, "nombre" es lo que ve el cliente.
+   --------------------------------------------------------------------------- */
+const DOCUMENTOS = [
+  { codigo: 'CC',  nombre: 'Cédula de ciudadanía' },
+  { codigo: 'CE',  nombre: 'Cédula de extranjería' },
+  { codigo: 'NIT', nombre: 'NIT (empresa)' },
+  { codigo: 'PA',  nombre: 'Pasaporte' },
+  { codigo: 'PEP', nombre: 'PEP' },
+  { codigo: 'PPT', nombre: 'PPT' },
+  { codigo: 'TI',  nombre: 'Tarjeta de identidad' },
+];
+
+
+/* ---------------------------------------------------------------------------
    3) LAS COLECCIONES Y SUS LOTES
    ---------------------------------------------------------------------------
    Pasión, Ilusión, Deseo y Euforia son NIVELES fijos de tu marca.

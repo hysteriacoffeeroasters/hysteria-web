@@ -166,7 +166,7 @@ hysteria-web/
 ├── index.html                  Estructura y SEO
 ├── LEEME.md                    Este archivo
 ├── package.json                Config del proyecto
-├── vercel.json                 Caché y seguridad
+├── vercel.json                 Caché y seguridad (ver nota abajo)
 ├── robots.txt / sitemap.xml    Para Google
 ├── site.webmanifest            Ícono al guardar en el celular
 │
@@ -184,6 +184,19 @@ hysteria-web/
 ```
 
 ---
+
+### Nota sobre `vercel.json`
+
+Ese archivo controla cuánto tiempo guarda el navegador cada cosa:
+
+| Qué | Cuánto se guarda | Por qué |
+|---|---|---|
+| `assets/fonts/` | 1 año | Las fuentes nunca cambian |
+| `assets/logo/`, `collections/`, `products/` | 1 día | Por si reemplazas una imagen |
+| `assets/css/`, `assets/js/` | **Siempre se revisa** | Para que un cambio en `datos.js` se vea de inmediato |
+
+⚠️ **No le agregues comentarios a ese archivo.** Vercel rechaza el despliegue si tiene
+propiedades que no reconoce (JSON no admite comentarios).
 
 ## 6. Preguntas frecuentes
 

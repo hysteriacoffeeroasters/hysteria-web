@@ -99,18 +99,62 @@ export default async function handler(req, res) {
 
     const base = SITE_URL;
 
+    // Datos de envío que el cliente escribió antes de pagar. Se recortan y
+    // validan aquí también: nunca se confía en lo que llega del navegador.
+    const limpio = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
+    const e = body.datosEnvio || {};
+    const dest = {
+      nombre:    limpio(e.nombre, 80),
+      telefono:  limpio(e.telefono, 30),
+      ciudad:    limpio(e.ciudad, 60),
+      direccion: limpio(e.direccion, 160),
+      notas:     limpio(e.notas, 200),
+    };
+    if (!dest.nombre || !dest.telefono || !dest.ciudad || !dest.direccion) {
+      return res.status(400).json({ error: 'Faltan datos de envío' });
+    }
+
+    // Nº de pedido corto y legible, para cruzar el pago con el despacho
+    const referencia = 'HYS-' + Date.now().toString(36).toUpperCase().slice(-6);
+
+    const partes = dest.nombre.split(/\s+/);
     const preferencia = {
       items,
-      shipments: { cost: costoEnvio, mode: 'not_specified' },
+      shipments: {
+        cost: costoEnvio,
+        mode: 'not_specified',
+        receiver_address: {
+          street_name: dest.direccion,
+          city_name: dest.ciudad,
+          zip_code: '',
+        },
+      },
+      payer: {
+        name: partes[0] || dest.nombre,
+        surname: partes.slice(1).join(' '),
+        phone: { area_code: '57', number: dest.telefono.replace(/\D/g, '') },
+        address: { street_name: `${dest.direccion}, ${dest.ciudad}`, zip_code: '' },
+      },
+      external_reference: referencia,
       back_urls: {
-        success: `${base}/?pago=exito`,
+        success: `${base}/?pago=exito&ref=${referencia}`,
         failure: `${base}/?pago=fallo`,
-        pending: `${base}/?pago=pendiente`,
+        pending: `${base}/?pago=pendiente&ref=${referencia}`,
       },
       auto_return: 'approved',
       statement_descriptor: 'HYSTERIA',
       binary_mode: false,
-      metadata: { origen: 'web', subtotal, envio: costoEnvio },
+      metadata: {
+        origen: 'web',
+        referencia,
+        subtotal,
+        envio: costoEnvio,
+        cliente_nombre: dest.nombre,
+        cliente_telefono: dest.telefono,
+        cliente_ciudad: dest.ciudad,
+        cliente_direccion: dest.direccion,
+        cliente_notas: dest.notas,
+      },
     };
 
     const r = await fetch('https://api.mercadopago.com/checkout/preferences', {
@@ -135,7 +179,14 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'Respuesta inesperada del pago' });
     }
 
-    return res.status(200).json({ url, id: data.id });
+    // El pedido queda registrado en los logs de Vercel por si hace falta rastrearlo
+    console.log('Pedido creado', JSON.stringify({
+      referencia, total: subtotal + costoEnvio,
+      cliente: dest.nombre, ciudad: dest.ciudad, telefono: dest.telefono,
+      items: items.map(i => `${i.quantity}x ${i.title}`).join(' | '),
+    }));
+
+    return res.status(200).json({ url, id: data.id, referencia });
 
   } catch (err) {
     console.error('Error creando la preferencia:', err);

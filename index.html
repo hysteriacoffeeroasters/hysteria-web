@@ -292,11 +292,51 @@
     </button>
   </div>
   <div class="cart-body" id="cart-body"></div>
+
   <div class="cart-foot" id="cart-foot" hidden>
     <div id="cart-sums"></div>
     <button class="btn btn-solid cart-checkout" id="cart-checkout">Finalizar compra</button>
     <p class="cart-nota">Pago con tarjeta, PSE o cierre por WhatsApp</p>
   </div>
+
+  <!-- Paso 2: datos de envío, antes de ir a la pasarela -->
+  <form class="cart-envio" id="cart-envio" hidden novalidate>
+    <div class="envio-head">
+      <button type="button" class="envio-volver" id="envio-volver">← Volver al pedido</button>
+      <p class="envio-titulo">¿A dónde lo enviamos?</p>
+    </div>
+
+    <label class="campo">
+      <span>Nombre y apellido</span>
+      <input type="text" id="env-nombre" name="nombre" autocomplete="name" required>
+    </label>
+
+    <label class="campo">
+      <span>Celular / WhatsApp</span>
+      <input type="tel" id="env-telefono" name="telefono" autocomplete="tel"
+             inputmode="tel" placeholder="300 000 0000" required>
+    </label>
+
+    <label class="campo">
+      <span>Ciudad</span>
+      <input type="text" id="env-ciudad" name="ciudad" autocomplete="address-level2" required>
+    </label>
+
+    <label class="campo">
+      <span>Dirección</span>
+      <input type="text" id="env-direccion" name="direccion" autocomplete="street-address"
+             placeholder="Calle 92 #15-62, apto 301" required>
+    </label>
+
+    <label class="campo">
+      <span>Indicaciones <em>(opcional)</em></span>
+      <input type="text" id="env-notas" name="notas" placeholder="Portería, horario, punto de referencia">
+    </label>
+
+    <p class="envio-error" id="envio-error" role="alert"></p>
+    <button type="submit" class="btn btn-solid cart-checkout" id="envio-pagar">Ir a pagar</button>
+    <p class="cart-nota">Tus datos viajan cifrados. El cobro lo procesa Mercado Pago.</p>
+  </form>
 </aside>
 
 <a class="wa-float" id="wa-float" href="#" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">

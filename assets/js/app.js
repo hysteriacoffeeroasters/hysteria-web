@@ -408,9 +408,13 @@
           <button class="btn btn-ghost btn-sm" data-cerrar-carrito>Ver los cafés</button>
         </div>`;
       foot.hidden = true;
+      const f = $('#cart-envio');
+      if (f) f.hidden = true;   // sin productos no tiene sentido pedir la dirección
       return;
     }
-    foot.hidden = false;
+    // si el paso de envío está abierto, se respeta; si no, se muestra el resumen
+    const enEnvio = $('#cart-envio') && !$('#cart-envio').hidden;
+    foot.hidden = enEnvio;
 
     cont.innerHTML = carrito.map(l => `
       <div class="cart-line">
@@ -453,6 +457,7 @@
     document.body.classList.toggle('no-scroll', abrir);
 
     if (abrir) {
+      mostrarPaso('resumen');   // siempre se abre en el resumen del pedido
       $('#cart-close').focus();
     } else if (focoPrevio && typeof focoPrevio.focus === 'function') {
       // devuelve el foco al botón que abrió el carrito, no a un nodo oculto
@@ -505,8 +510,14 @@
     ].join('\n');
   }
 
-  function irWhatsapp() {
-    const msg = encodeURIComponent(textoPedido());
+  function irWhatsapp(datos) {
+    let texto = textoPedido();
+    if (datos) {
+      texto += '\n\nDatos de envío:\n' +
+        `${datos.nombre}\n${datos.telefono}\n${datos.direccion}, ${datos.ciudad}` +
+        (datos.notas ? `\n${datos.notas}` : '');
+    }
+    const msg = encodeURIComponent(texto);
     if (puesto(NEGOCIO.whatsapp)) {
       window.open(`https://wa.me/${NEGOCIO.whatsapp}?text=${msg}`, '_blank', 'noopener');
     } else {
@@ -515,12 +526,55 @@
     }
   }
 
-  async function pagar() {
+  /* ── Paso de datos de envío ────────────────────────────────────────────── */
+  const LLAVE_ENVIO = 'hysteria_envio_v1';
+
+  function mostrarPaso(paso) {
+    const foot = $('#cart-foot'), form = $('#cart-envio');
+    if (paso === 'envio') {
+      foot.hidden = true; form.hidden = false;
+      // recuerda los datos de un pedido anterior para no volver a escribirlos
+      try {
+        const g = JSON.parse(localStorage.getItem(LLAVE_ENVIO) || '{}');
+        ['nombre', 'telefono', 'ciudad', 'direccion', 'notas'].forEach(k => {
+          const el = $('#env-' + k);
+          if (el && !el.value && g[k]) el.value = g[k];
+        });
+      } catch (e) {}
+      $('#env-nombre').focus();
+    } else {
+      form.hidden = true; foot.hidden = !carrito.length ? true : false;
+      $('#envio-error').textContent = '';
+    }
+  }
+
+  function leerEnvio() {
+    const v = k => ($('#env-' + k) ? $('#env-' + k).value.trim() : '');
+    return {
+      nombre: v('nombre'), telefono: v('telefono'), ciudad: v('ciudad'),
+      direccion: v('direccion'), notas: v('notas'),
+    };
+  }
+
+  function validarEnvio(d) {
+    const faltan = [];
+    if (d.nombre.length < 3) faltan.push('nombre');
+    if (d.telefono.replace(/\D/g, '').length < 7) faltan.push('telefono');
+    if (d.ciudad.length < 3) faltan.push('ciudad');
+    if (d.direccion.length < 5) faltan.push('direccion');
+    ['nombre', 'telefono', 'ciudad', 'direccion'].forEach(k => {
+      const el = $('#env-' + k);
+      if (el) el.setAttribute('aria-invalid', String(faltan.includes(k)));
+    });
+    return faltan;
+  }
+
+  async function pagar(datos) {
     if (!carrito.length) return;
-    const btn = $('#cart-checkout');
+    const btn = $('#envio-pagar');
     const original = btn.textContent;
 
-    if (PAGOS.modo !== 'mercadopago') return irWhatsapp();
+    if (PAGOS.modo !== 'mercadopago') return irWhatsapp(datos);
 
     btn.disabled = true;
     btn.textContent = 'Conectando…';
@@ -534,7 +588,8 @@
             id: l.id, titulo: l.nombre, descripcion: l.variante,
             cantidad: l.cant, precio: l.precio
           })),
-          envio: envio()
+          envio: envio(),
+          datosEnvio: datos
         })
       });
 
@@ -553,11 +608,38 @@
       btn.textContent = original;
       if (PAGOS.respaldoWhatsapp) {
         avisar('Cerramos tu pedido por WhatsApp');
-        irWhatsapp();
+        irWhatsapp(datos);
       } else {
         avisar('No pudimos conectar con el pago. Intenta de nuevo.');
       }
     }
+  }
+
+  function iniciarEnvio() {
+    const form = $('#cart-envio');
+    if (!form) return;
+
+    $('#cart-checkout').addEventListener('click', () => {
+      if (!carrito.length) return;
+      mostrarPaso('envio');
+    });
+    $('#envio-volver').addEventListener('click', () => mostrarPaso('resumen'));
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const d = leerEnvio();
+      const faltan = validarEnvio(d);
+      const err = $('#envio-error');
+      if (faltan.length) {
+        err.textContent = 'Revisa estos datos: ' + faltan.join(', ') + '.';
+        const primero = $('#env-' + faltan[0]);
+        if (primero) primero.focus();
+        return;
+      }
+      err.textContent = '';
+      try { localStorage.setItem(LLAVE_ENVIO, JSON.stringify(d)); } catch (e) {}
+      pagar(d);
+    });
   }
 
   /* ── Tiendas ───────────────────────────────────────────────────────────── */
@@ -866,20 +948,22 @@
     pintarCarrito();
     iniciarNav();
     iniciarBoletin();
+    iniciarEnvio();
     iniciarReveal();
     inyectarSchema();
 
-    $('#cart-checkout').addEventListener('click', pagar);
-
     // Mensaje de vuelta desde Mercado Pago
-    const p = new URLSearchParams(location.search).get('pago');
+    const params = new URLSearchParams(location.search);
+    const p = params.get('pago');
+    const ref = (params.get('ref') || '').replace(/[^A-Z0-9-]/gi, '').slice(0, 20);
     if (p === 'exito') {
       carrito = []; guardarCarrito(); pintarCarrito();
-      avisar('¡Gracias! Recibimos tu pedido');
+      avisar(ref ? `¡Gracias! Tu pedido ${ref} está confirmado` : '¡Gracias! Recibimos tu pedido');
     } else if (p === 'fallo') {
       avisar('El pago no se completó');
     } else if (p === 'pendiente') {
-      avisar('Tu pago quedó pendiente de confirmación');
+      avisar(ref ? `Pedido ${ref}: pago pendiente de confirmación`
+                 : 'Tu pago quedó pendiente de confirmación');
     }
   }
 

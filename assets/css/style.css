@@ -587,6 +587,45 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .cart-checkout { width: 100%; }
 .cart-nota { font-size: 11.5px; color: var(--ink-4); text-align: center; margin-top: 0.9rem; line-height: 1.6; }
 
+/* ── Paso de datos de envío ──────────────────────────────────────────────── */
+.cart-envio {
+  border-top: 1px solid var(--border);
+  padding: 1.3rem 1.5rem calc(1.3rem + env(safe-area-inset-bottom));
+  background: #050505; flex-shrink: 0;
+  overflow-y: auto; max-height: 78vh;
+}
+.envio-head { margin-bottom: 1.1rem; }
+.envio-volver {
+  font-family: var(--label); font-size: 10.5px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-3); padding: 4px 0;
+  transition: color 0.2s var(--ease);
+}
+.envio-volver:hover { color: var(--white); }
+.envio-titulo {
+  font-family: var(--serif); font-size: 1.3rem;
+  color: var(--white); margin-top: 0.5rem;
+}
+.campo { display: block; margin-bottom: 0.85rem; }
+.campo > span {
+  display: block; font-family: var(--label);
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: 6px;
+}
+.campo > span em { font-style: normal; color: var(--ink-4); letter-spacing: 0.1em; }
+.campo input {
+  width: 100%; background: transparent;
+  border: 1px solid var(--border); color: var(--white);
+  font-family: var(--body); font-size: 14.5px;
+  padding: 11px 13px; outline: none;
+  transition: border-color 0.2s var(--ease);
+}
+.campo input::placeholder { color: rgba(255,255,255,0.32); }
+.campo input:focus { border-color: var(--white); }
+.campo input[aria-invalid="true"] { border-color: #FF6B6B; }
+.envio-error { color: #FF8A8A; font-size: 12.5px; margin: 0.2rem 0 0.8rem; min-height: 1em; }
+.envio-error:empty { display: none; }
+
 /* Aviso flotante */
 .toast {
   position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 20px);

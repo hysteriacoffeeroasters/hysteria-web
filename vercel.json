@@ -10,13 +10,7 @@
       ]
     },
     {
-      "source": "/assets/(logo|collections|products)/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400, must-revalidate" }
-      ]
-    },
-    {
-      "source": "/assets/(css|js)/(.*)",
+      "source": "/assets/(logo|collections|products|css|js)/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]

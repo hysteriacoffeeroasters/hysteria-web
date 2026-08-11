@@ -206,8 +206,14 @@ Ese archivo controla cuánto tiempo guarda el navegador cada cosa:
 | Qué | Cuánto se guarda | Por qué |
 |---|---|---|
 | `assets/fonts/` | 1 año | Las fuentes nunca cambian |
-| `assets/logo/`, `collections/`, `products/` | 1 día | Por si reemplazas una imagen |
-| `assets/css/`, `assets/js/` | **Siempre se revisa** | Para que un cambio en `datos.js` se vea de inmediato |
+| Todo lo demás en `assets/` | **Siempre se revisa** | Para que al cambiar una ficha o un precio se vea de inmediato |
+
+El navegador igual no vuelve a descargar lo que no cambió: pregunta al servidor
+y este responde "sigue igual" (304), que pesa casi nada. Así nunca ves datos viejos.
+
+> **Si reemplazas una imagen conservando el mismo nombre** y aún la ves vieja,
+> es la caché de tu propio navegador: `Ctrl + F5` la refresca.
+> Tus visitantes no tendrán ese problema con esta configuración.
 
 ⚠️ **No le agregues comentarios a ese archivo.** Vercel rechaza el despliegue si tiene
 propiedades que no reconoce (JSON no admite comentarios).

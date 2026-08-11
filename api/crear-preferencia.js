@@ -49,6 +49,17 @@ const SITE_URL = (process.env.SITE_URL || 'https://www.hysteriacoffeeroasters.co
 const DOCS_VALIDOS = ['CC', 'CE', 'NIT', 'PA', 'PEP', 'PPT', 'TI'];
 const DOC_MERCADOPAGO = { CC: 'CC', CE: 'CE', NIT: 'NIT' };
 
+/* Puntos de molienda. Debe coincidir con MOLIENDAS en assets/js/datos.js.
+   'grano' significa que la bolsa va sin moler. */
+const MOLIENDAS = {
+  'grano':        'grano entero',
+  'fina':         'molido fino',
+  'medio-fina':   'molido medio fino',
+  'media':        'molido medio',
+  'media-gruesa': 'molido medio grueso',
+  'gruesa':       'molido grueso',
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -77,6 +88,7 @@ export default async function handler(req, res) {
 
     // Reconstruimos el pedido usando SOLO nuestros precios
     const items = [];
+    const moliendas = [];
     let subtotal = 0;
 
     for (const linea of entrada) {
@@ -87,10 +99,16 @@ export default async function handler(req, res) {
       if (!Number.isFinite(cant) || cant < 1) cant = 1;
       if (cant > MAX_UNIDADES) cant = MAX_UNIDADES;
 
+      // La molienda solo aplica al café; el pasaporte no la lleva
+      const esCafe = linea.id !== 'pasaporte';
+      const cod = String(linea.molienda || '').trim();
+      const molienda = esCafe ? (MOLIENDAS[cod] ? cod : 'grano') : '';
+      if (molienda) moliendas.push(`${prod.nombre}: ${MOLIENDAS[molienda]}`);
+
       subtotal += prod.precio * cant;
       items.push({
         id: linea.id,
-        title: prod.nombre,
+        title: prod.nombre + (molienda ? ` · ${MOLIENDAS[molienda]}` : ''),
         quantity: cant,
         unit_price: prod.precio,
         currency_id: 'COP',
@@ -179,6 +197,8 @@ export default async function handler(req, res) {
         factura_documento_tipo: dest.doctipo,
         factura_documento_numero: dest.docnum,
         factura_correo: dest.correo,
+        // Cómo hay que preparar cada bolsa antes de despachar
+        molienda: moliendas.join(' | ').slice(0, 480),
       },
     };
 
@@ -211,6 +231,7 @@ export default async function handler(req, res) {
       direccion: dest.direccion,
       factura: `${dest.doctipo} ${dest.docnum} · ${dest.correo}`,
       items: items.map(i => `${i.quantity}x ${i.title}`).join(' | '),
+      molienda: moliendas.join(' | '),
     }));
 
     return res.status(200).json({ url, id: data.id, referencia });

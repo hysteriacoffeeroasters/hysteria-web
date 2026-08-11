@@ -93,6 +93,28 @@ const DOCUMENTOS = [
 
 
 /* ---------------------------------------------------------------------------
+   2c) MOLIENDA
+   ---------------------------------------------------------------------------
+   Cada bolsa se puede pedir en grano o molida. Si la piden molida, el cliente
+   elige el punto según su método de preparación.
+
+   El "metodo" es solo la ayuda que aparece junto a cada opción, para que
+   sepa cuál escoger. Puedes editarlo, agregar o quitar puntos de molienda.
+   Si cambias los "codigo", cámbialos también en api/crear-preferencia.js
+   --------------------------------------------------------------------------- */
+const MOLIENDAS = [
+  { codigo: 'fina',         nombre: 'Fina',         metodo: 'Espresso' },
+  { codigo: 'medio-fina',   nombre: 'Medio fina',   metodo: 'Moka · AeroPress' },
+  { codigo: 'media',        nombre: 'Media',        metodo: 'V60 · Chemex · goteo' },
+  { codigo: 'media-gruesa', nombre: 'Media gruesa', metodo: 'Clever · Kalita' },
+  { codigo: 'gruesa',       nombre: 'Gruesa',       metodo: 'Prensa francesa · cold brew' },
+];
+
+// Punto que viene marcado por defecto cuando eligen "Molido"
+const MOLIENDA_POR_DEFECTO = 'media';
+
+
+/* ---------------------------------------------------------------------------
    3) LAS COLECCIONES Y SUS LOTES
    ---------------------------------------------------------------------------
    Pasión, Ilusión, Deseo y Euforia son NIVELES fijos de tu marca.

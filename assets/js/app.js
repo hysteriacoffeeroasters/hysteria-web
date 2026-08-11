@@ -38,6 +38,8 @@
       const bruto = raw ? JSON.parse(raw) : [];
       // Saneamos: cantidad numérica y acotada, precio numérico. Así, editar
       // localStorage a mano no burla el tope ni mete valores raros en el DOM.
+      const validas = ['grano'].concat(
+        (typeof MOLIENDAS !== 'undefined' ? MOLIENDAS : []).map(m => m.codigo));
       carrito = (Array.isArray(bruto) ? bruto : [])
         .filter(l => l && typeof l.id === 'string')
         .map(l => ({
@@ -45,6 +47,9 @@
           nombre: String(l.nombre || ''),
           variante: String(l.variante || ''),
           img: String(l.img || ''),
+          esCafe: !!l.esCafe,
+          gramos: Math.max(0, Number(l.gramos) || 0),
+          molienda: validas.includes(l.molienda) ? l.molienda : (l.esCafe ? 'grano' : ''),
           precio: Math.max(0, Number(l.precio) || 0),
           cant: Math.min(MAX_UNIDADES, Math.max(1, Math.floor(Number(l.cant) || 1))),
         }));
@@ -67,26 +72,27 @@
   const MAX_UNIDADES = 50;
 
   function agregar(item) {
-    const ex = carrito.find(l => l.id === item.id);
+    const nuevo = Object.assign({ cant: 1 }, item);
+    const ex = carrito.find(l => claveLinea(l) === claveLinea(nuevo));
     if (ex) {
       if (ex.cant >= MAX_UNIDADES) { avisar('Máximo ' + MAX_UNIDADES + ' por producto'); return; }
       ex.cant += 1;
     } else {
-      carrito.push(Object.assign({ cant: 1 }, item));
+      carrito.push(nuevo);
     }
     guardarCarrito(); pintarCarrito();
     avisar(item.nombre + ' agregado');
   }
-  function cambiarCant(id, d) {
-    const l = carrito.find(x => x.id === id);
+  function cambiarCant(clave, d) {
+    const l = carrito.find(x => claveLinea(x) === clave);
     if (!l) return;
     if (d > 0 && l.cant >= MAX_UNIDADES) { avisar('Máximo ' + MAX_UNIDADES + ' por producto'); return; }
     l.cant = Math.min(MAX_UNIDADES, l.cant + d);
-    if (l.cant < 1) carrito = carrito.filter(x => x.id !== id);
+    if (l.cant < 1) carrito = carrito.filter(x => claveLinea(x) !== clave);
     guardarCarrito(); pintarCarrito();
   }
-  function quitar(id) {
-    carrito = carrito.filter(x => x.id !== id);
+  function quitar(clave) {
+    carrito = carrito.filter(x => claveLinea(x) !== clave);
     guardarCarrito(); pintarCarrito();
   }
 
@@ -383,11 +389,51 @@
     agregar({
       id: L.id,
       nombre: 'Café ' + c.nombre + (puesto(L.variedad) ? ' · ' + L.variedad : ''),
-      variante: 'Bolsa ' + c.gramos + ' g · grano entero',
+      gramos: c.gramos,
+      esCafe: true,
+      molienda: 'grano',          // por defecto sale en grano entero
       precio: c.precios.bolsa,
       img: L.imagen
     });
   });
+
+  /* ── Molienda ──────────────────────────────────────────────────────────── */
+  const nombreMolienda = cod => {
+    const m = (typeof MOLIENDAS !== 'undefined' ? MOLIENDAS : []).find(x => x.codigo === cod);
+    return m ? m.nombre : cod;
+  };
+
+  // Texto que ve el cliente y que viaja al pago
+  function varianteDe(l) {
+    if (!l.esCafe) return l.variante || '';
+    const base = 'Bolsa ' + l.gramos + ' g';
+    return l.molienda === 'grano'
+      ? base + ' · grano entero'
+      : base + ' · molido ' + nombreMolienda(l.molienda).toLowerCase();
+  }
+
+  // La clave de una línea combina café y molienda: el mismo café en dos
+  // moliendas son dos líneas distintas del pedido.
+  const claveLinea = l => l.id + '|' + (l.molienda || '');
+
+  function cambiarMolienda(clave, nuevaMolienda) {
+    const l = carrito.find(x => claveLinea(x) === clave);
+    if (!l) return;
+    const anterior = l.molienda;
+    l.molienda = nuevaMolienda;
+
+    // Si ya existía otra línea del mismo café con esa molienda, se fusionan
+    const gemela = carrito.find(x => x !== l && claveLinea(x) === claveLinea(l));
+    if (gemela) {
+      gemela.cant = Math.min(MAX_UNIDADES, gemela.cant + l.cant);
+      carrito = carrito.filter(x => x !== l);
+    }
+    guardarCarrito(); pintarCarrito();
+    if (anterior !== nuevaMolienda) {
+      avisar(nuevaMolienda === 'grano' ? 'En grano entero'
+                                       : 'Molido ' + nombreMolienda(nuevaMolienda).toLowerCase());
+    }
+  }
 
   /* ── Panel del carrito ─────────────────────────────────────────────────── */
   function pintarCarrito() {
@@ -416,23 +462,48 @@
     const enEnvio = $('#cart-envio') && !$('#cart-envio').hidden;
     foot.hidden = enEnvio;
 
-    cont.innerHTML = carrito.map(l => `
+    const listaMoliendas = typeof MOLIENDAS !== 'undefined' ? MOLIENDAS : [];
+
+    cont.innerHTML = carrito.map(l => {
+      const k = claveLinea(l);
+      const molido = l.esCafe && l.molienda !== 'grano';
+      return `
       <div class="cart-line">
         <img class="cart-line-img" src="${esc(l.img)}" alt="" loading="lazy">
         <div class="cart-line-mid">
           <div class="cart-line-name">${esc(l.nombre)}</div>
-          <div class="cart-line-var">${esc(l.variante)}</div>
+          <div class="cart-line-var">${esc(varianteDe(l))}</div>
           <div class="cart-line-price">${money(l.precio)} c/u</div>
         </div>
         <div class="cart-line-right">
           <div class="qty">
-            <button data-menos="${esc(l.id)}" aria-label="Quitar una unidad de ${esc(l.nombre)}">−</button>
+            <button data-menos="${esc(k)}" aria-label="Quitar una unidad de ${esc(l.nombre)}">−</button>
             <span>${l.cant}</span>
-            <button data-mas="${esc(l.id)}" aria-label="Agregar una unidad de ${esc(l.nombre)}">+</button>
+            <button data-mas="${esc(k)}" aria-label="Agregar una unidad de ${esc(l.nombre)}">+</button>
           </div>
-          <button class="cart-line-del" data-quitar="${esc(l.id)}">Quitar</button>
+          <button class="cart-line-del" data-quitar="${esc(k)}">Quitar</button>
         </div>
-      </div>`).join('');
+        ${l.esCafe ? `
+        <div class="cart-line-opts">
+          <label class="opt">
+            <span class="sr-only">Presentación de ${esc(l.nombre)}</span>
+            <select data-forma="${esc(k)}">
+              <option value="grano" ${l.molienda === 'grano' ? 'selected' : ''}>Grano entero</option>
+              <option value="molido" ${molido ? 'selected' : ''}>Molido</option>
+            </select>
+          </label>
+          ${molido ? `
+          <label class="opt">
+            <span class="sr-only">Punto de molienda de ${esc(l.nombre)}</span>
+            <select data-molienda="${esc(k)}">
+              ${listaMoliendas.map(m => `
+                <option value="${esc(m.codigo)}" ${l.molienda === m.codigo ? 'selected' : ''}
+                >${esc(m.nombre)}${m.metodo ? ' · ' + esc(m.metodo) : ''}</option>`).join('')}
+            </select>
+          </label>` : ''}
+        </div>` : ''}
+      </div>`;
+    }).join('');
 
     const falta = PAGOS.envioGratisDesde > 0 ? PAGOS.envioGratisDesde - subtotal() : -1;
     $('#cart-sums').innerHTML = `
@@ -471,7 +542,7 @@
     if (e.key !== 'Tab') return;
     const cart = $('#cart');
     if (!cart.classList.contains('open')) return;
-    const foco = cart.querySelectorAll('a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])');
+    const foco = cart.querySelectorAll('a[href], button:not([disabled]), input, select, [tabindex]:not([tabindex="-1"])');
     if (!foco.length) return;
     const primero = foco[0], ultimo = foco[foco.length - 1];
     if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
@@ -491,6 +562,19 @@
     if (q) return quitar(q.dataset.quitar);
   });
 
+  // Selectores de presentación y punto de molienda dentro del carrito
+  document.addEventListener('change', e => {
+    const forma = e.target.closest('[data-forma]');
+    if (forma) {
+      const destino = forma.value === 'grano'
+        ? 'grano'
+        : (typeof MOLIENDA_POR_DEFECTO !== 'undefined' ? MOLIENDA_POR_DEFECTO : 'media');
+      return cambiarMolienda(forma.dataset.forma, destino);
+    }
+    const mol = e.target.closest('[data-molienda]');
+    if (mol) return cambiarMolienda(mol.dataset.molienda, mol.value);
+  });
+
   document.addEventListener('keydown', e => {
     atraparFoco(e);
     if (e.key !== 'Escape') return;
@@ -500,7 +584,7 @@
 
   /* ── Pago ──────────────────────────────────────────────────────────────── */
   function textoPedido() {
-    const lineas = carrito.map(l => `• ${l.cant} × ${l.nombre} (${l.variante}) — ${money(l.precio * l.cant)}`);
+    const lineas = carrito.map(l => `• ${l.cant} × ${l.nombre} (${varianteDe(l)}) — ${money(l.precio * l.cant)}`);
     return [
       'Hola Hysteria, quiero hacer un pedido:', '',
       lineas.join('\n'), '',
@@ -612,8 +696,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: carrito.map(l => ({
-            id: l.id, titulo: l.nombre, descripcion: l.variante,
-            cantidad: l.cant, precio: l.precio
+            id: l.id, titulo: l.nombre, descripcion: varianteDe(l),
+            cantidad: l.cant, precio: l.precio,
+            molienda: l.esCafe ? l.molienda : ''
           })),
           envio: envio(),
           datosEnvio: datos

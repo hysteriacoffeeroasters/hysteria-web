@@ -196,7 +196,11 @@ Listo. Cada persona que se suscriba aparece sola en tus contactos de Brevo.
 
 El formulario incluye una **trampa antibots**: un campo invisible que las personas
 nunca ven y que los robots sí rellenan. Si llega lleno, la suscripción se descarta
-en silencio.
+en silencio. Además, solo se aceptan suscripciones enviadas desde tu propia web.
+
+> Si algún día recibes suscripciones basura en volumen, la defensa fuerte es
+> añadir un CAPTCHA (Cloudflare Turnstile, gratis) o activar el **doble opt-in**
+> en Brevo (que el suscriptor confirme por correo). Avísame y lo conectamos.
 
 ---
 

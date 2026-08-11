@@ -43,9 +43,24 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'Boletín no configurado todavía' });
   }
 
-  try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+  // Defensa ligera: solo aceptamos suscripciones enviadas desde nuestra propia
+  // web (misma origin). No frena un bot decidido, pero descarta el abuso trivial
+  // desde otros orígenes. La protección fuerte (rate-limit por IP + doble opt-in)
+  // se documenta en el LEEME y requiere infraestructura adicional.
+  const origen = req.headers.origin || '';
+  const permitido = ['https://www.hysteriacoffeeroasters.com', 'https://hysteriacoffeeroasters.com'];
+  if (origen && !permitido.includes(origen)) {
+    return res.status(403).json({ error: 'Origen no permitido' });
+  }
 
+  let body;
+  try {
+    body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+  } catch (e) {
+    return res.status(400).json({ error: 'Cuerpo no válido' });
+  }
+
+  try {
     // Trampa antibots: si este campo viene lleno, lo llenó un robot.
     // Respondemos "listo" para que no sepa que lo detectamos.
     if (body.website) return res.status(200).json({ ok: true });

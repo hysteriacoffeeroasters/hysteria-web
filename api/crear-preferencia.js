@@ -37,6 +37,11 @@ const ENVIO = 15000;
 const ENVIO_GRATIS_DESDE = 120000;
 const MAX_UNIDADES = 50;
 
+// Dominio canónico fijo para las URLs de retorno del pago. No se deriva de las
+// cabeceras del request (evita el anti-patrón host-header). Se puede sobrescribir
+// con la variable de entorno SITE_URL en Vercel.
+const SITE_URL = (process.env.SITE_URL || 'https://www.hysteriacoffeeroasters.com').replace(/\/$/, '');
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -49,8 +54,14 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'Pagos no configurados todavía' });
   }
 
+  let body;
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+    body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+  } catch (e) {
+    return res.status(400).json({ error: 'Cuerpo no válido' });
+  }
+
+  try {
     const entrada = Array.isArray(body.items) ? body.items : [];
 
     if (!entrada.length) {
@@ -86,9 +97,7 @@ export default async function handler(req, res) {
     const costoEnvio =
       (ENVIO_GRATIS_DESDE > 0 && subtotal >= ENVIO_GRATIS_DESDE) ? 0 : ENVIO;
 
-    const host = req.headers['x-forwarded-host'] || req.headers.host;
-    const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0];
-    const base = `${proto}://${host}`;
+    const base = SITE_URL;
 
     const preferencia = {
       items,

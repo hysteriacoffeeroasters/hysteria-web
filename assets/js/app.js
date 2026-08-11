@@ -740,6 +740,25 @@
 
     pintarDocumentos();
 
+    // Los textos dicen la verdad según cómo se esté cobrando hoy
+    const porWhatsapp = PAGOS.modo !== 'mercadopago';
+    const btnPagar = $('#envio-pagar');
+    if (btnPagar) btnPagar.textContent = porWhatsapp ? 'Enviar pedido' : 'Ir a pagar';
+    const notaEnvio = $('#nota-envio');
+    if (notaEnvio) {
+      notaEnvio.innerHTML = porWhatsapp
+        ? 'Usamos tus datos solo para el envío y tu factura.<br>Coordinamos el pago contigo por WhatsApp.'
+        : 'Usamos tus datos solo para el envío y tu factura electrónica.<br>El cobro lo procesa Mercado Pago.';
+    }
+    const notaResumen = $('#nota-resumen');
+    if (notaResumen) {
+      notaResumen.textContent = porWhatsapp
+        ? 'Cerramos tu pedido por WhatsApp'
+        : 'Pago con tarjeta, PSE o cierre por WhatsApp';
+    }
+    const btnResumen = $('#cart-checkout');
+    if (btnResumen) btnResumen.textContent = porWhatsapp ? 'Continuar' : 'Finalizar compra';
+
     $('#cart-checkout').addEventListener('click', () => {
       if (!carrito.length) return;
       mostrarPaso('envio');

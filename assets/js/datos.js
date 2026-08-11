@@ -43,9 +43,14 @@ const NEGOCIO = {
    --------------------------------------------------------------------------- */
 const PAGOS = {
 
-  // 'mercadopago' → checkout real: tarjetas, PSE, Efecty, cuotas  (recomendado)
+  // 'mercadopago' → checkout real: tarjetas, PSE, Efecty, cuotas
   // 'whatsapp'    → el pedido se cierra por WhatsApp, sin cobro en línea
-  modo: 'mercadopago',
+  //
+  // 👉 CUANDO SE DESBLOQUEE TU CUENTA DE MERCADO PAGO:
+  //    1. cambia esta línea a  modo: 'mercadopago'
+  //    2. pon MP_ACCESS_TOKEN en Vercel y vuelve a desplegar
+  //    Los textos de los botones se ajustan solos.
+  modo: 'whatsapp',
 
   // Si Mercado Pago falla o aún no lo has configurado, el carrito
   // cae automáticamente en WhatsApp para no perder la venta.

@@ -358,31 +358,33 @@
               aria-controls="ppanel-${esc(m.id)}" aria-selected="${i === 0}"
               tabindex="${i === 0 ? '0' : '-1'}">${esc(m.nombre)}</button>`).join('');
 
-    panels.innerHTML = metodos.map((m, i) => {
-      const datos = [
-        ['Molienda', m.molienda], ['Proporción', m.proporcion],
-        ['Dosis', m.dosis], ['Agua', m.temperatura], ['Tiempo', m.tiempo],
-      ].filter(x => puesto(x[1]));
-
-      return `
+    panels.innerHTML = metodos.map((m, i) => `
       <div class="prep-panel" role="tabpanel" id="ppanel-${esc(m.id)}"
            aria-labelledby="ptab-${esc(m.id)}" tabindex="0" ${i === 0 ? '' : 'hidden'}>
         <div class="prep-cols">
           <aside class="prep-ficha">
-            ${m.resumen ? `<p class="prep-resumen">${esc(m.resumen)}</p>` : ''}
+            <h3 class="prep-equipo">${esc(m.equipo || m.nombre)}</h3>
+            ${puesto(m.rinde) ? `<p class="prep-rinde">${esc(m.rinde)}</p>` : ''}
             <dl class="prep-datos">
-              ${datos.map(d => `
-                <div><dt>${esc(d[0])}</dt><dd>${esc(d[1])}</dd></div>`).join('')}
+              ${(m.ficha || []).map(d => `
+                <div><dt>${esc(d.k)}</dt><dd>${esc(d.v)}</dd></div>`).join('')}
             </dl>
           </aside>
           <div class="prep-pasos">
-            <h3 class="prep-h3">Paso a paso</h3>
-            <ol>${(m.pasos || []).map(p => `<li>${esc(p)}</li>`).join('')}</ol>
-            ${m.consejo ? `<p class="prep-consejo"><strong>Tip:</strong> ${esc(m.consejo)}</p>` : ''}
+            <h4 class="prep-h3">Paso a paso</h4>
+            <ol>${(m.pasos || []).map(p => `
+              <li>
+                <span class="paso-titulo">${esc(p.titulo)}</span>
+                <span class="paso-texto">${esc(p.texto)}</span>
+              </li>`).join('')}
+            </ol>
           </div>
         </div>
-      </div>`;
-    }).join('');
+      </div>`).join('');
+
+    if (puesto(P.nota)) {
+      panels.insertAdjacentHTML('beforeend', `<p class="prep-nota">${esc(P.nota)}</p>`);
+    }
 
     function activar(b, enfocar) {
       $$('.ptab', tabs).forEach(x => {

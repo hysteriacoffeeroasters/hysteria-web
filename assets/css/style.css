@@ -37,7 +37,7 @@
   --ink-1: rgba(255,255,255,1);
   --ink-2: rgba(255,255,255,0.78);
   --ink-3: rgba(255,255,255,0.62);
-  --ink-4: rgba(255,255,255,0.46);
+  --ink-4: rgba(255,255,255,0.54);
 
   --border:      rgba(255,255,255,0.14);
   --border-soft: rgba(255,255,255,0.08);
@@ -519,7 +519,7 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .shop-media { position: relative; aspect-ratio: 1000 / 866; overflow: hidden; background: #060606; }
 .shop-media img { width: 100%; height: 100%; object-fit: cover; }
 .shop-info { padding: 1.4rem; display: flex; flex-direction: column; flex: 1; }
-.shop-coll { font-family: var(--label); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--c); }
+.shop-coll { font-family: var(--label); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--c-t, var(--c)); }
 .shop-name { font-family: var(--serif); font-size: 1.2rem; margin-top: 6px; }
 .shop-meta { font-size: 12.5px; color: var(--ink-3); margin-top: 6px; line-height: 1.6; }
 .shop-foot { margin-top: auto; padding-top: 1.2rem; border-top: 1px solid var(--border-soft); display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
@@ -612,12 +612,12 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .nl-input {
   flex: 1 1 auto; min-width: 150px;    /* nunca se aplasta */
   background: transparent;
-  border: 1px solid rgba(0,0,0,0.28); border-right: none;
+  border: 1px solid rgba(0,0,0,0.45); border-right: none;
   color: var(--black); font-family: var(--body); font-size: 14px;
   padding: 14px 16px; outline: none;
 }
 .nl-input:focus { border-color: var(--black); }
-.nl-input::placeholder { color: rgba(0,0,0,0.42); }
+.nl-input::placeholder { color: rgba(0,0,0,0.58); }
 .nl-btn {
   flex: 0 0 auto;
   background: var(--black); color: var(--white);

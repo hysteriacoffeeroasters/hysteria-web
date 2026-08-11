@@ -17,6 +17,17 @@
 
   const puesto = v => v && String(v).trim() && String(v).trim() !== 'PENDIENTE';
 
+  /* Los colores de marca son vivos para flores y textos grandes, pero sobre
+     negro no alcanzan 4.5:1 en textos pequeños (Ilusión y Deseo). Esta versión
+     aclarada se usa solo en micro-textos (etiquetas, encabezados de la tabla). */
+  const COLOR_TEXTO = {
+    pasion:  '#FF5A54',
+    ilusion: '#C579DD',
+    deseo:   '#4E97FF',
+    euforia: '#F49A1A',
+  };
+  const colorTexto = id => COLOR_TEXTO[id] || 'var(--white)';
+
   /* ── Estado del carrito ────────────────────────────────────────────────── */
   const LLAVE = 'hysteria_carrito_v1';
   let carrito = [];
@@ -105,7 +116,7 @@
         .join('');
 
       return `
-      <article class="coffee" data-coll="${esc(c.id)}" style="--c:${esc(c.color)}">
+      <article class="coffee" data-coll="${esc(c.id)}" style="--c:${esc(c.color)};--c-t:${esc(colorTexto(c.id))}">
         <div class="coffee-media">
           <img src="${esc(L.imagen)}"
                alt="Ficha de cata de ${esc(c.nombre)}${puesto(L.variedad) ? ', variedad ' + esc(L.variedad) : ''}"
@@ -159,7 +170,7 @@
 
   function filtrar(key) {
     const col = COLECCIONES.find(c => c.id === key);
-    document.documentElement.style.setProperty('--accent', col ? col.color : '#FFFFFF');
+    document.documentElement.style.setProperty('--accent', col ? colorTexto(col.id) : '#FFFFFF');
 
     const wm = $('#collection-watermark');
     if (wm) {
@@ -181,7 +192,7 @@
         <thead>
           <tr>
             <th scope="col"><span class="sr-only">Presentación</span></th>
-            ${COLECCIONES.map(c => `<th scope="col" style="color:${esc(c.color)}">${esc(c.nombre)}</th>`).join('')}
+            ${COLECCIONES.map(c => `<th scope="col" style="color:${esc(colorTexto(c.id))}">${esc(c.nombre)}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
@@ -236,13 +247,15 @@
     const tabs = $('#menu-tabs'), panels = $('#menu-panels');
     if (!tabs || !panels) return;
 
+    // roving tabindex: solo la pestaña activa es tabbable; las flechas mueven entre ellas
     tabs.innerHTML = MENU.map((g, i) => `
       <button class="mtab${i === 0 ? ' on' : ''}" role="tab" id="tab-${esc(g.id)}"
-              aria-controls="panel-${esc(g.id)}" aria-selected="${i === 0}">${esc(g.nombre)}</button>`).join('');
+              aria-controls="panel-${esc(g.id)}" aria-selected="${i === 0}"
+              tabindex="${i === 0 ? '0' : '-1'}">${esc(g.nombre)}</button>`).join('');
 
     panels.innerHTML = MENU.map((g, i) => `
       <div class="menu-panel" role="tabpanel" id="panel-${esc(g.id)}"
-           aria-labelledby="tab-${esc(g.id)}" ${i === 0 ? '' : 'hidden'}>
+           aria-labelledby="tab-${esc(g.id)}" tabindex="0" ${i === 0 ? '' : 'hidden'}>
         <div class="menu-grid">
           ${g.items.map(it => `
             <div class="menu-item${it.destacado ? ' destacado' : ''}">
@@ -254,14 +267,39 @@
         ${g.nota ? `<p class="menu-note">${esc(g.nota)}</p>` : ''}
       </div>`).join('');
 
-    tabs.addEventListener('click', e => {
-      const b = e.target.closest('.mtab');
-      if (!b) return;
-      $$('.mtab', tabs).forEach(x => { x.classList.remove('on'); x.setAttribute('aria-selected', 'false'); });
-      b.classList.add('on'); b.setAttribute('aria-selected', 'true');
+    function activar(b, enfocar) {
+      $$('.mtab', tabs).forEach(x => {
+        x.classList.remove('on');
+        x.setAttribute('aria-selected', 'false');
+        x.setAttribute('tabindex', '-1');
+      });
+      b.classList.add('on');
+      b.setAttribute('aria-selected', 'true');
+      b.setAttribute('tabindex', '0');
+      if (enfocar) b.focus();
       $$('.menu-panel', panels).forEach(p => { p.hidden = true; });
       const target = $('#' + b.getAttribute('aria-controls'));
       if (target) target.hidden = false;
+    }
+
+    tabs.addEventListener('click', e => {
+      const b = e.target.closest('.mtab');
+      if (b) activar(b, false);
+    });
+
+    // Navegación con flechas / Home / End (patrón WAI-ARIA tabs)
+    tabs.addEventListener('keydown', e => {
+      const lista = $$('.mtab', tabs);
+      const i = lista.indexOf(document.activeElement);
+      if (i < 0) return;
+      let j = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') j = (i + 1) % lista.length;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') j = (i - 1 + lista.length) % lista.length;
+      else if (e.key === 'Home') j = 0;
+      else if (e.key === 'End') j = lista.length - 1;
+      if (j === null) return;
+      e.preventDefault();
+      activar(lista[j], true);
     });
   }
 
@@ -273,7 +311,7 @@
     cont.innerHTML = todosLosLotes().map(({ col: c, lote: L }) => {
       const meta = [L.origen, L.proceso].filter(puesto).join(' · ');
       return `
-      <article class="shop-card" style="--c:${esc(c.color)}">
+      <article class="shop-card" style="--c:${esc(c.color)};--c-t:${esc(colorTexto(c.id))}">
         <div class="shop-media">
           <img src="${esc(L.imagen)}" alt="Bolsa de café ${esc(c.nombre)} ${esc(L.variedad)}"
                width="1000" height="866" loading="lazy" decoding="async">
@@ -382,12 +420,38 @@
       <div class="cart-row total"><span>Total</span><span>${money(total())}</span></div>`;
   }
 
+  let focoPrevio = null;
+
   function abrirCarrito(abrir) {
-    $('#cart').classList.toggle('open', abrir);
+    const cart = $('#cart');
+    if (abrir) focoPrevio = document.activeElement;
+
+    cart.classList.toggle('open', abrir);
     $('#cart-backdrop').classList.toggle('open', abrir);
-    $('#cart').setAttribute('aria-hidden', String(!abrir));
+    cart.setAttribute('aria-hidden', String(!abrir));
+    // inert saca el panel cerrado del orden de tabulación y del árbol de accesibilidad
+    cart.toggleAttribute('inert', !abrir);
     document.body.classList.toggle('no-scroll', abrir);
-    if (abrir) $('#cart-close').focus();
+
+    if (abrir) {
+      $('#cart-close').focus();
+    } else if (focoPrevio && typeof focoPrevio.focus === 'function') {
+      // devuelve el foco al botón que abrió el carrito, no a un nodo oculto
+      focoPrevio.focus();
+      focoPrevio = null;
+    }
+  }
+
+  // Trampa de foco: mientras el carrito está abierto, Tab no se escapa al fondo
+  function atraparFoco(e) {
+    if (e.key !== 'Tab') return;
+    const cart = $('#cart');
+    if (!cart.classList.contains('open')) return;
+    const foco = cart.querySelectorAll('a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])');
+    if (!foco.length) return;
+    const primero = foco[0], ultimo = foco[foco.length - 1];
+    if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
+    else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
   }
 
   document.addEventListener('click', e => {
@@ -404,6 +468,7 @@
   });
 
   document.addEventListener('keydown', e => {
+    atraparFoco(e);
     if (e.key !== 'Escape') return;
     if ($('#cart').classList.contains('open')) abrirCarrito(false);
     if ($('#nav-mobile').classList.contains('open')) cerrarNavMovil();
@@ -630,15 +695,21 @@
 
   /* ── Navegación ────────────────────────────────────────────────────────── */
   function cerrarNavMovil() {
-    $('#nav-mobile').classList.remove('open');
-    $('#nav-toggle').setAttribute('aria-expanded', 'false');
+    const t = $('#nav-toggle'), m = $('#nav-mobile');
+    m.classList.remove('open');
+    m.setAttribute('inert', '');
+    t.setAttribute('aria-expanded', 'false');
+    t.setAttribute('aria-label', 'Abrir menú');
     document.body.classList.remove('no-scroll');
   }
   function iniciarNav() {
     const t = $('#nav-toggle'), m = $('#nav-mobile');
+    m.setAttribute('inert', '');   // arranca cerrado, fuera del orden de tabulación
     t.addEventListener('click', () => {
       const abierto = m.classList.toggle('open');
+      m.toggleAttribute('inert', !abierto);
       t.setAttribute('aria-expanded', String(abierto));
+      t.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
       document.body.classList.toggle('no-scroll', abierto);
     });
     $$('a', m).forEach(a => a.addEventListener('click', cerrarNavMovil));

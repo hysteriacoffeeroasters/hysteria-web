@@ -79,7 +79,7 @@
   </div>
 </header>
 
-<div class="nav-mobile" id="nav-mobile">
+<div class="nav-mobile" id="nav-mobile" inert>
   <a href="#esencia">Esencia</a>
   <a href="#colecciones">Colecciones</a>
   <a href="#promos">Promos</a>
@@ -272,9 +272,10 @@
 
 <!-- ══ CARRITO ══════════════════════════════════════════════════════════ -->
 <div class="cart-backdrop" id="cart-backdrop"></div>
-<aside class="cart" id="cart" aria-hidden="true" aria-label="Carrito de compras">
+<aside class="cart" id="cart" role="dialog" aria-modal="true" aria-hidden="true"
+       aria-labelledby="cart-title" inert>
   <div class="cart-head">
-    <h2>Tu pedido</h2>
+    <h2 id="cart-title">Tu pedido</h2>
     <button class="cart-close" id="cart-close" aria-label="Cerrar carrito">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="1.5" aria-hidden="true">

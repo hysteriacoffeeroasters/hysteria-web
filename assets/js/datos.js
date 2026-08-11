@@ -132,7 +132,7 @@ const COLECCIONES = [
     nombre: 'Ilusión',
     color: '#A11AD3',
     flor: 'assets/collections/ilusion.png',
-    descripcion: 'Cafés que traducen complejidad derivado a la genética de sus varietales y el cuidado detallado en sus procesos. Dejándonos en un estado de frenesí de euforia y satisfacción por sus sabores diferenciados.',
+    descripcion: 'Cafés que traducen complejidad derivada de la genética de sus varietales y el cuidado detallado en sus procesos, dejándonos en un estado de frenesí, euforia y satisfacción por sus sabores diferenciados.',
     caracteristica: 'Varietales exóticos',
 
     gramos: 340,
@@ -164,7 +164,7 @@ const COLECCIONES = [
     nombre: 'Deseo',
     color: '#0068FF',
     flor: 'assets/collections/deseo.png',
-    descripcion: 'Cafés que trascienden las sensaciones del deseo, haciendo posible lo imposible dejándonos en una realidad de sabores experimentales, nuevos y complejos.',
+    descripcion: 'Cafés que trascienden las sensaciones del deseo, haciendo posible lo imposible, dejándonos en una realidad de sabores experimentales, nuevos y complejos.',
     caracteristica: 'Naturales y fermentaciones alternativas',
 
     gramos: 340,
@@ -211,10 +211,8 @@ const COLECCIONES = [
     color: '#F49A1A',
     flor: 'assets/collections/euforia.png',
 
-    // ⚠️ REVISAR — Es la única colección sin texto tuyo todavía.
-    // Escríbelo con el mismo tono que las otras tres y reemplázalo aquí.
-    descripcion: 'La colección más reciente de la casa, en presentación de 250 g.',
-    caracteristica: '',   // ← ej: 'Procesos cítricos experimentales'
+    descripcion: 'Cafés que expresan la complejidad de los procesos más novedosos y alternativos.',
+    caracteristica: '',   // ← si quieres una línea de procesos, escríbela aquí
 
     gramos: 250,
     precios: {
@@ -322,7 +320,7 @@ const MENU = [
   {
     id: 'classic',
     nombre: 'Classic',
-    nota: 'Preparado con el café de la colección que elijas.',
+    nota: 'Preparado con un café seleccionado especialmente para espresso',
     items: [
       { nombre: 'Espresso',       desc: '', precio: 7500 },
       { nombre: 'Long Black',     desc: '', precio: 7500 },

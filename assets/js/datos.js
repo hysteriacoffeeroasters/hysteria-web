@@ -230,7 +230,9 @@ const PASAPORTE = {
    Para ocultar la sección completa: PROMOCIONES.mostrar = false
    --------------------------------------------------------------------------- */
 const PROMOCIONES = {
-  mostrar: true,
+  // 👉 Cambia a  true  para volver a publicar la sección de promociones.
+  mostrar: false,
+
   vigencia: 'Consulta vigencia en tienda',   // texto libre, o '' para ocultarlo
 
   lista: [
@@ -382,11 +384,19 @@ const TIENDAS = [
     barrio: '',                       // opcional, ej: 'Chicó'
     mapa: '',                         // opcional: enlace exacto de Google Maps
 
-    // ⚠️ REVISAR — Estos horarios venían de la web anterior.
-    // Corrígelos con los reales.
+    // Lo que ve el cliente en la web.
     horarios: [
-      { dias: 'Lunes a viernes', horas: '7:30 am – 8:00 pm' },
-      { dias: 'Sábado y domingo', horas: '9:00 am – 9:00 pm' },
+      { dias: 'Lunes a viernes',      horas: '7:30 am – 7:00 pm' },
+      { dias: 'Sábado',               horas: '9:30 am – 4:30 pm' },
+      { dias: 'Domingos y festivos',  horas: 'Cerrado' },
+    ],
+
+    // Lo mismo pero para Google (no se muestra en la web).
+    // Si cambias los horarios de arriba, cambia también estos.
+    // Formato de 24 horas. No incluyas los días que cierras.
+    horarioGoogle: [
+      { dias: ['Monday','Tuesday','Wednesday','Thursday','Friday'], abre: '07:30', cierra: '19:00' },
+      { dias: ['Saturday'],                                        abre: '09:30', cierra: '16:30' },
     ],
   },
 ];

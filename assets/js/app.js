@@ -191,7 +191,12 @@
     const sec = $('#promos');
     if (!sec) return;
     const activas = (PROMOCIONES.lista || []).filter(p => p.activa);
-    if (!PROMOCIONES.mostrar || !activas.length) { sec.remove(); return; }
+    if (!PROMOCIONES.mostrar || !activas.length) {
+      sec.remove();
+      // sin sección, los enlaces a #promos quedarían rotos
+      $$('a[href="#promos"]').forEach(a => a.remove());
+      return;
+    }
 
     $('#promo-grid').innerHTML = activas.map(p => `
       <article class="promo${p.destacada ? ' destacada' : ''}">
@@ -668,7 +673,15 @@
     // Con una sola tienda, su dirección es la del negocio (mejor para Google)
     if (abiertas.length === 1) {
       negocio.address.streetAddress = abiertas[0].direccion;
-      negocio.openingHours = (abiertas[0].horarios || []).map(h => h.dias + ' ' + h.horas);
+      const hg = abiertas[0].horarioGoogle || [];
+      if (hg.length) {
+        negocio.openingHoursSpecification = hg.map(h => ({
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: h.dias,
+          opens: h.abre,
+          closes: h.cierra
+        }));
+      }
     }
 
     const tiendas = abiertas.length > 1 ? abiertas.map(t => ({

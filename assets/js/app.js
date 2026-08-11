@@ -625,6 +625,12 @@
     });
     $('#envio-volver').addEventListener('click', () => mostrarPaso('resumen'));
 
+    // al escribir se limpia la marca de error de ese campo
+    form.addEventListener('input', e => {
+      if (e.target.matches('input')) e.target.setAttribute('aria-invalid', 'false');
+      if (!$$('#cart-envio [aria-invalid="true"]').length) $('#envio-error').textContent = '';
+    });
+
     form.addEventListener('submit', e => {
       e.preventDefault();
       const d = leerEnvio();

@@ -343,9 +343,12 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .cfilt:hover { color: var(--white); }
 .cfilt.on { color: var(--accent); border-bottom-color: var(--accent); }
 
+/* auto-FILL, no auto-fit: al filtrar por una colección la tarjeta que queda
+   conserva su ancho normal en vez de estirarse a todo el contenedor. */
 .coffee-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: clamp(1rem, 2vw, 1.6rem); margin-top: 2.8rem;
+  align-items: start;
 }
 .coffee {
   border: 1px solid var(--border-soft);

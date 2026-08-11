@@ -1,0 +1,15 @@
+{
+  "name": "Hysteria Coffee Roasters",
+  "short_name": "Hysteria",
+  "description": "Café de especialidad tostado en Bogotá. Colecciones Pasión, Ilusión y Deseo.",
+  "lang": "es-CO",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    { "src": "/assets/logo/favicon-32.png",  "sizes": "32x32",   "type": "image/png" },
+    { "src": "/assets/logo/favicon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/assets/logo/icono-white.png", "sizes": "512x478", "type": "image/png", "purpose": "any" }
+  ]
+}

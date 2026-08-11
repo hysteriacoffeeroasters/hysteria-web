@@ -1,0 +1,25 @@
+# Dependencias
+node_modules/
+
+# Entorno — NUNCA subas credenciales al repositorio
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel/
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Temporales
+*.tmp
+_verif/
+_tmp_*

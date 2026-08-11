@@ -42,17 +42,24 @@
         (typeof MOLIENDAS !== 'undefined' ? MOLIENDAS : []).map(m => m.codigo));
       carrito = (Array.isArray(bruto) ? bruto : [])
         .filter(l => l && typeof l.id === 'string')
-        .map(l => ({
-          id: l.id,
-          nombre: String(l.nombre || ''),
-          variante: String(l.variante || ''),
-          img: String(l.img || ''),
-          esCafe: !!l.esCafe,
-          gramos: Math.max(0, Number(l.gramos) || 0),
-          molienda: validas.includes(l.molienda) ? l.molienda : (l.esCafe ? 'grano' : ''),
-          precio: Math.max(0, Number(l.precio) || 0),
-          cant: Math.min(MAX_UNIDADES, Math.max(1, Math.floor(Number(l.cant) || 1))),
-        }));
+        .map(l => {
+          // Carritos guardados antes de existir la molienda no traen esCafe ni
+          // gramos: se deducen del catálogo para que no pierdan el selector.
+          const hit = buscarLote(l.id);
+          const esCafe = l.esCafe !== undefined ? !!l.esCafe : !!hit;
+          const gramos = Number(l.gramos) || (hit ? hit.col.gramos : 0);
+          return {
+            id: l.id,
+            nombre: String(l.nombre || ''),
+            variante: String(l.variante || ''),
+            img: String(l.img || ''),
+            esCafe,
+            gramos: Math.max(0, gramos),
+            molienda: validas.includes(l.molienda) ? l.molienda : (esCafe ? 'grano' : ''),
+            precio: Math.max(0, Number(l.precio) || 0),
+            cant: Math.min(MAX_UNIDADES, Math.max(1, Math.floor(Number(l.cant) || 1))),
+          };
+        });
     } catch (e) { carrito = []; }
   }
   function guardarCarrito() {

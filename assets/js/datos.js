@@ -469,6 +469,140 @@ const MENU = [
 
 
 /* ---------------------------------------------------------------------------
+   6b) CÓMO PREPARAR TU CAFÉ
+   ---------------------------------------------------------------------------
+   Guías de preparación por método. Cada una sale como una pestaña.
+
+   Son recetas base, con proporciones estándar de café de especialidad.
+   ⚠️ Ajústalas a tu estándar de casa si tu tueste pide otra cosa: son las
+   que va a seguir tu cliente, así que conviene que coincidan contigo.
+
+   Para agregar un método, copia un bloque. Para quitarlo, bórralo.
+   Para ocultar la sección completa: PREPARACION.mostrar = false
+   --------------------------------------------------------------------------- */
+const PREPARACION = {
+  mostrar: true,
+  titulo: '¿Cómo preparar tu café?',
+  intro: 'El café que te llevas ya hizo su parte. Estas son las proporciones y los tiempos con los que lo preparamos nosotros, para que en tu casa sepa igual.',
+
+  metodos: [
+    {
+      id: 'goteo',
+      nombre: 'Goteo · V60',
+      molienda: 'Media',
+      proporcion: '1:16',
+      dosis: '20 g de café · 320 ml de agua',
+      temperatura: '92–94 °C',
+      tiempo: '3 minutos',
+      resumen: 'El método que más deja hablar al café: taza limpia, aromática y con la acidez bien definida. Es como servimos las tazas en barra.',
+      pasos: [
+        'Enjuaga el filtro con agua caliente y bota esa agua. Quita el sabor a papel y calienta el equipo.',
+        'Agrega los 20 g de café y sacude para nivelar la cama.',
+        'Vierte 60 ml en círculos desde el centro y espera 30–45 segundos. El café se infla: eso es el gas saliendo.',
+        'Vierte en espiral, sin tocar las paredes, hasta llegar a 180 ml.',
+        'Completa hasta 320 ml en un último vertido.',
+        'Deja drenar. Debería terminar entre 2:45 y 3:15.',
+      ],
+      consejo: 'Si tarda más de 3:30, muele más grueso. Si baja en menos de 2:30, más fino. El tiempo manda.',
+    },
+    {
+      id: 'prensa',
+      nombre: 'Prensa francesa',
+      molienda: 'Gruesa',
+      proporcion: '1:15',
+      dosis: '30 g de café · 450 ml de agua',
+      temperatura: '93 °C',
+      tiempo: '4 minutos',
+      resumen: 'Cuerpo alto y textura densa. Perdona los errores, así que es el mejor método para empezar.',
+      pasos: [
+        'Calienta la prensa con agua caliente y descártala.',
+        'Agrega los 30 g de café en molienda gruesa.',
+        'Vierte los 450 ml de una sola vez, asegurándote de mojar todo el café.',
+        'Espera 4 minutos sin tocar nada.',
+        'Rompe la costra de la superficie con una cuchara y retira la espuma.',
+        'Baja el émbolo despacio y sirve de inmediato.',
+      ],
+      consejo: 'No dejes el café dentro de la prensa: sigue extrayéndose y amarga. Pásalo a otro recipiente.',
+    },
+    {
+      id: 'aeropress',
+      nombre: 'AeroPress',
+      molienda: 'Medio fina',
+      proporcion: '1:14',
+      dosis: '15 g de café · 220 ml de agua',
+      temperatura: '88 °C',
+      tiempo: '2 minutos',
+      resumen: 'Rápida, viajera y muy indulgente. Da una taza concentrada y de cuerpo medio.',
+      pasos: [
+        'Pon el filtro en la tapa y enjuágalo con agua caliente.',
+        'Arma la AeroPress sobre la taza y agrega los 15 g de café.',
+        'Vierte los 220 ml de agua a 88 °C.',
+        'Revuelve 10 segundos con la paleta.',
+        'Tapa y espera hasta el minuto 1:30.',
+        'Presiona despacio durante unos 30 segundos, hasta oír el aire.',
+      ],
+      consejo: 'Si te cuesta mucho presionar, muele más grueso. No deberías necesitar fuerza.',
+    },
+    {
+      id: 'moka',
+      nombre: 'Moka · Greca',
+      molienda: 'Medio fina',
+      proporcion: 'Según la greca',
+      dosis: 'Embudo lleno, sin apretar',
+      temperatura: 'Fuego medio-bajo',
+      tiempo: '4–5 minutos',
+      resumen: 'La de toda la vida. Concentrada y con cuerpo, perfecta para tomar con leche.',
+      pasos: [
+        'Llena la base con agua caliente hasta justo debajo de la válvula.',
+        'Llena el embudo con café medio fino, al ras y sin apretar.',
+        'Enrosca bien y ponla a fuego medio-bajo.',
+        'Cuando el café empiece a salir parejo y con un burbujeo suave, ya está.',
+        'Retira del fuego apenas el chorro se vuelva claro y ruidoso.',
+        'Enfría la base con un paño húmedo para cortar la extracción.',
+      ],
+      consejo: 'El fuego alto quema el café y lo vuelve amargo. Paciencia: medio-bajo siempre.',
+    },
+    {
+      id: 'coldbrew',
+      nombre: 'Cold Brew',
+      molienda: 'Gruesa',
+      proporcion: '1:10',
+      dosis: '100 g de café · 1 litro de agua',
+      temperatura: 'Agua fría',
+      tiempo: '12–16 horas',
+      resumen: 'Extracción en frío: dulce, suave y con muy poca acidez. Es el mismo principio de nuestra botella.',
+      pasos: [
+        'Muele 100 g de café bien grueso.',
+        'Ponlo en un frasco con 1 litro de agua fría y revuelve para mojarlo todo.',
+        'Tapa y refrigera entre 12 y 16 horas.',
+        'Filtra con papel o con una tela de tejido cerrado.',
+        'Sirve sobre hielo.',
+      ],
+      consejo: 'Se conserva hasta 7 días en nevera. Si te queda muy fuerte, dilúyelo con agua o leche al gusto.',
+    },
+    {
+      id: 'espresso',
+      nombre: 'Espresso',
+      molienda: 'Fina',
+      proporcion: '1:2',
+      dosis: '18 g de café · 36 g en taza',
+      temperatura: '93 °C',
+      tiempo: '25–30 segundos',
+      resumen: 'La extracción más exigente: concentra todo en pocos mililitros y no perdona la molienda.',
+      pasos: [
+        'Dosifica 18 g de café en el portafiltro.',
+        'Nivela y prensa parejo, sin inclinar.',
+        'Purga la máquina un segundo antes de montar.',
+        'Extrae hasta obtener 36 g en la taza.',
+        'Debería tardar entre 25 y 30 segundos.',
+      ],
+      consejo: 'Si sale en menos de 20 s queda ácido y aguado: muele más fino. Si pasa de 35 s, amarga: muele más grueso.',
+    },
+  ],
+};
+
+
+/* ---------------------------------------------------------------------------
    7) DÓNDE ESTAMOS
    ---------------------------------------------------------------------------
    Si dejas 'PENDIENTE' en dirección, esa tarjeta no se muestra.

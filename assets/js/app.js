@@ -335,6 +335,89 @@
     });
   }
 
+  /* ── Cómo preparar tu café ─────────────────────────────────────────────── */
+  function pintarPreparacion() {
+    const sec = $('#preparacion');
+    if (!sec) return;
+    const P = typeof PREPARACION !== 'undefined' ? PREPARACION : null;
+    const metodos = P && Array.isArray(P.metodos) ? P.metodos : [];
+
+    if (!P || !P.mostrar || !metodos.length) {
+      sec.remove();
+      $$('a[href="#preparacion"]').forEach(a => a.remove());
+      return;
+    }
+
+    $('#prep-titulo').textContent = P.titulo || '¿Cómo preparar tu café?';
+    $('#prep-intro').textContent = P.intro || '';
+
+    const tabs = $('#prep-tabs'), panels = $('#prep-panels');
+
+    tabs.innerHTML = metodos.map((m, i) => `
+      <button class="ptab${i === 0 ? ' on' : ''}" role="tab" id="ptab-${esc(m.id)}"
+              aria-controls="ppanel-${esc(m.id)}" aria-selected="${i === 0}"
+              tabindex="${i === 0 ? '0' : '-1'}">${esc(m.nombre)}</button>`).join('');
+
+    panels.innerHTML = metodos.map((m, i) => {
+      const datos = [
+        ['Molienda', m.molienda], ['Proporción', m.proporcion],
+        ['Dosis', m.dosis], ['Agua', m.temperatura], ['Tiempo', m.tiempo],
+      ].filter(x => puesto(x[1]));
+
+      return `
+      <div class="prep-panel" role="tabpanel" id="ppanel-${esc(m.id)}"
+           aria-labelledby="ptab-${esc(m.id)}" tabindex="0" ${i === 0 ? '' : 'hidden'}>
+        <div class="prep-cols">
+          <aside class="prep-ficha">
+            ${m.resumen ? `<p class="prep-resumen">${esc(m.resumen)}</p>` : ''}
+            <dl class="prep-datos">
+              ${datos.map(d => `
+                <div><dt>${esc(d[0])}</dt><dd>${esc(d[1])}</dd></div>`).join('')}
+            </dl>
+          </aside>
+          <div class="prep-pasos">
+            <h3 class="prep-h3">Paso a paso</h3>
+            <ol>${(m.pasos || []).map(p => `<li>${esc(p)}</li>`).join('')}</ol>
+            ${m.consejo ? `<p class="prep-consejo"><strong>Tip:</strong> ${esc(m.consejo)}</p>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    function activar(b, enfocar) {
+      $$('.ptab', tabs).forEach(x => {
+        x.classList.remove('on');
+        x.setAttribute('aria-selected', 'false');
+        x.setAttribute('tabindex', '-1');
+      });
+      b.classList.add('on');
+      b.setAttribute('aria-selected', 'true');
+      b.setAttribute('tabindex', '0');
+      if (enfocar) b.focus();
+      $$('.prep-panel', panels).forEach(p => { p.hidden = true; });
+      const t = $('#' + b.getAttribute('aria-controls'));
+      if (t) t.hidden = false;
+    }
+
+    tabs.addEventListener('click', e => {
+      const b = e.target.closest('.ptab');
+      if (b) activar(b, false);
+    });
+    tabs.addEventListener('keydown', e => {
+      const lista = $$('.ptab', tabs);
+      const i = lista.indexOf(document.activeElement);
+      if (i < 0) return;
+      let j = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') j = (i + 1) % lista.length;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') j = (i - 1 + lista.length) % lista.length;
+      else if (e.key === 'Home') j = 0;
+      else if (e.key === 'End') j = lista.length - 1;
+      if (j === null) return;
+      e.preventDefault();
+      activar(lista[j], true);
+    });
+  }
+
   /* ── Destacado del menú ────────────────────────────────────────────────── */
   function pintarDestacado() {
     const cont = $('#destacado-menu');
@@ -1117,6 +1200,7 @@
     pintarPromos();
     pintarMenu();
     pintarDestacado();
+    pintarPreparacion();
     pintarTienda();
     pintarTiendas();
     pintarContacto();

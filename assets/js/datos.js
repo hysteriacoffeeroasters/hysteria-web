@@ -100,7 +100,8 @@ const COLECCIONES = [
     nombre: 'Pasión',
     color: '#E42320',
     flor: 'assets/collections/pasion.png',
-    descripcion: 'La puerta de entrada. Un café limpio y equilibrado para tomar todos los días sin perder carácter.',
+    descripcion: 'Cafés que desbordan sentimientos de amor, gusto y respeto por la diversidad de nuestros orígenes, culturas y sabores.',
+    caracteristica: 'Variedades tradicionales, procesos lavados',
 
     gramos: 340,
     precios: {
@@ -131,7 +132,8 @@ const COLECCIONES = [
     nombre: 'Ilusión',
     color: '#A11AD3',
     flor: 'assets/collections/ilusion.png',
-    descripcion: 'Un paso más arriba. Variedades de mayor complejidad y una taza con más matices aromáticos.',
+    descripcion: 'Cafés que traducen complejidad derivado a la genética de sus varietales y el cuidado detallado en sus procesos. Dejándonos en un estado de frenesí de euforia y satisfacción por sus sabores diferenciados.',
+    caracteristica: 'Varietales exóticos',
 
     gramos: 340,
     precios: {
@@ -162,7 +164,8 @@ const COLECCIONES = [
     nombre: 'Deseo',
     color: '#0068FF',
     flor: 'assets/collections/deseo.png',
-    descripcion: 'Lo más alto de la casa. Lotes experimentales y de fermentación controlada, en cantidad limitada.',
+    descripcion: 'Cafés que trascienden las sensaciones del deseo, haciendo posible lo imposible dejándonos en una realidad de sabores experimentales, nuevos y complejos.',
+    caracteristica: 'Naturales y fermentaciones alternativas',
 
     gramos: 340,
     precios: {
@@ -208,8 +211,10 @@ const COLECCIONES = [
     color: '#F49A1A',
     flor: 'assets/collections/euforia.png',
 
-    // ⚠️ REVISAR — Escribe la descripción real de esta colección.
+    // ⚠️ REVISAR — Es la única colección sin texto tuyo todavía.
+    // Escríbelo con el mismo tono que las otras tres y reemplázalo aquí.
     descripcion: 'La colección más reciente de la casa, en presentación de 250 g.',
+    caracteristica: '',   // ← ej: 'Procesos cítricos experimentales'
 
     gramos: 250,
     precios: {

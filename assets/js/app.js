@@ -471,17 +471,24 @@
       return;
     }
 
-    cont.innerHTML = vis.map(t => `
+    cont.classList.toggle('una-sola', vis.length === 1);
+
+    cont.innerHTML = vis.map(t => {
+      const mapa = t.mapa || ('https://www.google.com/maps/search/?api=1&query=' +
+        encodeURIComponent(t.direccion + ', ' + NEGOCIO.ciudad + ', ' + NEGOCIO.pais));
+      const tag = [t.etiqueta, t.barrio].filter(x => x && x.trim()).join(' · ');
+      return `
       <div class="visit-card">
-        <div class="visit-tag">${esc(t.etiqueta)} · ${esc(t.barrio)}</div>
+        <div class="visit-tag">${esc(tag)}</div>
         <div class="visit-name">${esc(t.nombre)}</div>
         <p class="visit-detail">${esc(t.direccion)}<br>${esc(NEGOCIO.ciudad)}, ${esc(NEGOCIO.pais)}</p>
-        ${t.mapa ? `<a class="visit-link" href="${esc(t.mapa)}" target="_blank" rel="noopener">Ver en el mapa</a>` : ''}
+        <a class="visit-link" href="${esc(mapa)}" target="_blank" rel="noopener">Ver en el mapa</a>
         <div class="visit-hours">
           ${(t.horarios || []).map(h => `
             <div class="visit-hour"><b>${esc(h.dias)}</b><span>${esc(h.horas)}</span></div>`).join('')}
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   /* ── Contacto en el pie ────────────────────────────────────────────────── */
@@ -656,14 +663,22 @@
     };
     if (puesto(NEGOCIO.telefono)) negocio.telephone = NEGOCIO.telefono;
 
-    const tiendas = TIENDAS.filter(t => puesto(t.direccion)).map(t => ({
+    const abiertas = TIENDAS.filter(t => puesto(t.direccion));
+
+    // Con una sola tienda, su dirección es la del negocio (mejor para Google)
+    if (abiertas.length === 1) {
+      negocio.address.streetAddress = abiertas[0].direccion;
+      negocio.openingHours = (abiertas[0].horarios || []).map(h => h.dias + ' ' + h.horas);
+    }
+
+    const tiendas = abiertas.length > 1 ? abiertas.map(t => ({
       '@type': 'CafeOrCoffeeShop',
       name: t.nombre,
       address: {
         '@type': 'PostalAddress', streetAddress: t.direccion,
         addressLocality: NEGOCIO.ciudad, addressCountry: 'CO'
       }
-    }));
+    })) : [];
 
     const s = document.createElement('script');
     s.type = 'application/ld+json';

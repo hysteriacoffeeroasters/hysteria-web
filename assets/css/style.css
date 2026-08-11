@@ -608,6 +608,8 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 
 /* ── VISÍTANOS ───────────────────────────────────────────────────────────── */
 .visit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.3rem; margin-top: 2.8rem; }
+/* Con una sola tienda la tarjeta no debe estirarse a todo el ancho */
+.visit-grid.una-sola { grid-template-columns: minmax(290px, 560px); }
 .visit-card { border: 1px solid var(--border-soft); background: var(--card); padding: clamp(1.7rem, 3vw, 2.4rem); position: relative; }
 .visit-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--white); }
 .visit-tag { font-family: var(--label); font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-4); }

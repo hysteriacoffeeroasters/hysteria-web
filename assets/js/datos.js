@@ -17,17 +17,15 @@
    --------------------------------------------------------------------------- */
 const NEGOCIO = {
 
-  // ⚠️ REVISAR — Número de WhatsApp para recibir pedidos.
+  // Número de WhatsApp para recibir pedidos.
   // Formato internacional SIN "+", SIN espacios. Colombia = 57 + número.
-  // Ejemplo real: '573145557788'
-  // Mientras diga 'PENDIENTE', el botón de pedido usará el correo.
-  whatsapp: 'PENDIENTE',
+  whatsapp: '573195584123',
 
-  // ⚠️ REVISAR — ¿Es este el correo correcto para pedidos?
+  // Correo de pedidos (confirmado).
   correo: 'hysteriacoffeeroasters@gmail.com',
 
-  // ⚠️ REVISAR — Teléfono visible. Déjalo en 'PENDIENTE' para ocultarlo.
-  telefono: 'PENDIENTE',
+  // Teléfono visible. Déjalo en 'PENDIENTE' para ocultarlo.
+  telefono: '+57 319 558 4123',
 
   instagram: 'https://www.instagram.com/hysteriacoffeeroasters/',
 
@@ -186,16 +184,14 @@ const COLECCIONES = [
     descripcion: 'La colección más reciente de la casa, en presentación de 250 g.',
 
     gramos: 250,
-    // ⚠️ REVISAR — No encontré la ficha de este lote en tus archivos.
-    // Llena estos campos y aparecerán solos en la web.
     lote: {
-      origen:    'PENDIENTE',
-      variedad:  'PENDIENTE',
-      proceso:   'PENDIENTE',
+      origen:    'Huila',
+      variedad:  'Borbón Orange',
+      proceso:   'Experimental Citric',
       notas:     '',
       altura:    '',
       productor: '',
-      tueste:    '',
+      tueste:    'Medio',
     },
 
     precios: {
@@ -374,32 +370,23 @@ const MENU = [
 /* ---------------------------------------------------------------------------
    7) DÓNDE ESTAMOS
    ---------------------------------------------------------------------------
-   ⚠️ REVISAR — Estas direcciones venían de la web anterior y parecen de relleno.
-   Corrígelas. Si solo tienes una tienda, borra el segundo bloque completo.
    Si dejas 'PENDIENTE' en dirección, esa tarjeta no se muestra.
+   Si el campo "mapa" está vacío, se genera solo un enlace a Google Maps
+   con la dirección. Puedes pegar el enlace exacto de tu ficha si prefieres.
    --------------------------------------------------------------------------- */
 const TIENDAS = [
   {
-    etiqueta: 'Principal',
-    nombre: 'Hysteria · La Candelaria',
-    direccion: 'PENDIENTE',          // ej: 'Calle 12 #3-45, La Candelaria'
-    barrio: 'La Candelaria',
-    mapa: '',                         // pega aquí el enlace de Google Maps
+    etiqueta: 'Nuestra tienda',
+    nombre: 'Hysteria Coffee Roasters',
+    direccion: 'Calle 92 #15-62',
+    barrio: '',                       // opcional, ej: 'Chicó'
+    mapa: '',                         // opcional: enlace exacto de Google Maps
+
+    // ⚠️ REVISAR — Estos horarios venían de la web anterior.
+    // Corrígelos con los reales.
     horarios: [
       { dias: 'Lunes a viernes', horas: '7:30 am – 8:00 pm' },
       { dias: 'Sábado y domingo', horas: '9:00 am – 9:00 pm' },
-    ],
-  },
-  {
-    etiqueta: 'Sucursal',
-    nombre: 'Hysteria · Chapinero',
-    direccion: 'PENDIENTE',          // ej: 'Carrera 7 #63-21, Chapinero Alto'
-    barrio: 'Chapinero Alto',
-    mapa: '',
-    horarios: [
-      { dias: 'Lunes a viernes', horas: '8:00 am – 7:00 pm' },
-      { dias: 'Sábado', horas: '9:00 am – 6:00 pm' },
-      { dias: 'Domingo', horas: 'Cerrado' },
     ],
   },
 ];

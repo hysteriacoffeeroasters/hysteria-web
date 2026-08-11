@@ -81,9 +81,8 @@ const PAGOS = {
    👉 CUANDO CAMBIES DE LOTE: edita solo el bloque "lote".
       El resto del sitio se actualiza solo.
 
-   El campo "notas" está vacío a propósito: no invento notas de cata.
-   Escribe las reales y aparecerán en la web. Si lo dejas vacío, no se muestra.
-   Lo mismo con cualquier campo en 'PENDIENTE'.
+   Los datos de cada lote salen de "infografía hysteria final.pdf".
+   Si dejas un campo vacío o en 'PENDIENTE', simplemente no se muestra en la web.
    --------------------------------------------------------------------------- */
 const COLECCIONES = [
   {
@@ -97,10 +96,10 @@ const COLECCIONES = [
     gramos: 340,
     lote: {
       origen:    'Huila',
-      variedad:  'Caturra',
+      variedad:  'Colombia',
       proceso:   'Lavado',
-      notas:     '',            // ← ej: 'Panela · naranja · chocolate con leche'
-      altura:    '',            // ← ej: '1.750 msnm'
+      notas:     'Panela · caramelo · frutos amarillos',
+      altura:    '1.800 msnm',
       productor: '',            // ← ej: 'Finca La Esperanza · familia Ramírez'
       tueste:    'Medio',
     },
@@ -126,10 +125,10 @@ const COLECCIONES = [
     gramos: 340,
     lote: {
       origen:    'Huila',
-      variedad:  'Pacamara',
+      variedad:  'Gesha',
       proceso:   'Lavado',
-      notas:     '',
-      altura:    '',
+      notas:     'Limoncillo · flores blancas · miel',
+      altura:    '1.750 msnm',
       productor: '',
       tueste:    'Medio',
     },
@@ -157,11 +156,25 @@ const COLECCIONES = [
       origen:    'Huila',
       variedad:  'Borbón Rojo',
       proceso:   'Natural · Experimental',
-      notas:     '',
-      altura:    '',
+      notas:     'Chocolate · frambuesa · cáscara de naranja',
+      altura:    '1.750 msnm',
       productor: '',
       tueste:    'Medio',
     },
+
+    /* En tu infografía hay un SEGUNDO lote de Deseo. Para cambiarlo,
+       borra el bloque "lote" de arriba y descomenta este:
+
+    lote: {
+      origen:    'Tolima',
+      variedad:  'Ombligón',
+      proceso:   'Natural · 72 h de fermentación',
+      notas:     'Cacao · ciruela · avinado',
+      altura:    '1.700 msnm',
+      productor: '',
+      tueste:    'Medio',
+    },
+    */
 
     precios: {
       bolsa:      75000,
@@ -186,10 +199,10 @@ const COLECCIONES = [
     gramos: 250,
     lote: {
       origen:    'Huila',
-      variedad:  'Borbón Orange',
+      variedad:  'Borbón Naranja',
       proceso:   'Experimental Citric',
-      notas:     '',
-      altura:    '',
+      notas:     'Flor de azahar · pomelo · tropical',
+      altura:    '1.800 msnm',
       productor: '',
       tueste:    'Medio',
     },

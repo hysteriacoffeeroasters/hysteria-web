@@ -120,6 +120,24 @@ const MOLIENDA_POR_DEFECTO = 'media';
 
 
 /* ---------------------------------------------------------------------------
+   2d) DESTACADO DEL MENÚ
+   ---------------------------------------------------------------------------
+   Una foto grande al cierre del menú para destacar un producto.
+   El precio NO se escribe aquí: se toma del MENU buscando "item", así que
+   si cambias el precio en el menú, este bloque se actualiza solo.
+   Pon  mostrar: false  para ocultarlo.
+   --------------------------------------------------------------------------- */
+const DESTACADO_MENU = {
+  mostrar: true,
+  item: 'Cold Brew',                     // debe coincidir con un nombre del MENU
+  foto: 'assets/fotos/coldbrew.jpg',
+  alt: 'Botella de Cold Brew de Hysteria sobre granos de café tostado',
+  titulo: 'Cold Brew',
+  bajada: 'Bebida artesanal, embotellada en casa.',
+};
+
+
+/* ---------------------------------------------------------------------------
    3) LAS COLECCIONES Y SUS LOTES
    ---------------------------------------------------------------------------
    Pasión, Ilusión, Deseo y Euforia son NIVELES fijos de tu marca.

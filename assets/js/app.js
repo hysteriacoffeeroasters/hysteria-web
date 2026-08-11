@@ -335,6 +335,32 @@
     });
   }
 
+  /* ── Destacado del menú ────────────────────────────────────────────────── */
+  function pintarDestacado() {
+    const cont = $('#destacado-menu');
+    if (!cont) return;
+    const d = typeof DESTACADO_MENU !== 'undefined' ? DESTACADO_MENU : null;
+    if (!d || !d.mostrar) { cont.remove(); return; }
+
+    // El precio sale del menú, no se escribe a mano: así nunca se desfasa
+    let precio = null;
+    (typeof MENU !== 'undefined' ? MENU : []).forEach(g =>
+      (g.items || []).forEach(it => { if (it.nombre === d.item) precio = it.precio; }));
+
+    cont.hidden = false;
+    cont.innerHTML = `
+      <figure class="destacado-foto">
+        <img src="${esc(d.foto)}" alt="${esc(d.alt || '')}"
+             width="800" height="1000" loading="lazy" decoding="async">
+      </figure>
+      <div class="destacado-info">
+        <p class="sec-tag">De la casa</p>
+        <h3 class="destacado-titulo">${esc(d.titulo)}</h3>
+        ${d.bajada ? `<p class="destacado-bajada">${esc(d.bajada)}</p>` : ''}
+        ${precio !== null ? `<p class="destacado-precio">${money(precio)}</p>` : ''}
+      </div>`;
+  }
+
   /* ── Tienda ────────────────────────────────────────────────────────────── */
   function pintarTienda() {
     const cont = $('#shop-grid');
@@ -1090,6 +1116,7 @@
     pintarPrecios();
     pintarPromos();
     pintarMenu();
+    pintarDestacado();
     pintarTienda();
     pintarTiendas();
     pintarContacto();

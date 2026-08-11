@@ -4,20 +4,22 @@ Todo lo que necesitas saber para manejar tu sitio, sin ser programador.
 
 ---
 
-## 1. Lo primero: llena estos 5 datos
+## 1. Los datos del negocio
 
-Abre `assets/js/datos.js` con el Bloc de notas (o cualquier editor) y busca las marcas **⚠️ REVISAR**.
+Todo se edita en `assets/js/datos.js` (ábrelo con el Bloc de notas). Estado actual:
 
-| Qué | Dónde | Por qué importa |
+| Qué | Dónde | Estado |
 |---|---|---|
-| **Número de WhatsApp** | `NEGOCIO.whatsapp` | Sin esto no hay botón flotante ni respaldo de pedidos |
-| **Correo de pedidos** | `NEGOCIO.correo` | A dónde llegan las consultas |
-| **Dirección de la tienda** | `TIENDAS[].direccion` | Hoy dice `PENDIENTE` y **la tarjeta no se muestra** |
-| **Notas de cata** | `COLECCIONES[].lote.notas` | Están vacías a propósito: no inventé sabores |
-| **Vigencia de promociones** | `PROMOCIONES.vigencia` | Confirma que las 3 promos sigan activas |
+| **WhatsApp** | `NEGOCIO.whatsapp` | ✅ +57 319 558 4123 |
+| **Correo de pedidos** | `NEGOCIO.correo` | ✅ configurado |
+| **Dirección de la tienda** | `TIENDAS[].direccion` | ✅ Calle 92 #15-62 |
+| **Horarios** | `TIENDAS[].horarios` | ✅ configurados |
+| **Notas de cata** | `COLECCIONES[].lotes[].notas` | ✅ desde la infografía |
+| **Promociones** | `PROMOCIONES.mostrar` | ⏸️ ocultas (`false`) hasta confirmar vigencia |
 
-> **Regla de oro:** cualquier campo que diga `PENDIENTE` simplemente **no aparece** en la web.
-> Es a propósito: es mejor no mostrar nada que mostrar un dato falso.
+> **Regla de oro:** cualquier campo que diga `PENDIENTE` o quede vacío
+> simplemente **no aparece** en la web. Es a propósito: mejor no mostrar
+> nada que mostrar un dato falso.
 
 ### Las cuatro colecciones
 

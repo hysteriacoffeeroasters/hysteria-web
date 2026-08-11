@@ -35,8 +35,19 @@
   function cargarCarrito() {
     try {
       const raw = localStorage.getItem(LLAVE);
-      carrito = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(carrito)) carrito = [];
+      const bruto = raw ? JSON.parse(raw) : [];
+      // Saneamos: cantidad numérica y acotada, precio numérico. Así, editar
+      // localStorage a mano no burla el tope ni mete valores raros en el DOM.
+      carrito = (Array.isArray(bruto) ? bruto : [])
+        .filter(l => l && typeof l.id === 'string')
+        .map(l => ({
+          id: l.id,
+          nombre: String(l.nombre || ''),
+          variante: String(l.variante || ''),
+          img: String(l.img || ''),
+          precio: Math.max(0, Number(l.precio) || 0),
+          cant: Math.min(MAX_UNIDADES, Math.max(1, Math.floor(Number(l.cant) || 1))),
+        }));
     } catch (e) { carrito = []; }
   }
   function guardarCarrito() {
@@ -52,17 +63,25 @@
   };
   const total = () => subtotal() + envio();
 
+  // Mismo tope por línea que aplica el servidor (api/crear-preferencia.js).
+  const MAX_UNIDADES = 50;
+
   function agregar(item) {
     const ex = carrito.find(l => l.id === item.id);
-    if (ex) ex.cant += 1;
-    else carrito.push(Object.assign({ cant: 1 }, item));
+    if (ex) {
+      if (ex.cant >= MAX_UNIDADES) { avisar('Máximo ' + MAX_UNIDADES + ' por producto'); return; }
+      ex.cant += 1;
+    } else {
+      carrito.push(Object.assign({ cant: 1 }, item));
+    }
     guardarCarrito(); pintarCarrito();
     avisar(item.nombre + ' agregado');
   }
   function cambiarCant(id, d) {
     const l = carrito.find(x => x.id === id);
     if (!l) return;
-    l.cant += d;
+    if (d > 0 && l.cant >= MAX_UNIDADES) { avisar('Máximo ' + MAX_UNIDADES + ' por producto'); return; }
+    l.cant = Math.min(MAX_UNIDADES, l.cant + d);
     if (l.cant < 1) carrito = carrito.filter(x => x.id !== id);
     guardarCarrito(); pintarCarrito();
   }
@@ -782,7 +801,7 @@
       '@type': 'CafeOrCoffeeShop',
       '@id': base + '/#negocio',
       name: 'Hysteria Coffee Roasters',
-      description: 'Tostadora y café de especialidad en ' + NEGOCIO.ciudad + '. Colecciones Pasión, Ilusión y Deseo.',
+      description: 'Tostadora y café de especialidad en ' + NEGOCIO.ciudad + '. Colecciones Pasión, Ilusión, Deseo y Euforia.',
       url: base + '/',
       image: base + '/assets/logo/imagotipo-white.png',
       logo: base + '/assets/logo/icono-white.png',

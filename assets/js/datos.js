@@ -382,11 +382,11 @@ const MENU = [
     nota: 'Horneado el mismo día.',
     items: [
       { nombre: 'Arepa de yuca y queso', desc: '', precio: 7500 },
-      { nombre: 'Pan de Chocolate',      desc: '', precio: 11000 },
-      { nombre: 'Croissant de Queso',    desc: '', precio: 11000 },
-      { nombre: 'Croissant de Almendra', desc: '', precio: 11000 },
+      { nombre: 'Pan de chocolate',      desc: '', precio: 11000 },
+      { nombre: 'Croissant de queso',    desc: '', precio: 11000 },
+      { nombre: 'Croissant de almendra', desc: '', precio: 11000 },
       { nombre: 'Hysteria Cookies',      desc: '', precio: 11000 },
-      { nombre: 'Arepa de Choclo',       desc: '', precio: 14000 },
+      { nombre: 'Arepa de choclo',       desc: '', precio: 14000 },
     ],
   },
   {
@@ -447,9 +447,9 @@ const TEXTOS = {
 
   esencia: 'Queremos transmitir toda esa pasión y amor brindando los mejores cafés colombianos de diferentes orígenes, variedades y procesos, siempre resaltando y respetando el trabajo que hay detrás de un café especial.',
 
-  mision: 'Ser una empresa influyente en el desarrollo del mercado del café de especialidad, generando cultura, conciencia e impacto al buen consumo a través de un estilo moderno y diferente, contribuyendo a la identidad y sentido de pertenencia de un producto tan nuestro como el café colombiano.',
+  mision: 'Ser una empresa influyente en el desarrollo del mercado del café de especialidad, generando cultura, conciencia e impacto en el buen consumo a través de un estilo moderno y diferente, contribuyendo a la identidad y sentido de pertenencia de un producto tan nuestro como el café colombiano.',
 
-  vision: 'Lograr un posicionamiento en el mercado de café especializado, llegando a muchos sectores sociales y siendo uno de los principales referentes de calidad y servicio, ofreciendo distintos tipos de experiencias y perfiles, trabajando siempre bajo un trato directo y precio justo con el caficultor.',
+  vision: 'Lograr un posicionamiento en el mercado del café de especialidad, llegando a muchos sectores sociales y siendo uno de los principales referentes de calidad y servicio, ofreciendo distintos tipos de experiencias y perfiles, trabajando siempre bajo un trato directo y precio justo con el caficultor.',
 };
 
 

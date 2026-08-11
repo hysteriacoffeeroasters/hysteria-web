@@ -21,13 +21,16 @@
    lo que manda el navegador: si no fuera así, cualquiera podría editar el
    carrito desde su navegador y pagar $1.
 
-   👉 Si cambias un precio en assets/js/datos.js, cámbialo también aquí.       */
+   👉 Si cambias un precio en assets/js/datos.js, cámbialo también aquí.
+   👉 Si agregas un LOTE nuevo, agrégalo también aquí con su mismo "id".
+      Si no está en esta lista, no se puede comprar.                          */
 const CATALOGO = {
-  pasion:    { nombre: 'Café Pasión · Bolsa 340 g',  precio: 39500 },
-  ilusion:   { nombre: 'Café Ilusión · Bolsa 340 g', precio: 59500 },
-  deseo:     { nombre: 'Café Deseo · Bolsa 340 g',   precio: 75000 },
-  euforia:   { nombre: 'Café Euforia · Bolsa 250 g', precio: 75000 },
-  pasaporte: { nombre: 'Pasaporte Compass',          precio: 25000 },
+  'pasion-colombia':        { nombre: 'Café Pasión · Colombia · Bolsa 340 g',        precio: 39500 },
+  'ilusion-gesha':          { nombre: 'Café Ilusión · Gesha · Bolsa 340 g',          precio: 59500 },
+  'deseo-borbon-rojo':      { nombre: 'Café Deseo · Borbón Rojo · Bolsa 340 g',      precio: 75000 },
+  'deseo-ombligon':         { nombre: 'Café Deseo · Ombligón · Bolsa 340 g',         precio: 75000 },
+  'euforia-borbon-naranja': { nombre: 'Café Euforia · Borbón Naranja · Bolsa 250 g', precio: 75000 },
+  'pasaporte':              { nombre: 'Pasaporte Compass',                           precio: 25000 },
 };
 
 const ENVIO = 15000;

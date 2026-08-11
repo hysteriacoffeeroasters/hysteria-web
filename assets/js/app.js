@@ -71,13 +71,25 @@
     avisoT = setTimeout(() => t.classList.remove('show'), 2400);
   }
 
+  /* ── Lotes ─────────────────────────────────────────────────────────────────
+     Una colección puede tener uno o varios lotes. Cada lote es una tarjeta.
+     Aquí aplanamos {colección → lotes} en una sola lista.                     */
+  function todosLosLotes() {
+    const out = [];
+    COLECCIONES.forEach(c => (c.lotes || []).forEach(l => out.push({ col: c, lote: l })));
+    return out;
+  }
+
+  function buscarLote(id) {
+    return todosLosLotes().find(x => x.lote.id === id) || null;
+  }
+
   /* ── Colecciones ───────────────────────────────────────────────────────── */
   function pintarColecciones() {
     const cont = $('#coffee-grid');
     if (!cont) return;
 
-    cont.innerHTML = COLECCIONES.map(c => {
-      const L = c.lote || {};
+    cont.innerHTML = todosLosLotes().map(({ col: c, lote: L }) => {
       const specs = [
         ['Origen', L.origen], ['Variedad', L.variedad], ['Proceso', L.proceso]
       ].filter(x => puesto(x[1]));
@@ -88,20 +100,22 @@
         L.tueste ? 'Tueste ' + String(L.tueste).toLowerCase() : ''
       ].filter(Boolean).join(' · ');
 
-      const badges = (c.agotado ? ['<span class="badge agotado">Agotado</span>'] : [])
-        .concat((c.etiquetas || []).map(t => '<span class="badge">' + esc(t) + '</span>'))
+      const badges = (L.agotado ? ['<span class="badge agotado">Agotado</span>'] : [])
+        .concat((L.insignias || []).map(t => '<span class="badge">' + esc(t) + '</span>'))
         .join('');
 
       return `
       <article class="coffee" data-coll="${esc(c.id)}" style="--c:${esc(c.color)}">
         <div class="coffee-media">
-          <img src="${esc(c.etiqueta)}" alt="Etiqueta de la colección ${esc(c.nombre)}"
-               width="900" height="600" loading="lazy" decoding="async">
+          <img src="${esc(L.imagen)}"
+               alt="Ficha de cata de ${esc(c.nombre)}${puesto(L.variedad) ? ', variedad ' + esc(L.variedad) : ''}"
+               width="1000" height="896" loading="lazy" decoding="async">
           <span class="coffee-dot" aria-hidden="true"></span>
           <div class="coffee-badges">${badges}</div>
         </div>
         <div class="coffee-info">
           <h3 class="coffee-name">${esc(c.nombre)}</h3>
+          ${puesto(L.variedad) ? `<p class="coffee-lote">${esc(L.variedad)}</p>` : ''}
           <p class="coffee-desc">${esc(c.descripcion)}</p>
 
           ${specs.length ? `<div class="coffee-specs">${specs.map(s => `
@@ -117,8 +131,8 @@
               <div class="coffee-price">${money(c.precios.bolsa)}</div>
               ${c.precios.taza ? `<div class="coffee-cup">En barra, taza filtrada ${money(c.precios.taza)}</div>` : ''}
             </div>
-            <button class="btn btn-ghost btn-sm js-add" data-id="${esc(c.id)}" ${c.agotado ? 'disabled' : ''}>
-              ${c.agotado ? 'Agotado' : 'Agregar'}
+            <button class="btn btn-ghost btn-sm js-add" data-id="${esc(L.id)}" ${L.agotado ? 'disabled' : ''}>
+              ${L.agotado ? 'Agotado' : 'Agregar'}
             </button>
           </div>
         </div>
@@ -255,23 +269,22 @@
     const cont = $('#shop-grid');
     if (!cont) return;
 
-    cont.innerHTML = COLECCIONES.map(c => {
-      const L = c.lote || {};
-      const meta = [L.origen, L.variedad, L.proceso].filter(puesto).join(' · ');
+    cont.innerHTML = todosLosLotes().map(({ col: c, lote: L }) => {
+      const meta = [L.origen, L.proceso].filter(puesto).join(' · ');
       return `
       <article class="shop-card" style="--c:${esc(c.color)}">
         <div class="shop-media">
-          <img src="${esc(c.etiqueta)}" alt="Bolsa de café ${esc(c.nombre)}"
-               width="900" height="600" loading="lazy" decoding="async">
+          <img src="${esc(L.imagen)}" alt="Bolsa de café ${esc(c.nombre)} ${esc(L.variedad)}"
+               width="1000" height="896" loading="lazy" decoding="async">
         </div>
         <div class="shop-info">
           <div class="shop-coll">${esc(c.nombre)}</div>
-          <div class="shop-name">Bolsa ${c.gramos} g · grano entero</div>
-          ${meta ? `<div class="shop-meta">${esc(meta)}</div>` : ''}
+          <div class="shop-name">${puesto(L.variedad) ? esc(L.variedad) : 'Bolsa ' + c.gramos + ' g'}</div>
+          <div class="shop-meta">Bolsa ${c.gramos} g · grano entero${meta ? '<br>' + esc(meta) : ''}</div>
           <div class="shop-foot">
             <span class="shop-price">${money(c.precios.bolsa)}</span>
-            <button class="btn btn-ghost btn-sm js-add" data-id="${esc(c.id)}" ${c.agotado ? 'disabled' : ''}>
-              ${c.agotado ? 'Agotado' : 'Agregar'}
+            <button class="btn btn-ghost btn-sm js-add" data-id="${esc(L.id)}" ${L.agotado ? 'disabled' : ''}>
+              ${L.agotado ? 'Agotado' : 'Agregar'}
             </button>
           </div>
         </div>
@@ -306,10 +319,16 @@
                 precio: PASAPORTE.precio, img: 'assets/logo/icono-white.png' });
       return;
     }
-    const c = COLECCIONES.find(x => x.id === id);
-    if (!c || c.agotado) return;
-    agregar({ id: c.id, nombre: 'Café ' + c.nombre, variante: 'Bolsa ' + c.gramos + ' g · grano entero',
-              precio: c.precios.bolsa, img: c.etiqueta });
+    const hit = buscarLote(id);
+    if (!hit || hit.lote.agotado) return;
+    const { col: c, lote: L } = hit;
+    agregar({
+      id: L.id,
+      nombre: 'Café ' + c.nombre + (puesto(L.variedad) ? ' · ' + L.variedad : ''),
+      variante: 'Bolsa ' + c.gramos + ' g · grano entero',
+      precio: c.precios.bolsa,
+      img: L.imagen
+    });
   });
 
   /* ── Panel del carrito ─────────────────────────────────────────────────── */
@@ -633,20 +652,34 @@
   /* ── Datos estructurados para Google ───────────────────────────────────── */
   function inyectarSchema() {
     const base = location.origin;
-    const productos = COLECCIONES.map(c => ({
-      '@type': 'Product',
-      name: 'Café ' + c.nombre + ' · Bolsa ' + c.gramos + ' g · Hysteria Coffee Roasters',
-      description: c.descripcion,
-      image: base + '/' + c.etiqueta,
-      brand: { '@type': 'Brand', name: 'Hysteria Coffee Roasters' },
-      weight: { '@type': 'QuantitativeValue', value: c.gramos, unitCode: 'GRM' },
-      offers: {
-        '@type': 'Offer', price: c.precios.bolsa, priceCurrency: 'COP',
-        availability: c.agotado
-          ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
-        url: base + '/#tienda'
+    const productos = todosLosLotes().map(({ col: c, lote: L }) => {
+      const p = {
+        '@type': 'Product',
+        name: 'Café ' + c.nombre + (puesto(L.variedad) ? ' · ' + L.variedad : '') +
+              ' · Bolsa ' + c.gramos + ' g',
+        description: [c.descripcion, puesto(L.notas) ? 'Notas: ' + L.notas + '.' : '']
+          .filter(Boolean).join(' '),
+        image: base + '/' + L.imagen,
+        brand: { '@type': 'Brand', name: 'Hysteria Coffee Roasters' },
+        weight: { '@type': 'QuantitativeValue', value: c.gramos, unitCode: 'GRM' },
+        offers: {
+          '@type': 'Offer', price: c.precios.bolsa, priceCurrency: 'COP',
+          availability: L.agotado
+            ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+          url: base + '/#tienda'
+        }
+      };
+      const props = [
+        ['Origen', L.origen], ['Variedad', L.variedad],
+        ['Proceso', L.proceso], ['Altura', L.altura], ['Tueste', L.tueste]
+      ].filter(x => puesto(x[1]));
+      if (props.length) {
+        p.additionalProperty = props.map(x => ({
+          '@type': 'PropertyValue', name: x[0], value: x[1]
+        }));
       }
-    }));
+      return p;
+    });
 
     const negocio = {
       '@type': 'CafeOrCoffeeShop',

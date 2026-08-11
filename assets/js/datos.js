@@ -73,16 +73,26 @@ const PAGOS = {
 
 
 /* ---------------------------------------------------------------------------
-   3) LAS COLECCIONES
+   3) LAS COLECCIONES Y SUS LOTES
    ---------------------------------------------------------------------------
    Pasión, Ilusión, Deseo y Euforia son NIVELES fijos de tu marca.
-   El café que va dentro (el lote) rota.
+   Cada colección define el PRECIO y el gramaje.
 
-   👉 CUANDO CAMBIES DE LOTE: edita solo el bloque "lote".
-      El resto del sitio se actualiza solo.
+   Dentro de cada colección puede haber UNO O VARIOS LOTES.
+   Cada lote es un café distinto y sale como su propia tarjeta en la web.
+   Hoy Deseo tiene dos: Borbón Rojo (Huila) y Ombligón (Tolima).
 
-   Los datos de cada lote salen de "infografía hysteria final.pdf".
-   Si dejas un campo vacío o en 'PENDIENTE', simplemente no se muestra en la web.
+   👉 PARA AGREGAR UN LOTE: copia un bloque de "lotes" y cambia los datos.
+      Necesita un "id" único y una imagen en assets/products/.
+
+   👉 PARA QUITAR UN LOTE: bórralo del arreglo, o ponle  agotado: true
+      si quieres que siga visible pero sin poder comprarse.
+
+   ⚠️ Si agregas un lote nuevo, agrégalo también en api/crear-preferencia.js
+      (es la lista con la que se cobra de verdad).
+
+   Los datos salen de "infografía hysteria final.pdf".
+   Si dejas un campo vacío, simplemente no se muestra en la web.
    --------------------------------------------------------------------------- */
 const COLECCIONES = [
   {
@@ -90,28 +100,30 @@ const COLECCIONES = [
     nombre: 'Pasión',
     color: '#E42320',
     flor: 'assets/collections/pasion.png',
-    etiqueta: 'assets/products/pasion.jpg',
     descripcion: 'La puerta de entrada. Un café limpio y equilibrado para tomar todos los días sin perder carácter.',
 
     gramos: 340,
-    lote: {
-      origen:    'Huila',
-      variedad:  'Colombia',
-      proceso:   'Lavado',
-      notas:     'Panela · caramelo · frutos amarillos',
-      altura:    '1.800 msnm',
-      productor: '',            // ← ej: 'Finca La Esperanza · familia Ramírez'
-      tueste:    'Medio',
-    },
-
     precios: {
       bolsa:      39500,   // bolsa de 340 g
       taza:       11500,   // taza en método filtrado
       parDeTazas: 17000,
     },
 
-    etiquetas: ['Más vendido'],   // insignias. Deja [] para ninguna.
-    agotado: false,
+    lotes: [
+      {
+        id: 'pasion-colombia',
+        imagen:    'assets/products/pasion.jpg',
+        origen:    'Huila',
+        variedad:  'Colombia',
+        proceso:   'Lavado',
+        notas:     'Panela · caramelo · frutos amarillos',
+        altura:    '1.800 msnm',
+        productor: '',            // ← ej: 'Finca La Esperanza · familia Ramírez'
+        tueste:    'Medio',
+        insignias: ['Más vendido'],
+        agotado:   false,
+      },
+    ],
   },
 
   {
@@ -119,28 +131,30 @@ const COLECCIONES = [
     nombre: 'Ilusión',
     color: '#A11AD3',
     flor: 'assets/collections/ilusion.png',
-    etiqueta: 'assets/products/ilusion.jpg',
     descripcion: 'Un paso más arriba. Variedades de mayor complejidad y una taza con más matices aromáticos.',
 
     gramos: 340,
-    lote: {
-      origen:    'Huila',
-      variedad:  'Gesha',
-      proceso:   'Lavado',
-      notas:     'Limoncillo · flores blancas · miel',
-      altura:    '1.750 msnm',
-      productor: '',
-      tueste:    'Medio',
-    },
-
     precios: {
       bolsa:      59500,
       taza:       15800,
       parDeTazas: 20800,
     },
 
-    etiquetas: [],
-    agotado: false,
+    lotes: [
+      {
+        id: 'ilusion-gesha',
+        imagen:    'assets/products/ilusion.jpg',
+        origen:    'Huila',
+        variedad:  'Gesha',
+        proceso:   'Lavado',
+        notas:     'Limoncillo · flores blancas · miel',
+        altura:    '1.750 msnm',
+        productor: '',
+        tueste:    'Medio',
+        insignias: [],
+        agotado:   false,
+      },
+    ],
   },
 
   {
@@ -148,42 +162,44 @@ const COLECCIONES = [
     nombre: 'Deseo',
     color: '#0068FF',
     flor: 'assets/collections/deseo.png',
-    etiqueta: 'assets/products/deseo.jpg',
     descripcion: 'Lo más alto de la casa. Lotes experimentales y de fermentación controlada, en cantidad limitada.',
 
     gramos: 340,
-    lote: {
-      origen:    'Huila',
-      variedad:  'Borbón Rojo',
-      proceso:   'Natural · Experimental',
-      notas:     'Chocolate · frambuesa · cáscara de naranja',
-      altura:    '1.750 msnm',
-      productor: '',
-      tueste:    'Medio',
-    },
-
-    /* En tu infografía hay un SEGUNDO lote de Deseo. Para cambiarlo,
-       borra el bloque "lote" de arriba y descomenta este:
-
-    lote: {
-      origen:    'Tolima',
-      variedad:  'Ombligón',
-      proceso:   'Natural · 72 h de fermentación',
-      notas:     'Cacao · ciruela · avinado',
-      altura:    '1.700 msnm',
-      productor: '',
-      tueste:    'Medio',
-    },
-    */
-
     precios: {
       bolsa:      75000,
       taza:       17000,
       parDeTazas: 22500,
     },
 
-    etiquetas: ['Edición limitada'],
-    agotado: false,
+    // Deseo tiene DOS lotes activos. Los dos salen en la web.
+    lotes: [
+      {
+        id: 'deseo-borbon-rojo',
+        imagen:    'assets/products/deseo.jpg',
+        origen:    'Huila',
+        variedad:  'Borbón Rojo',
+        proceso:   'Natural · Experimental',
+        notas:     'Chocolate · frambuesa · cáscara de naranja',
+        altura:    '1.750 msnm',
+        productor: '',
+        tueste:    'Medio',
+        insignias: ['Edición limitada'],
+        agotado:   false,
+      },
+      {
+        id: 'deseo-ombligon',
+        imagen:    'assets/products/deseo-ombligon.jpg',
+        origen:    'Tolima',
+        variedad:  'Ombligón',
+        proceso:   'Natural · 72 h de fermentación',
+        notas:     'Cacao · ciruela · avinado',
+        altura:    '1.700 msnm',
+        productor: '',
+        tueste:    'Medio',
+        insignias: ['Edición limitada'],
+        agotado:   false,
+      },
+    ],
   },
 
   {
@@ -191,30 +207,32 @@ const COLECCIONES = [
     nombre: 'Euforia',
     color: '#F49A1A',
     flor: 'assets/collections/euforia.png',
-    etiqueta: 'assets/products/euforia.jpg',
 
     // ⚠️ REVISAR — Escribe la descripción real de esta colección.
     descripcion: 'La colección más reciente de la casa, en presentación de 250 g.',
 
     gramos: 250,
-    lote: {
-      origen:    'Huila',
-      variedad:  'Borbón Naranja',
-      proceso:   'Experimental Citric',
-      notas:     'Flor de azahar · pomelo · tropical',
-      altura:    '1.800 msnm',
-      productor: '',
-      tueste:    'Medio',
-    },
-
     precios: {
       bolsa:      75000,
       taza:       17000,
       parDeTazas: 22500,
     },
 
-    etiquetas: ['Nuevo'],
-    agotado: false,
+    lotes: [
+      {
+        id: 'euforia-borbon-naranja',
+        imagen:    'assets/products/euforia.jpg',
+        origen:    'Huila',
+        variedad:  'Borbón Naranja',
+        proceso:   'Experimental Citric',
+        notas:     'Flor de azahar · pomelo · tropical',
+        altura:    '1.800 msnm',
+        productor: '',
+        tueste:    'Medio',
+        insignias: ['Nuevo'],
+        agotado:   false,
+      },
+    ],
   },
 ];
 

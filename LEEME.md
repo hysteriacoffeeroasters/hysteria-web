@@ -21,30 +21,44 @@ Abre `assets/js/datos.js` con el Bloc de notas (o cualquier editor) y busca las 
 
 ### Las cuatro colecciones
 
-| Colección | Flor | Bolsa | Precio | Taza | Par |
-|---|---|---|---|---|---|
-| 🔴 Pasión | Lirio | 340 g | $39.500 | $11.500 | $17.000 |
-| 🟣 Ilusión | Orquídea | 340 g | $59.500 | $15.800 | $20.800 |
-| 🔵 Deseo | Rosa | 340 g | $75.000 | $17.000 | $22.500 |
-| 🟠 Euforia | Loto | 250 g | $75.000 | $17.000 | $22.500 |
+| Colección | Flor | Bolsa | Precio | Taza | Par | Lotes activos |
+|---|---|---|---|---|---|---|
+| 🔴 Pasión | Lirio | 340 g | $39.500 | $11.500 | $17.000 | Colombia · Huila |
+| 🟣 Ilusión | Orquídea | 340 g | $59.500 | $15.800 | $20.800 | Gesha · Huila |
+| 🔵 Deseo | Rosa | 340 g | $75.000 | $17.000 | $22.500 | Borbón Rojo · Huila<br>Ombligón · Tolima |
+| 🟠 Euforia | Loto | 250 g | $75.000 | $17.000 | $22.500 | Borbón Naranja · Huila |
 
-Tomado de `menú hysteria final (1).pdf`. Ojo: **Euforia es la única de 250 g**; las otras tres son de 340 g.
+Precios de `menú hysteria final (1).pdf`, fichas de `infografía hysteria final.pdf`.
+Ojo: **Euforia es la única de 250 g**; las otras tres son de 340 g.
 
-### Cuando cambies de lote de café
+### Colecciones y lotes
 
-Solo edita el bloque `lote` de esa colección:
+La **colección** define el precio y el gramaje. Dentro puede haber **uno o varios lotes**,
+y cada lote sale como su propia tarjeta. Hoy Deseo tiene dos.
+
+Para agregar un lote, copia un bloque dentro de `lotes` de esa colección:
 
 ```js
-lote: {
-  origen:    'Huila',
-  variedad:  'Caturra',
-  proceso:   'Lavado',
-  notas:     'Panela · naranja · chocolate con leche',
-  altura:    '1.750 msnm',
-  productor: 'Finca La Esperanza',
+{
+  id: 'deseo-ombligon',          // único, sin espacios ni tildes
+  imagen:    'assets/products/deseo-ombligon.jpg',
+  origen:    'Tolima',
+  variedad:  'Ombligón',
+  proceso:   'Natural · 72 h de fermentación',
+  notas:     'Cacao · ciruela · avinado',
+  altura:    '1.700 msnm',
+  productor: '',
   tueste:    'Medio',
+  insignias: ['Edición limitada'],
+  agotado:   false,
 },
 ```
+
+⚠️ **Todo lote nuevo debe agregarse también en `api/crear-preferencia.js`**, con el
+mismo `id`. Si no está ahí, no se puede comprar (es la lista con la que se cobra).
+
+Para retirar un lote: bórralo, o ponle `agotado: true` si quieres que siga visible
+pero sin botón de compra.
 
 El resto del sitio (tienda, tarjetas, Google) se actualiza solo.
 

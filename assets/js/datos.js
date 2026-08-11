@@ -456,16 +456,18 @@ const TEXTOS = {
 /* ---------------------------------------------------------------------------
    9) BOLETÍN
    ---------------------------------------------------------------------------
-   Para recibir los correos de verdad necesitas un servicio de formularios.
-   El más fácil y gratuito es Formspree:
-     1. Entra a https://formspree.io y crea una cuenta
-     2. Crea un formulario nuevo y copia el enlace que te dan
-     3. Pégalo abajo en "endpoint"
-   Mientras esté vacío, el formulario abre tu correo con el mensaje listo.
+   Los correos se registran en BREVO, que además te sirve para diseñar y
+   enviar el boletín. La suscripción pasa por  api/boletin.js , que guarda
+   tu llave en el servidor para que nadie pueda verla.
+
+   ⚠️ La llave NO va en este archivo. Va en Vercel como BREVO_API_KEY.
+      Las instrucciones completas están en api/boletin.js y en el LEEME.
+
+   Mientras no configures la llave, el formulario sigue usando tu correo
+   como respaldo, así que la web no se rompe.
    --------------------------------------------------------------------------- */
 const BOLETIN = {
   activo: true,
-  endpoint: '',
   titulo: 'Tostados frescos, cada dos semanas.',
   subtitulo: 'Recibe primero los lotes nuevos y las ediciones limitadas.',
 };

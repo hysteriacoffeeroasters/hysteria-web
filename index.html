@@ -214,6 +214,9 @@
         <label class="sr-only" for="nl-email">Tu correo electrónico</label>
         <input class="nl-input" id="nl-email" name="email" type="email"
                placeholder="tu@correo.com" autocomplete="email" required>
+        <!-- Trampa antibots: invisible para personas, irresistible para robots -->
+        <input class="nl-trampa" name="website" type="text" tabindex="-1"
+               autocomplete="off" aria-hidden="true">
         <button class="nl-btn" type="submit">Suscribirme</button>
         <p class="nl-msg" id="nl-msg" role="status" aria-live="polite"></p>
       </form>

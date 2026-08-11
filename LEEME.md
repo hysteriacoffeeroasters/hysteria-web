@@ -163,13 +163,38 @@ Ese respaldo se controla en `datos.js` → `PAGOS.respaldoWhatsapp`.
 
 ---
 
-## 4. Recibir los correos del boletín
+## 4. Activar el boletín con Brevo
 
-Hoy el formulario abre el correo del cliente. Para recibirlos automáticamente:
+Brevo es gratis, admite contactos ilimitados y permite enviar hasta 300 correos
+al día. Sirve para las dos cosas: **recoger** las suscripciones y **enviar** el boletín.
 
-1. Crea una cuenta gratis en [formspree.io](https://formspree.io)
-2. **New Form** → copia la dirección que te dan (tipo `https://formspree.io/f/abc123`)
-3. Pégala en `datos.js` → `BOLETIN.endpoint`
+1. Crea tu cuenta en [brevo.com](https://www.brevo.com)
+2. Arriba a la derecha, tu nombre → **SMTP y API** → pestaña **Claves de API**
+   → **Generar una nueva clave** → cópiala
+3. *(Recomendado)* **Contactos → Listas** → crea la lista `Boletín web`
+   y anota su **ID** (el número que aparece en la dirección del navegador)
+4. En Vercel: tu proyecto → **Settings → Environment Variables**
+
+   | Nombre | Valor |
+   |---|---|
+   | `BREVO_API_KEY` | la clave del paso 2 |
+   | `BREVO_LIST_ID` | el número del paso 3 *(opcional)* |
+
+   Marca **Production**, **Preview** y **Development**.
+5. **Deployments → ⋯ → Redeploy**
+
+Listo. Cada persona que se suscriba aparece sola en tus contactos de Brevo.
+
+> **Mientras no pongas la clave**, el formulario sigue funcionando con el
+> respaldo por correo. No se rompe nada, pero pierdes suscriptores: por eso
+> conviene hacerlo pronto.
+
+> ⚠️ **Nunca** pegues la clave en `datos.js`. Ese archivo lo puede leer cualquiera.
+> En Vercel queda cifrada.
+
+El formulario incluye una **trampa antibots**: un campo invisible que las personas
+nunca ven y que los robots sí rellenan. Si llega lleno, la suscripción se descarta
+en silencio.
 
 ---
 

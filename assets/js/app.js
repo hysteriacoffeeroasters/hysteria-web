@@ -581,24 +581,49 @@
       const email = input.value.trim();
       if (!email) return;
 
-      if (!BOLETIN.endpoint) {
+      const btn = $('.nl-btn', form);
+      const textoBtn = btn.textContent;
+      btn.disabled = true;
+      msg.style.color = '';
+      msg.textContent = 'Enviando…';
+
+      const respaldoCorreo = () => {
         window.location.href = `mailto:${NEGOCIO.correo}` +
           `?subject=${encodeURIComponent('Suscripción al boletín')}` +
           `&body=${encodeURIComponent('Quiero suscribirme con el correo: ' + email)}`;
         msg.textContent = 'Abrimos tu correo para confirmar la suscripción.';
-        return;
-      }
-      msg.textContent = 'Enviando…';
+      };
+
       try {
-        const r = await fetch(BOLETIN.endpoint, {
-          method: 'POST', headers: { 'Accept': 'application/json' },
-          body: new FormData(form)
+        const r = await fetch('/api/boletin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            website: (form.querySelector('[name="website"]') || {}).value || ''
+          })
         });
-        if (!r.ok) throw new Error();
-        form.reset();
-        msg.textContent = '¡Listo! Te escribiremos pronto.';
+
+        if (r.status === 503) { respaldoCorreo(); return; }   // aún sin configurar
+
+        const data = await r.json().catch(() => ({}));
+
+        if (r.ok) {
+          form.reset();
+          msg.textContent = data.yaEstaba
+            ? 'Ya estabas en la lista. ¡Gracias!'
+            : '¡Listo! Te escribiremos pronto.';
+        } else if (r.status === 400) {
+          msg.textContent = 'Revisa el correo, parece incompleto.';
+        } else {
+          throw new Error('http ' + r.status);
+        }
       } catch (err) {
-        msg.textContent = 'No pudimos suscribirte. Escríbenos a ' + NEGOCIO.correo;
+        console.warn('Boletín:', err);
+        respaldoCorreo();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = textoBtn;
       }
     });
   }

@@ -416,7 +416,7 @@
     const base = 'Bolsa ' + l.gramos + ' g';
     return l.molienda === 'grano'
       ? base + ' · grano entero'
-      : base + ' · molido ' + nombreMolienda(l.molienda).toLowerCase();
+      : base + ' · molienda ' + nombreMolienda(l.molienda).toLowerCase();
   }
 
   // La clave de una línea combina café y molienda: el mismo café en dos
@@ -438,7 +438,7 @@
     guardarCarrito(); pintarCarrito();
     if (anterior !== nuevaMolienda) {
       avisar(nuevaMolienda === 'grano' ? 'En grano entero'
-                                       : 'Molido ' + nombreMolienda(nuevaMolienda).toLowerCase());
+                                       : 'Molienda ' + nombreMolienda(nuevaMolienda).toLowerCase());
     }
   }
 

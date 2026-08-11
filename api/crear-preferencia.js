@@ -53,11 +53,11 @@ const DOC_MERCADOPAGO = { CC: 'CC', CE: 'CE', NIT: 'NIT' };
    'grano' significa que la bolsa va sin moler. */
 const MOLIENDAS = {
   'grano':        'grano entero',
-  'fina':         'molido fino',
-  'medio-fina':   'molido medio fino',
-  'media':        'molido medio',
-  'media-gruesa': 'molido medio grueso',
-  'gruesa':       'molido grueso',
+  'fina':         'molienda fina',
+  'medio-fina':   'molienda medio fina',
+  'media':        'molienda media',
+  'media-gruesa': 'molienda media gruesa',
+  'gruesa':       'molienda gruesa',
 };
 
 export default async function handler(req, res) {

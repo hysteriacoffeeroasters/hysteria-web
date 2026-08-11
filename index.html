@@ -100,8 +100,9 @@
 
   <!-- ══ PORTADA ════════════════════════════════════════════════════════ -->
   <section class="hero" id="top">
-    <img class="hero-watermark" src="assets/logo/icono-white.png" alt=""
-         width="512" height="478" fetchpriority="high">
+    <img class="hero-foto" src="assets/fotos/hero.jpg" alt=""
+         width="1800" height="1125" fetchpriority="high" decoding="async">
+    <div class="hero-velo" aria-hidden="true"></div>
     <div class="hero-noise" aria-hidden="true"></div>
 
     <div class="hero-inner">
@@ -127,6 +128,10 @@
         <p id="txt-esencia"></p>
       </div>
       <div class="esencia-grid reveal">
+        <figure class="esencia-foto">
+          <img src="assets/fotos/esencia.jpg" width="900" height="1125" loading="lazy"
+               decoding="async" alt="Filtro de papel con café recién vertido en un dripper Orea">
+        </figure>
         <div class="esencia-card">
           <h3>Misión</h3>
           <p id="txt-mision"></p>
@@ -238,7 +243,13 @@
         <p class="sec-tag">Visítanos</p>
         <h2 class="sec-title">Encuéntranos en Bogotá</h2>
       </div>
-      <div class="visit-grid reveal" id="visit-grid"></div>
+      <div class="visit-wrap reveal">
+        <figure class="visit-foto">
+          <img src="assets/fotos/local.jpg" width="1200" height="960" loading="lazy"
+               decoding="async" alt="Barista de Hysteria preparando un café filtrado en la tienda">
+        </figure>
+        <div class="visit-grid" id="visit-grid"></div>
+      </div>
     </div>
   </section>
 

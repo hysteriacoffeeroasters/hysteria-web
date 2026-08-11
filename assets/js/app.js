@@ -117,6 +117,7 @@
           <h3 class="coffee-name">${esc(c.nombre)}</h3>
           ${puesto(L.variedad) ? `<p class="coffee-lote">${esc(L.variedad)}</p>` : ''}
           <p class="coffee-desc">${esc(c.descripcion)}</p>
+          ${puesto(c.caracteristica) ? `<p class="coffee-caracteristica">${esc(c.caracteristica)}</p>` : ''}
 
           ${specs.length ? `<div class="coffee-specs">${specs.map(s => `
             <div><div class="spec-k">${esc(s[0])}</div><div class="spec-v">${esc(s[1])}</div></div>

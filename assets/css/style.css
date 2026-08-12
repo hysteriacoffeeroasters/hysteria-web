@@ -265,12 +265,12 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
   padding: 4rem var(--gut) 5rem;
   position: relative; overflow: hidden;
 }
-/* Foto de portada: ocupa todo el fondo, anclada a la derecha para que el
-   vertido quede libre y el texto viva sobre la zona oscura de la izquierda. */
+/* Foto de portada: la fachada ocupa todo el fondo. El encuadre favorece la
+   banda del letrero (30% desde arriba); el texto vive sobre el velo oscuro. */
 .hero-foto {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
-  object-fit: cover; object-position: 68% center;
+  object-fit: cover; object-position: center 16%;
   pointer-events: none; user-select: none;
 }
 /* Degradado que garantiza la legibilidad del texto sobre la foto */
@@ -536,6 +536,21 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .menu-item-price { font-size: 13.5px; color: var(--white); margin-top: 0.9rem; font-weight: 400; letter-spacing: 0.03em; }
 
 /* ── CÓMO PREPARAR TU CAFÉ ───────────────────────────────────────────────── */
+/* Cabecera de la guía: la foto del vertido (antigua portada) vive aquí,
+   con un velo que se aclara hacia la derecha para dejar respirar el café.
+   La imagen solo se pide cuando la sección se acerca al viewport (app.js
+   agrega .lista); así no compite con la foto de portada en la carga. */
+.prep-cabecera {
+  border: 1px solid var(--border-soft);
+  padding: clamp(2rem, 4.5vw, 3.4rem);
+  background-size: cover;
+  background-position: center 42%;
+}
+.prep-cabecera.lista {
+  background-image:
+    linear-gradient(100deg, rgba(0,0,0,0.93) 0%, rgba(0,0,0,0.74) 52%, rgba(0,0,0,0.48) 100%),
+    url('../fotos/hero.jpg');
+}
 .prep-tabs {
   display: flex; border-bottom: 1px solid var(--border-soft);
   overflow-x: auto; scrollbar-width: none; margin-top: 2.4rem;
@@ -559,6 +574,18 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
   border: 1px solid var(--border-soft); border-top: none;
 }
 .prep-ficha, .prep-pasos { background: var(--card); padding: clamp(1.6rem, 3.2vw, 2.6rem); }
+/* Ficha con foto de fondo (campo `foto` del método en datos.js). El velo es
+   más denso arriba, donde vive el texto, y deja respirar la foto abajo. */
+.prep-ficha.con-foto {
+  background-image:
+    linear-gradient(to bottom, rgba(6,6,6,0.94) 0%, rgba(6,6,6,0.80) 55%, rgba(6,6,6,0.62) 100%),
+    var(--prep-foto);
+  background-size: cover;
+  background-position: center;
+}
+/* Sobre foto, las etiquetas suben de --ink-4 a --ink-2: los brillos de la
+   imagen bajo el velo dejaban el gris tenue por debajo de 4.5:1 (AA). */
+.prep-ficha.con-foto .prep-datos dt { color: var(--ink-2); }
 .prep-equipo {
   font-family: var(--serif); font-style: italic; font-weight: 400;
   font-size: clamp(1.5rem, 2.6vw, 2rem); line-height: 1.15; color: var(--white);
@@ -917,7 +944,6 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
   .cart-btn { padding: 9px 13px; }
   .hero-scroll { display: none; }
   /* En móvil el texto ocupa todo el ancho: el velo se vuelve vertical */
-  .hero-foto { object-position: 62% center; }
   .hero-velo {
     background:
       linear-gradient(to bottom, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.72) 45%,

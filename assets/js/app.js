@@ -362,7 +362,11 @@
       <div class="prep-panel" role="tabpanel" id="ppanel-${esc(m.id)}"
            aria-labelledby="ptab-${esc(m.id)}" tabindex="0" ${i === 0 ? '' : 'hidden'}>
         <div class="prep-cols">
-          <aside class="prep-ficha">
+          <aside class="prep-ficha${puesto(m.foto) ? ' con-foto' : ''}"${puesto(m.foto)
+            /* URL absoluta: dentro de una custom property, un url() relativo se
+               resolvería contra la hoja de estilos y no contra la página.
+               El %27 evita que un apóstrofo en el nombre cierre el url('). */
+            ? ` style="--prep-foto:url('${esc(new URL(m.foto, document.baseURI).href.replace(/'/g, '%27'))}')"` : ''}>
             <h3 class="prep-equipo">${esc(m.equipo || m.nombre)}</h3>
             ${puesto(m.rinde) ? `<p class="prep-rinde">${esc(m.rinde)}</p>` : ''}
             <dl class="prep-datos">
@@ -384,6 +388,18 @@
 
     if (puesto(P.nota)) {
       panels.insertAdjacentHTML('beforeend', `<p class="prep-nota">${esc(P.nota)}</p>`);
+    }
+
+    // La foto de la cabecera se pide solo cuando la sección se acerca,
+    // para que no compita con la foto de portada durante la carga inicial.
+    const cab = $('.prep-cabecera', sec);
+    if (cab) {
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver((es, ob) => {
+          es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('lista'); ob.disconnect(); } });
+        }, { rootMargin: '600px 0px' });
+        io.observe(cab);
+      } else { cab.classList.add('lista'); }
     }
 
     function activar(b, enfocar) {

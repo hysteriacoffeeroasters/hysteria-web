@@ -479,6 +479,10 @@ const MENU = [
 
    Para agregar un método, copia un bloque. Para quitarlo, bórralo.
    Para ocultar la sección completa: PREPARACION.mostrar = false
+
+   Foto opcional: agrega  foto: 'assets/fotos/tu-foto.jpg'  a un método y esa
+   imagen aparece de fondo en su ficha (la web la oscurece sola para que el
+   texto siga leyéndose). Si no hay foto, la ficha queda como siempre.
    --------------------------------------------------------------------------- */
 const PREPARACION = {
   mostrar: true,
@@ -537,6 +541,7 @@ const PREPARACION = {
       nombre: 'Origami',
       equipo: 'Origami Dripper',
       rinde: 'Para una taza',
+      foto: 'assets/fotos/prep-origami.jpg',
       ficha: [
         { k: 'Café peso', v: '15 g' },
         { k: 'Tiempo total', v: '2:30–3:00 minutos' },

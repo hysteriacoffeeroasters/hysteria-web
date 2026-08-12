@@ -56,7 +56,9 @@
             esCafe,
             gramos: Math.max(0, gramos),
             molienda: validas.includes(l.molienda) ? l.molienda : (esCafe ? 'grano' : ''),
-            precio: Math.max(0, Number(l.precio) || 0),
+            // El precio manda el catálogo actual: si cambió en datos.js, el
+            // carrito guardado se actualiza al volver (no se cobra el viejo).
+            precio: hit ? hit.col.precios.bolsa : Math.max(0, Number(l.precio) || 0),
             cant: Math.min(MAX_UNIDADES, Math.max(1, Math.floor(Number(l.cant) || 1))),
           };
         });
@@ -188,14 +190,15 @@
     const cont = $('#cfilters');
     if (!cont) return;
     cont.innerHTML =
-      '<button class="cfilt on" data-f="all">Todas</button>' +
-      COLECCIONES.map(c => `<button class="cfilt" data-f="${esc(c.id)}">${esc(c.nombre)}</button>`).join('');
+      '<button class="cfilt on" aria-pressed="true" data-f="all">Todas</button>' +
+      COLECCIONES.map(c => `<button class="cfilt" aria-pressed="false" data-f="${esc(c.id)}">${esc(c.nombre)}</button>`).join('');
 
     cont.addEventListener('click', e => {
       const b = e.target.closest('.cfilt');
       if (!b || b.classList.contains('on')) return;
-      $$('.cfilt', cont).forEach(x => { x.classList.remove('on'); });
+      $$('.cfilt', cont).forEach(x => { x.classList.remove('on'); x.setAttribute('aria-pressed', 'false'); });
       b.classList.add('on');
+      b.setAttribute('aria-pressed', 'true');
       filtrar(b.dataset.f);
     });
   }
@@ -581,6 +584,15 @@
 
     if (!cont || !foot) return;
 
+    // innerHTML destruye el control que tenía el foco del teclado: se anota
+    // cuál era para devolvérselo después del repintado.
+    const act = document.activeElement;
+    const focoEn = act && cont.contains(act)
+      ? ['data-mas', 'data-menos', 'data-quitar', 'data-forma', 'data-molienda']
+          .map(a => (act.hasAttribute(a) ? [a, act.getAttribute(a)] : null))
+          .find(Boolean) || ['vacio', '']
+      : null;
+
     if (!carrito.length) {
       cont.innerHTML = `
         <div class="cart-empty">
@@ -590,6 +602,7 @@
       foot.hidden = true;
       const f = $('#cart-envio');
       if (f) f.hidden = true;   // sin productos no tiene sentido pedir la dirección
+      if (focoEn) { const b = $('[data-cerrar-carrito]', cont); if (b) b.focus(); }
       return;
     }
     // si el paso de envío está abierto, se respeta; si no, se muestra el resumen
@@ -646,6 +659,13 @@
       <div class="cart-row"><span>Subtotal</span><span>${money(subtotal())}</span></div>
       <div class="cart-row"><span>Envío</span><span>${envio() === 0 ? 'Gratis' : money(envio())}</span></div>
       <div class="cart-row total"><span>Total</span><span>${money(total())}</span></div>`;
+
+    // Devuelve el foco al control equivalente (o al cierre si su línea ya no está)
+    if (focoEn) {
+      const otraVez = focoEn[0] !== 'vacio' &&
+        cont.querySelector(`[${focoEn[0]}="${CSS.escape(focoEn[1])}"]`);
+      (otraVez || $('#cart-close') || cont).focus();
+    }
   }
 
   let focoPrevio = null;
@@ -676,7 +696,10 @@
     if (e.key !== 'Tab') return;
     const cart = $('#cart');
     if (!cart.classList.contains('open')) return;
-    const foco = cart.querySelectorAll('a[href], button:not([disabled]), input, select, [tabindex]:not([tabindex="-1"])');
+    // Solo cuentan los controles visibles: el formulario de envío vive dentro
+    // del panel con [hidden] y sus campos no deben anclar la envoltura del foco.
+    const foco = Array.from(cart.querySelectorAll('a[href], button:not([disabled]), input, select, [tabindex]:not([tabindex="-1"])'))
+      .filter(el => el.offsetParent !== null);
     if (!foco.length) return;
     const primero = foco[0], ultimo = foco[foco.length - 1];
     if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
@@ -785,8 +808,9 @@
     return d;
   }
 
+  // Acepta dominios con varios niveles (unal.edu.co, empresa.com.co…)
   const correoOk = v =>
-    /^[^\s@,;:<>()[\]\\]+@[^\s@.,;:<>()[\]\\]+\.[A-Za-z]{2,}$/.test(v) && v.length <= 254;
+    /^[^\s@,;:<>()[\]\\]+@[^\s@.,;:<>()[\]\\]+(\.[^\s@.,;:<>()[\]\\]+)*\.[A-Za-z]{2,}$/.test(v) && v.length <= 254;
 
   function validarEnvio(d) {
     const faltan = [];
@@ -1001,7 +1025,7 @@
       '#txt-frase': TEXTOS.frase, '#txt-autor': '— ' + TEXTOS.fraseAutor,
       '#txt-intro': TEXTOS.intro, '#txt-esencia': TEXTOS.esencia,
       '#txt-mision': TEXTOS.mision, '#txt-vision': TEXTOS.vision,
-      '#txt-eyebrow': `${NEGOCIO.ciudad} · Café de especialidad · Est. ${NEGOCIO.fundacion}`,
+      '#txt-eyebrow': `Hysteria Coffee Roasters · Café de especialidad · ${NEGOCIO.ciudad}`,
     };
     Object.keys(map).forEach(k => { const el = $(k); if (el) el.textContent = map[k]; });
 
@@ -1020,7 +1044,11 @@
       const input = $('#nl-email', form);
       const msg = $('#nl-msg', form);
       const email = input.value.trim();
-      if (!email) return;
+      if (!email) {
+        if (msg) msg.textContent = 'Escribe tu correo para suscribirte.';
+        input.focus();
+        return;
+      }
 
       const btn = $('.nl-btn', form);
       const textoBtn = btn.textContent;
@@ -1047,21 +1075,19 @@
 
         if (r.status === 503) { respaldoCorreo(); return; }   // aún sin configurar
 
-        const data = await r.json().catch(() => ({}));
-
         if (r.ok) {
           form.reset();
-          msg.textContent = data.yaEstaba
-            ? 'Ya estabas en la lista. ¡Gracias!'
-            : '¡Listo! Te escribiremos pronto.';
+          msg.textContent = '¡Listo! Te escribiremos pronto.';
         } else if (r.status === 400) {
           msg.textContent = 'Revisa el correo, parece incompleto.';
         } else {
-          throw new Error('http ' + r.status);
+          // Tropiezo pasajero del servidor (502/500): se pide reintentar.
+          // El respaldo por correo queda solo para el 503 "sin configurar".
+          msg.textContent = 'No pudimos registrarte en este momento. Inténtalo de nuevo en unos minutos.';
         }
       } catch (err) {
         console.warn('Boletín:', err);
-        respaldoCorreo();
+        msg.textContent = 'No pudimos registrarte en este momento. Inténtalo de nuevo en unos minutos.';
       } finally {
         btn.disabled = false;
         btn.textContent = textoBtn;

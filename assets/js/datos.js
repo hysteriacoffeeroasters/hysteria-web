@@ -107,11 +107,13 @@ const DOCUMENTOS = [
    sepa cuál escoger. Puedes editarlo, agregar o quitar puntos de molienda.
    Si cambias los "codigo", cámbialos también en api/crear-preferencia.js
    --------------------------------------------------------------------------- */
+/* Las ayudas de "metodo" siguen las recetas de la sección ¿Cómo preparar
+   tu café? — si cambias una guía, revisa que esta tabla siga coincidiendo. */
 const MOLIENDAS = [
-  { codigo: 'fina',         nombre: 'Fina',         metodo: 'Espresso' },
-  { codigo: 'medio-fina',   nombre: 'Medio fina',   metodo: 'Moka · AeroPress' },
-  { codigo: 'media',        nombre: 'Media',        metodo: 'V60 · Chemex · goteo' },
-  { codigo: 'media-gruesa', nombre: 'Media gruesa', metodo: 'Clever · Kalita' },
+  { codigo: 'fina',         nombre: 'Fina',         metodo: 'AeroPress · espresso' },
+  { codigo: 'medio-fina',   nombre: 'Medio fina',   metodo: 'V60 · Moka' },
+  { codigo: 'media',        nombre: 'Media',        metodo: 'Origami · olleta · goteo' },
+  { codigo: 'media-gruesa', nombre: 'Media gruesa', metodo: 'Chemex · Clever' },
   { codigo: 'gruesa',       nombre: 'Gruesa',       metodo: 'Prensa francesa · cold brew' },
 ];
 

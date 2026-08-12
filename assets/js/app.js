@@ -152,7 +152,7 @@
         <div class="coffee-media">
           <img src="${esc(L.imagen)}"
                alt="Ficha de cata de ${esc(c.nombre)}${puesto(L.variedad) ? ', variedad ' + esc(L.variedad) : ''}"
-               width="1000" height="866" loading="lazy" decoding="async">
+               width="900" height="1687" loading="lazy" decoding="async">
           <span class="coffee-dot" aria-hidden="true"></span>
           <div class="coffee-badges">${badges}</div>
         </div>
@@ -472,8 +472,8 @@
       return `
       <article class="shop-card" style="--c:${esc(c.color)};--c-t:${esc(colorTexto(c.id))}">
         <div class="shop-media">
-          <img src="${esc(L.imagen)}" alt="Bolsa de café ${esc(c.nombre)} ${esc(L.variedad)}"
-               width="1000" height="866" loading="lazy" decoding="async">
+          <img src="${esc(L.imagen)}" alt="Ficha de cata de ${esc(c.nombre)} ${esc(L.variedad)}"
+               width="900" height="1687" loading="lazy" decoding="async">
         </div>
         <div class="shop-info">
           <div class="shop-coll">${esc(c.nombre)}</div>

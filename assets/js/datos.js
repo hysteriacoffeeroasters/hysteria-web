@@ -248,9 +248,7 @@ const COLECCIONES = [
     lotes: [
       {
         id: 'deseo-borbon-rojo',
-        // Mientras no haya foto de la bolsa, se muestra la ficha de cata
-        imagen:      'assets/products/deseo.jpg',
-        imagenFicha: true,
+        imagen:      'assets/products/bolsa-deseo.jpg',
         origen:    'Huila',
         variedad:  'Borbón Rojo',
         proceso:   'Natural · Experimental',
@@ -264,8 +262,7 @@ const COLECCIONES = [
       },
       {
         id: 'deseo-ombligon',
-        imagen:      'assets/products/deseo-ombligon.jpg',
-        imagenFicha: true,
+        imagen:      'assets/products/bolsa-deseo.jpg',
         origen:    'Tolima',
         variedad:  'Ombligón',
         proceso:   'Natural · 72 h de fermentación',

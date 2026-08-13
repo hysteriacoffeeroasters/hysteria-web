@@ -139,7 +139,8 @@ export default async function handler(req, res) {
       notas:     limpio(e.notas, 200),
     };
 
-    const correoOk = /^[^\s@,;:<>()[\]\\]+@[^\s@.,;:<>()[\]\\]+\.[A-Za-z]{2,}$/.test(dest.correo);
+    // Acepta dominios con varios niveles (unal.edu.co, empresa.com.co…)
+    const correoOk = /^[^\s@,;:<>()[\]\\]+@[^\s@.,;:<>()[\]\\]+(\.[^\s@.,;:<>()[\]\\]+)*\.[A-Za-z]{2,}$/.test(dest.correo);
     if (!dest.nombre || !dest.telefono || !dest.ciudad || !dest.direccion ||
         !correoOk || !dest.doctipo || dest.docnum.replace(/[\s.-]/g, '').length < 5) {
       return res.status(400).json({ error: 'Faltan datos de envío o facturación' });

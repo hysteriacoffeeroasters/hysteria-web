@@ -28,7 +28,8 @@ function correoValido(v) {
   if (typeof v !== 'string') return false;
   const s = v.trim();
   if (s.length < 6 || s.length > MAX_LARGO) return false;
-  return /^[^\s@,;:<>()[\]\\]+@[^\s@.,;:<>()[\]\\]+\.[A-Za-z]{2,}$/.test(s);
+  // Acepta dominios con varios niveles (unal.edu.co, empresa.com.co…)
+  return /^[^\s@,;:<>()[\]\\]+@[^\s@.,;:<>()[\]\\]+(\.[^\s@.,;:<>()[\]\\]+)*\.[A-Za-z]{2,}$/.test(s);
 }
 
 export default async function handler(req, res) {

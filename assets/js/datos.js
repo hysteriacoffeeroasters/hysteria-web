@@ -715,7 +715,7 @@ const PREPARACION = {
         { k: 'Temperatura', v: 'ambiente o nevera (4–20 °C)' },
       ],
       pasos: [
-        { titulo: 'Medir y moler', texto: 'Mide y muele 125 g de café en molienda gruesa, como sal marina. Una molienda fina turbia el concentrado y complica el filtrado.' },
+        { titulo: 'Medir y moler', texto: 'Mide y muele 125 g de café en molienda gruesa, como sal marina. Una molienda fina enturbia el concentrado y complica el filtrado.' },
         { titulo: 'Mezclar', texto: 'En un frasco o jarra limpia, agrega el café y vierte los 1000 ml de agua fría filtrada. Revuelve hasta que todo el café quede saturado.' },
         { titulo: 'Reposar', texto: 'Tapa el recipiente y déjalo reposar de 12 a 18 horas: en la nevera para una taza más limpia y dulce, o a temperatura ambiente para más cuerpo.' },
         { titulo: 'Filtrar', texto: 'Pasa el concentrado por un colador de tela o filtro de papel sin presionar los posos. Si quieres máxima limpieza, filtra dos veces.' },

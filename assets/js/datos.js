@@ -803,7 +803,7 @@ const EQUIPO = {
       nombre: 'Juan',
       cargo:  'Tostador',
       texto:  '',        // ← opcional: una o dos frases sobre su trabajo
-      foto:   '',        // ← ej: 'assets/equipo/juan.jpg'
+      foto:   'assets/equipo/juan.jpg',
     },
     {
       nombre: 'Jeisson',

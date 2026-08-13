@@ -588,11 +588,11 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .menu-item-price { font-size: 13.5px; color: var(--white); margin-top: 0.9rem; font-weight: 400; letter-spacing: 0.03em; }
 
 /* ── CÓMO PREPARAR TU CAFÉ ───────────────────────────────────────────────── */
-/* Cabecera de la guía: la foto del vertido (antigua portada) vive aquí,
-   con un velo que se aclara hacia la derecha para dejar respirar el café.
-   La imagen solo se pide cuando la sección se acerca al viewport (app.js
-   agrega .lista); así no compite con la foto de portada en la carga. */
-.prep-cabecera {
+/* Franjas de cabecera: cada gran sección abre con una foto propia detrás de
+   su intro, con un velo que se aclara hacia la derecha para dejar respirar
+   la imagen. Las fotos solo se piden cuando la sección se acerca al viewport
+   (app.js agrega .lista); así no compiten con la portada en la carga. */
+.prep-cabecera, .colecciones-cabecera, .tienda-cabecera {
   border: 1px solid var(--border-soft);
   padding: clamp(2rem, 4.5vw, 3.4rem);
   background-size: cover;
@@ -603,6 +603,18 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
     linear-gradient(100deg, rgba(0,0,0,0.93) 0%, rgba(0,0,0,0.74) 52%, rgba(0,0,0,0.48) 100%),
     url('../fotos/hero.jpg');
 }
+.colecciones-cabecera.lista {
+  background-image:
+    linear-gradient(100deg, rgba(0,0,0,0.93) 0%, rgba(0,0,0,0.74) 52%, rgba(0,0,0,0.42) 100%),
+    url('../fotos/colecciones-bolsa.jpg');
+}
+.tienda-cabecera.lista {
+  background-image:
+    linear-gradient(100deg, rgba(0,0,0,0.93) 0%, rgba(0,0,0,0.74) 52%, rgba(0,0,0,0.42) 100%),
+    url('../fotos/tienda-granos.jpg');
+}
+/* Sobre foto, el cuerpo de texto sube de tono para asegurar el contraste */
+.colecciones-cabecera .sec-body, .tienda-cabecera .sec-body { color: var(--ink-2); }
 .prep-tabs {
   display: flex; border-bottom: 1px solid var(--border-soft);
   overflow-x: auto; scrollbar-width: none; margin-top: 2.4rem;

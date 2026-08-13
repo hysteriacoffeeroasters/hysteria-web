@@ -1310,6 +1310,8 @@
     cargarCarrito();
     pintarTextos();
     fondoDiferido($('.esencia-cabecera'));
+    fondoDiferido($('.colecciones-cabecera'));
+    fondoDiferido($('.tienda-cabecera'));
     pintarFiltros();
     pintarEquipo();
     pintarColecciones();

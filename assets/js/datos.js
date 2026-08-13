@@ -296,8 +296,7 @@ const COLECCIONES = [
     lotes: [
       {
         id: 'euforia-borbon-naranja',
-        imagen:      'assets/products/euforia.jpg',
-        imagenFicha: true,
+        imagen:      'assets/products/bolsa-euforia.jpg',
         origen:    'Huila',
         variedad:  'Borbón Naranja',
         proceso:   'Experimental Citric',

@@ -809,7 +809,7 @@ const EQUIPO = {
       nombre: 'Jeisson',
       cargo:  'Gerente de Mercadeo',
       texto:  '',
-      foto:   '',
+      foto:   'assets/equipo/jeisson.jpg',
     },
     {
       nombre: 'Andrés',

@@ -654,9 +654,10 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .prep-pasos li::before {
   content: counter(paso, decimal-leading-zero);
   position: absolute; left: 0; top: 0;
-  width: 28px; height: 28px; border: 1px solid var(--border);
+  width: 28px; height: 28px;
+  background: var(--white); color: var(--black);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--label); font-size: 11px; color: var(--ink-3);
+  font-family: var(--label); font-size: 11px; font-weight: 700;
 }
 .paso-titulo {
   display: block; font-family: var(--label);

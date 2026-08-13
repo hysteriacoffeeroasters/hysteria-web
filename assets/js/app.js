@@ -149,6 +149,8 @@
         .concat((L.insignias || []).map(t => '<span class="badge">' + esc(t) + '</span>'))
         .join('');
 
+      const perfil = perfilHTML(L.perfil);
+
       return `
       <article class="coffee" data-coll="${esc(c.id)}" style="--c:${esc(c.color)};--c-t:${esc(colorTexto(c.id))}">
         <div class="coffee-media">
@@ -170,6 +172,7 @@
 
           ${puesto(L.notas) ? `<p class="coffee-notes">${esc(L.notas)}</p>` : ''}
           ${extras ? `<p class="coffee-extra">${esc(extras)}</p>` : ''}
+          ${perfil}
 
           <div class="coffee-buy">
             <div>
@@ -552,6 +555,35 @@
   // La clave de una línea combina café y molienda: el mismo café en dos
   // moliendas son dos líneas distintas del pedido.
   const claveLinea = l => l.id + '|' + (l.molienda || '');
+
+  /* ── Perfil de taza ────────────────────────────────────────────────────── */
+  // Los seis ejes de la infografía, ahora también en texto: la imagen de la
+  // ficha es decorativa para un lector de pantalla, así que el dato tiene que
+  // existir fuera de ella. Las barras son aria-hidden y el valor va en palabras.
+  const EJES_PERFIL = [
+    ['aroma', 'Aroma'], ['dulzura', 'Dulzura'], ['sabor', 'Sabor'],
+    ['acidez', 'Acidez'], ['residual', 'Residual'], ['cuerpo', 'Cuerpo'],
+  ];
+
+  function perfilHTML(p) {
+    if (!p) return '';
+    const filas = EJES_PERFIL
+      .filter(([k]) => Number(p[k]) > 0)
+      .map(([k, etiqueta]) => {
+        const v = Math.min(5, Math.max(1, Math.round(Number(p[k]))));
+        return `
+        <div class="perfil-fila">
+          <span class="perfil-k">${esc(etiqueta)}</span>
+          <span class="perfil-barra" aria-hidden="true">${
+            Array.from({ length: 5 }, (_, i) =>
+              `<i class="${i < v ? 'on' : ''}"></i>`).join('')
+          }</span>
+          <span class="sr-only">${v} de 5</span>
+        </div>`;
+      });
+    if (!filas.length) return '';
+    return `<div class="perfil"><p class="perfil-tit">Perfil de taza</p>${filas.join('')}</div>`;
+  }
 
   function cambiarMolienda(clave, nuevaMolienda) {
     const l = carrito.find(x => claveLinea(x) === clave);
@@ -1186,8 +1218,10 @@
       name: 'Hysteria Coffee Roasters',
       description: 'Tostadora y café de especialidad en ' + NEGOCIO.ciudad + '. Colecciones Pasión, Ilusión, Deseo y Euforia.',
       url: base + '/',
-      image: base + '/assets/logo/imagotipo-white.png',
-      logo: base + '/assets/logo/icono-white.png',
+      // Google pinta estos logos sobre fondo blanco: el imagotipo de marca es
+      // blanco y quedaría invisible, por eso aquí va la variante oscura.
+      image: base + '/assets/fotos/og.jpg',
+      logo: base + '/assets/logo/logo-schema.png',
       email: NEGOCIO.correo,
       servesCuisine: 'Café de especialidad',
       priceRange: '$$',

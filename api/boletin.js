@@ -71,7 +71,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Correo no válido' });
     }
 
-    const datos = { email, updateEnabled: true };
+    // emailBlacklisted: false reactiva a quien se dio de baja y vuelve a
+    // suscribirse por el formulario. Sin esto Brevo lo deja en la lista negra
+    // y nunca recibe nada, aunque la web le diga que quedó registrado.
+    const datos = { email, updateEnabled: true, emailBlacklisted: false };
 
     const listId = parseInt(process.env.BREVO_LIST_ID, 10);
     if (Number.isFinite(listId) && listId > 0) datos.listIds = [listId];
@@ -93,11 +96,6 @@ export default async function handler(req, res) {
 
     let detalle = {};
     try { detalle = await r.json(); } catch (e) {}
-
-    // Ya estaba suscrito: para el visitante eso es un éxito, no un error
-    if (detalle && detalle.code === 'duplicate_parameter') {
-      return res.status(200).json({ ok: true, yaEstaba: true });
-    }
 
     console.error('Brevo respondió con error:', r.status, detalle);
     return res.status(502).json({ error: 'No pudimos registrar el correo' });

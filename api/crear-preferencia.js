@@ -225,12 +225,12 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'Respuesta inesperada del pago' });
     }
 
-    // El pedido queda registrado en los logs de Vercel por si hace falta rastrearlo
+    // Rastro mínimo en los logs de Vercel: lo justo para cruzar un pedido con
+    // Mercado Pago. Los datos personales (nombre, dirección, teléfono, documento
+    // y correo) NO se registran: viajan a Mercado Pago y viven allí, no en logs
+    // que quedan retenidos en la plataforma.
     console.log('Pedido creado', JSON.stringify({
-      referencia, total: subtotal + costoEnvio,
-      cliente: dest.nombre, ciudad: dest.ciudad, telefono: dest.telefono,
-      direccion: dest.direccion,
-      factura: `${dest.doctipo} ${dest.docnum} · ${dest.correo}`,
+      referencia, total: subtotal + costoEnvio, ciudad: dest.ciudad,
       items: items.map(i => `${i.quantity}x ${i.title}`).join(' | '),
       molienda: moliendas.join(' | '),
     }));

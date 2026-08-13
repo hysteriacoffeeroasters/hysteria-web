@@ -10,9 +10,16 @@
       ]
     },
     {
-      "source": "/assets/(logo|collections|products|css|js)/(.*)",
+      "source": "/assets/(logo|collections|products|fotos|css|js)/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "(.*)\\.vercel\\.app" }],
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]
     },
     {

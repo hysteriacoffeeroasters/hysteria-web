@@ -153,10 +153,13 @@
 
       return `
       <article class="coffee" data-coll="${esc(c.id)}" style="--c:${esc(c.color)};--c-t:${esc(colorTexto(c.id))}">
-        <div class="coffee-media">
+        <div class="coffee-media${L.imagenFicha ? ' media-ficha' : ''}">
           <img src="${esc(L.imagen)}"
-               alt="Ficha de cata de ${esc(c.nombre)}${puesto(L.variedad) ? ', variedad ' + esc(L.variedad) : ''}"
-               width="900" height="1687" loading="lazy" decoding="async">
+               alt="${L.imagenFicha
+                 ? `Ficha de cata de ${esc(c.nombre)}${puesto(L.variedad) ? ', variedad ' + esc(L.variedad) : ''}`
+                 : `Bolsa de café ${esc(c.nombre)}${puesto(L.variedad) ? ' · ' + esc(L.variedad) : ''}`}"
+               width="${L.imagenFicha ? '900' : '430'}" height="${L.imagenFicha ? '1687' : '538'}"
+               loading="lazy" decoding="async">
           <span class="coffee-dot" aria-hidden="true"></span>
           <div class="coffee-badges">${badges}</div>
         </div>
@@ -503,9 +506,11 @@
       const meta = [L.origen, L.proceso].filter(puesto).join(' · ');
       return `
       <article class="shop-card" style="--c:${esc(c.color)};--c-t:${esc(colorTexto(c.id))}">
-        <div class="shop-media">
-          <img src="${esc(L.imagen)}" alt="Ficha de cata de ${esc(c.nombre)} ${esc(L.variedad)}"
-               width="900" height="1687" loading="lazy" decoding="async">
+        <div class="shop-media${L.imagenFicha ? ' media-ficha' : ''}">
+          <img src="${esc(L.imagen)}"
+               alt="${L.imagenFicha ? 'Ficha de cata' : 'Bolsa de café'} ${esc(c.nombre)} ${esc(L.variedad)}"
+               width="${L.imagenFicha ? '900' : '430'}" height="${L.imagenFicha ? '1687' : '538'}"
+               loading="lazy" decoding="async">
         </div>
         <div class="shop-info">
           <div class="shop-coll">${esc(c.nombre)}</div>

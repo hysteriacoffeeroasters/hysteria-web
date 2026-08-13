@@ -180,7 +180,7 @@ const COLECCIONES = [
     lotes: [
       {
         id: 'pasion-colombia',
-        imagen:    'assets/products/pasion.jpg',
+        imagen:    'assets/products/bolsa-pasion.jpg',
         origen:    'Huila',
         variedad:  'Colombia',
         proceso:   'Lavado',
@@ -214,7 +214,7 @@ const COLECCIONES = [
     lotes: [
       {
         id: 'ilusion-gesha',
-        imagen:    'assets/products/ilusion.jpg',
+        imagen:    'assets/products/bolsa-ilusion.jpg',
         origen:    'Huila',
         variedad:  'Gesha',
         proceso:   'Lavado',
@@ -248,7 +248,9 @@ const COLECCIONES = [
     lotes: [
       {
         id: 'deseo-borbon-rojo',
-        imagen:    'assets/products/deseo.jpg',
+        // Mientras no haya foto de la bolsa, se muestra la ficha de cata
+        imagen:      'assets/products/deseo.jpg',
+        imagenFicha: true,
         origen:    'Huila',
         variedad:  'Borbón Rojo',
         proceso:   'Natural · Experimental',
@@ -262,7 +264,8 @@ const COLECCIONES = [
       },
       {
         id: 'deseo-ombligon',
-        imagen:    'assets/products/deseo-ombligon.jpg',
+        imagen:      'assets/products/deseo-ombligon.jpg',
+        imagenFicha: true,
         origen:    'Tolima',
         variedad:  'Ombligón',
         proceso:   'Natural · 72 h de fermentación',
@@ -296,7 +299,8 @@ const COLECCIONES = [
     lotes: [
       {
         id: 'euforia-borbon-naranja',
-        imagen:    'assets/products/euforia.jpg',
+        imagen:      'assets/products/euforia.jpg',
+        imagenFicha: true,
         origen:    'Huila',
         variedad:  'Borbón Naranja',
         proceso:   'Experimental Citric',

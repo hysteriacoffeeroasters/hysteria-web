@@ -201,8 +201,8 @@ const COLECCIONES = [
     nombre: 'Ilusión',
     color: '#A11AD3',
     flor: 'assets/collections/ilusion.png',
-    descripcion: 'Cafés que traducen complejidad derivada de la genética de sus varietales y el cuidado detallado en sus procesos, dejándonos en un estado de frenesí, euforia y satisfacción por sus sabores diferenciados.',
-    caracteristica: 'Varietales exóticos',
+    descripcion: 'Cafés que cambian nuestras percepciones y sensaciones, llevándonos a nuevos sabores y emociones y transformando verdades en realidades imaginarias.',
+    caracteristica: 'Varietales exóticos y diferenciados',
 
     gramos: 340,
     precios: {
@@ -234,8 +234,8 @@ const COLECCIONES = [
     nombre: 'Deseo',
     color: '#0068FF',
     flor: 'assets/collections/deseo.png',
-    descripcion: 'Cafés que trascienden las sensaciones del deseo, haciendo posible lo imposible, dejándonos en una realidad de sabores experimentales, nuevos y complejos.',
-    caracteristica: 'Naturales y fermentaciones alternativas',
+    descripcion: 'Cafés que trascienden las sensaciones del deseo, haciendo posible lo imposible y dejándonos en una realidad de sabores alucinantes, nuevos y complejos.',
+    caracteristica: 'Procesos naturales y fermentaciones prolongadas',
 
     gramos: 340,
     precios: {
@@ -283,8 +283,8 @@ const COLECCIONES = [
     color: '#F49A1A',
     flor: 'assets/collections/euforia.png',
 
-    descripcion: 'Cafés que expresan la complejidad de los procesos más novedosos y alternativos.',
-    caracteristica: '',   // ← si quieres una línea de procesos, escríbela aquí
+    descripcion: 'Cafés que traducen complejidad y misticismo, derivados de sus procesos experimentales y de la genética de sus varietales, dejándonos en un estado de frenesí, entusiasmo y satisfacción por sus sabores diferenciados.',
+    caracteristica: 'Procesos experimentales y cafés de competencia',
 
     gramos: 250,
     precios: {

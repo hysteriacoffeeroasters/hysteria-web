@@ -795,27 +795,27 @@ const TEXTOS = {
    --------------------------------------------------------------------------- */
 const EQUIPO = {
   mostrar: true,
-  titulo: 'Las manos detrás de la barra',
+  titulo: 'El equipo detrás de cada taza',
   intro: 'Hysteria la sostenemos tres personas que compartimos la misma obsesión: que cada taza valga el trabajo que hay detrás.',
 
   personas: [
     {
       nombre: 'Juan',
-      cargo:  '',        // ← ej: 'Tostión'
-      texto:  '',        // ← ej: 'Define el perfil de cada lote...'
-      foto:   '',
+      cargo:  'Tostador',
+      texto:  '',        // ← opcional: una o dos frases sobre su trabajo
+      foto:   '',        // ← ej: 'assets/equipo/juan.jpg'
     },
     {
       nombre: 'Jeisson',
-      cargo:  '',
+      cargo:  'Gerente de Mercadeo',
       texto:  '',
       foto:   '',
     },
     {
       nombre: 'Andrés',
-      cargo:  '',
+      cargo:  'Barista',
       texto:  '',
-      foto:   '',
+      foto:   'assets/equipo/andres.jpg',
     },
   ],
 };

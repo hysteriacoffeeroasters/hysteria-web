@@ -32,6 +32,18 @@
   const LLAVE = 'hysteria_carrito_v1';
   let carrito = [];
 
+  // Precio vigente de una línea guardada: el del tamaño elegido si la colección
+  // tiene presentaciones, si no el de la bolsa; y el guardado como último recurso.
+  function precioDeCatalogo(hit, gramos, guardado) {
+    if (hit) {
+      const lista = Array.isArray(hit.col.presentaciones) ? hit.col.presentaciones : [];
+      const p = lista.find(x => Number(x.gramos) === Number(gramos));
+      if (p) return Number(p.precio);
+      if (!lista.length) return hit.col.precios.bolsa;
+    }
+    return Math.max(0, Number(guardado) || 0);
+  }
+
   function cargarCarrito() {
     try {
       const raw = localStorage.getItem(LLAVE);
@@ -58,7 +70,8 @@
             molienda: validas.includes(l.molienda) ? l.molienda : (esCafe ? 'grano' : ''),
             // El precio manda el catálogo actual: si cambió en datos.js, el
             // carrito guardado se actualiza al volver (no se cobra el viejo).
-            precio: hit ? hit.col.precios.bolsa : Math.max(0, Number(l.precio) || 0),
+            // Con varias presentaciones, manda la que coincida con los gramos.
+            precio: precioDeCatalogo(hit, gramos, l.precio),
             cant: Math.min(MAX_UNIDADES, Math.max(1, Math.floor(Number(l.cant) || 1))),
           };
         });
@@ -574,18 +587,52 @@
     return m ? m.nombre : cod;
   };
 
+  // 340 g · 1 kg · 2,5 kg — los kilos se leen mejor que "2500 g"
+  function nombreGramos(g) {
+    const n = Number(g) || 0;
+    if (n < 1000) return n + ' g';
+    const kilos = n / 1000;
+    return String(kilos).replace('.', ',') + ' kg';
+  }
+
+  // Presentaciones disponibles de un café (vacío si la colección no las define)
+  function presentacionesDe(id) {
+    const hit = buscarLote(id);
+    const lista = hit && Array.isArray(hit.col.presentaciones) ? hit.col.presentaciones : [];
+    return lista.filter(p => Number(p.gramos) > 0 && Number(p.precio) > 0);
+  }
+
   // Texto que ve el cliente y que viaja al pago
   function varianteDe(l) {
     if (!l.esCafe) return l.variante || '';
-    const base = 'Bolsa ' + l.gramos + ' g';
+    const base = 'Bolsa ' + nombreGramos(l.gramos);
     return l.molienda === 'grano'
       ? base + ' · grano entero'
       : base + ' · molienda ' + nombreMolienda(l.molienda).toLowerCase();
   }
 
-  // La clave de una línea combina café y molienda: el mismo café en dos
-  // moliendas son dos líneas distintas del pedido.
-  const claveLinea = l => l.id + '|' + (l.molienda || '');
+  // La clave de una línea combina café, tamaño y molienda: el mismo café en
+  // dos presentaciones o dos moliendas son líneas distintas del pedido.
+  const claveLinea = l => l.id + '|' + (l.gramos || '') + '|' + (l.molienda || '');
+
+  function cambiarTamano(clave, nuevosGramos) {
+    const l = carrito.find(x => claveLinea(x) === clave);
+    if (!l) return;
+    const p = presentacionesDe(l.id).find(x => String(x.gramos) === String(nuevosGramos));
+    if (!p) return;
+
+    l.gramos = p.gramos;
+    l.precio = p.precio;
+
+    // Si ya había una línea igual con ese tamaño, se fusionan
+    const gemela = carrito.find(x => x !== l && claveLinea(x) === claveLinea(l));
+    if (gemela) {
+      gemela.cant = Math.min(MAX_UNIDADES, gemela.cant + l.cant);
+      carrito = carrito.filter(x => x !== l);
+    }
+    guardarCarrito(); pintarCarrito();
+    avisar('Bolsa de ' + nombreGramos(p.gramos));
+  }
 
   /* ── Perfil de taza ────────────────────────────────────────────────────── */
   // Los seis ejes de la infografía, ahora también en texto: la imagen de la
@@ -651,7 +698,7 @@
     // cuál era para devolvérselo después del repintado.
     const act = document.activeElement;
     const focoEn = act && cont.contains(act)
-      ? ['data-mas', 'data-menos', 'data-quitar', 'data-forma', 'data-molienda']
+      ? ['data-mas', 'data-menos', 'data-quitar', 'data-tamano', 'data-forma', 'data-molienda']
           .map(a => (act.hasAttribute(a) ? [a, act.getAttribute(a)] : null))
           .find(Boolean) || ['vacio', '']
       : null;
@@ -695,6 +742,18 @@
         </div>
         ${l.esCafe ? `
         <div class="cart-line-opts">
+          ${(() => {
+            const tam = presentacionesDe(l.id);
+            return tam.length > 1 ? `
+          <label class="opt">
+            <span class="sr-only">Tamaño de la bolsa de ${esc(l.nombre)}</span>
+            <select data-tamano="${esc(k)}">
+              ${tam.map(p => `
+                <option value="${esc(p.gramos)}" ${Number(l.gramos) === Number(p.gramos) ? 'selected' : ''}
+                >${esc(nombreGramos(p.gramos))} · ${esc(money(p.precio))}</option>`).join('')}
+            </select>
+          </label>` : '';
+          })()}
           <label class="opt">
             <span class="sr-only">Presentación de ${esc(l.nombre)}</span>
             <select data-forma="${esc(k)}">
@@ -784,6 +843,9 @@
 
   // Selectores de presentación y punto de molienda dentro del carrito
   document.addEventListener('change', e => {
+    const tam = e.target.closest('[data-tamano]');
+    if (tam) return cambiarTamano(tam.dataset.tamano, tam.value);
+
     const forma = e.target.closest('[data-forma]');
     if (forma) {
       const destino = forma.value === 'grano'
@@ -919,6 +981,7 @@
           items: carrito.map(l => ({
             id: l.id, titulo: l.nombre, descripcion: varianteDe(l),
             cantidad: l.cant, precio: l.precio,
+            gramos: l.esCafe ? l.gramos : 0,
             molienda: l.esCafe ? l.molienda : ''
           })),
           envio: envio(),

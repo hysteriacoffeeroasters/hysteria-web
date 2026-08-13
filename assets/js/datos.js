@@ -177,6 +177,15 @@ const COLECCIONES = [
       parDeTazas: 17000,
     },
 
+    // Tamaños que el cliente elige en el carrito. La primera es la que se
+    // agrega por defecto y la que muestra la tarjeta.
+    // ⚠️ Si cambias un precio, cámbialo también en api/crear-preferencia.js
+    presentaciones: [
+      { gramos: 340,  precio: 39500 },
+      { gramos: 1000, precio: 85000 },
+      { gramos: 2500, precio: 185000 },
+    ],
+
     lotes: [
       {
         id: 'pasion-colombia',
@@ -777,7 +786,7 @@ const TEXTOS = {
 
   intro: 'Somos la unión de un sinfín de emociones, sentimientos y sensaciones que nos produce el café. Te traemos los mejores cafés colombianos de diferentes orígenes, variedades y procesos.',
 
-  esencia: 'Queremos transmitir toda esa pasión y amor brindando los mejores cafés colombianos de diferentes orígenes, variedades y procesos, siempre resaltando y respetando el trabajo que hay detrás de un café especial.',
+  esencia: 'Queremos transmitir toda esa pasión y amor brindando los mejores cafés de diferentes orígenes, variedades y procesos, siempre resaltando y respetando el trabajo que hay detrás de un café especial.',
 };
 
 
@@ -797,7 +806,7 @@ const TEXTOS = {
 const EQUIPO = {
   mostrar: true,
   titulo: 'El equipo detrás de cada taza',
-  intro: 'Hysteria la sostenemos tres personas que compartimos la misma obsesión: que cada taza valga el trabajo que hay detrás.',
+  intro: 'Nuestra unión nace a partir de tres apasionados por el café con visiones diferentes que convergen en un solo objetivo: hacer visible el trabajo y la complejidad que hay detrás de cada grano de café.',
 
   personas: [
     {

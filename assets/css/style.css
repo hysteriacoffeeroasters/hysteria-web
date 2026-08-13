@@ -796,8 +796,10 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .cart-line { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1.1rem 0; border-bottom: 1px solid var(--border-soft); }
 
 /* Presentación y punto de molienda, en su propia fila bajo la línea */
-.cart-line-opts { flex: 1 0 100%; display: flex; gap: 0.5rem; margin-top: -0.2rem; }
-.cart-line-opts .opt { flex: 1 1 0; min-width: 0; }
+/* Hasta tres selectores por línea (tamaño, presentación y molienda): se
+   reparten el ancho y bajan de fila cuando el panel no da para los tres. */
+.cart-line-opts { flex: 1 0 100%; display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: -0.2rem; }
+.cart-line-opts .opt { flex: 1 1 130px; min-width: 0; }
 .cart-line-opts select {
   width: 100%; background: transparent;
   border: 1px solid var(--border); color: var(--ink-2);
@@ -813,7 +815,7 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .cart-line-opts select:hover,
 .cart-line-opts select:focus { border-color: var(--white); color: var(--white); }
 .cart-line-opts select option { background: #111; color: #fff; text-transform: none; letter-spacing: normal; }
-@media (max-width: 400px) { .cart-line-opts { flex-wrap: wrap; } }
+
 .cart-line-img { width: 74px; height: 56px; object-fit: cover; flex-shrink: 0; background: #0C0C0C; }
 .cart-line-mid { flex: 1; min-width: 0; }
 .cart-line-name { font-family: var(--serif); font-size: 1.02rem; line-height: 1.25; }

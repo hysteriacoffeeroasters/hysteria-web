@@ -25,7 +25,10 @@
    👉 Si agregas un LOTE nuevo, agrégalo también aquí con su mismo "id".
       Si no está en esta lista, no se puede comprar.                          */
 const CATALOGO = {
-  'pasion-colombia':        { nombre: 'Café Pasión · Colombia · Bolsa 340 g',        precio: 39500 },
+  // Con "presentaciones", el precio sale del tamaño que pidió el cliente.
+  // Debe coincidir con COLECCIONES[].presentaciones en assets/js/datos.js
+  'pasion-colombia':        { nombre: 'Café Pasión · Colombia',                      precio: 39500,
+                              presentaciones: { 340: 39500, 1000: 85000, 2500: 185000 } },
   'ilusion-gesha':          { nombre: 'Café Ilusión · Gesha · Bolsa 340 g',          precio: 59500 },
   'deseo-borbon-rojo':      { nombre: 'Café Deseo · Borbón Rojo · Bolsa 340 g',      precio: 75000 },
   'deseo-ombligon':         { nombre: 'Café Deseo · Ombligón · Bolsa 340 g',         precio: 75000 },
@@ -105,12 +108,26 @@ export default async function handler(req, res) {
       const molienda = esCafe ? (MOLIENDAS[cod] ? cod : 'grano') : '';
       if (molienda) moliendas.push(`${prod.nombre}: ${MOLIENDAS[molienda]}`);
 
-      subtotal += prod.precio * cant;
+      // Tamaño de la bolsa. Solo se acepta uno de los declarados aquí: lo que
+      // manda el navegador nunca fija el precio, solo elige entre los nuestros.
+      let precio = prod.precio;
+      let etiquetaTamano = '';
+      if (prod.presentaciones) {
+        const g = String(parseInt(linea.gramos, 10) || '');
+        const elegido = Object.prototype.hasOwnProperty.call(prod.presentaciones, g)
+          ? g
+          : String(Object.keys(prod.presentaciones)[0]);
+        precio = prod.presentaciones[elegido];
+        const n = Number(elegido);
+        etiquetaTamano = ' · Bolsa ' + (n < 1000 ? `${n} g` : `${String(n / 1000).replace('.', ',')} kg`);
+      }
+
+      subtotal += precio * cant;
       items.push({
         id: linea.id,
-        title: prod.nombre + (molienda ? ` · ${MOLIENDAS[molienda]}` : ''),
+        title: prod.nombre + etiquetaTamano + (molienda ? ` · ${MOLIENDAS[molienda]}` : ''),
         quantity: cant,
-        unit_price: prod.precio,
+        unit_price: precio,
         currency_id: 'COP',
       });
     }

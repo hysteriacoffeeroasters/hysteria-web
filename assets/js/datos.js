@@ -710,6 +710,7 @@ const PREPARACION = {
     {
       id: 'coldbrew',
       nombre: 'Cold Brew',
+      foto: 'assets/fotos/prep-coldbrew.jpg',
       equipo: 'Cold Brew',
       rinde: '1 litro de concentrado',
       ficha: [

@@ -777,10 +777,47 @@ const TEXTOS = {
   intro: 'Somos la unión de un sinfín de emociones, sentimientos y sensaciones que nos produce el café. Te traemos los mejores cafés colombianos de diferentes orígenes, variedades y procesos.',
 
   esencia: 'Queremos transmitir toda esa pasión y amor brindando los mejores cafés colombianos de diferentes orígenes, variedades y procesos, siempre resaltando y respetando el trabajo que hay detrás de un café especial.',
+};
 
-  mision: 'Ser una empresa influyente en el desarrollo del mercado del café de especialidad, generando cultura, conciencia e impacto en el buen consumo a través de un estilo moderno y diferente, contribuyendo a la identidad y sentido de pertenencia de un producto tan nuestro como el café colombiano.',
 
-  vision: 'Lograr un posicionamiento en el mercado del café de especialidad, llegando a muchos sectores sociales y siendo uno de los principales referentes de calidad y servicio, ofreciendo distintos tipos de experiencias y perfiles, trabajando siempre bajo un trato directo y precio justo con el caficultor.',
+/* ---------------------------------------------------------------------------
+   7b) EL EQUIPO
+   ---------------------------------------------------------------------------
+   Las personas detrás de Hysteria. Aparecen en la sección "Nuestra esencia".
+
+   • cargo  → una línea corta (aparece en mayúsculas sobre el nombre)
+   • texto  → dos o tres frases: qué hace y qué le apasiona del café
+   • foto   → opcional. Si la dejas vacía se muestra la inicial en la tipografía
+              de la marca, que también se ve bien. Para poner foto, guarda el
+              archivo en assets/equipo/ y escribe aquí 'assets/equipo/juan.jpg'
+
+   Para agregar a alguien, copia un bloque. Para quitarlo, bórralo.
+   --------------------------------------------------------------------------- */
+const EQUIPO = {
+  mostrar: true,
+  titulo: 'Las manos detrás de la barra',
+  intro: 'Hysteria la sostenemos tres personas que compartimos la misma obsesión: que cada taza valga el trabajo que hay detrás.',
+
+  personas: [
+    {
+      nombre: 'Juan',
+      cargo:  '',        // ← ej: 'Tostión'
+      texto:  '',        // ← ej: 'Define el perfil de cada lote...'
+      foto:   '',
+    },
+    {
+      nombre: 'Jeisson',
+      cargo:  '',
+      texto:  '',
+      foto:   '',
+    },
+    {
+      nombre: 'Andrés',
+      cargo:  '',
+      texto:  '',
+      foto:   '',
+    },
+  ],
 };
 
 

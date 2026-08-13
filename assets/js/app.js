@@ -250,6 +250,40 @@
       </table>`;
   }
 
+  /* ── Equipo ────────────────────────────────────────────────────────────── */
+  function pintarEquipo() {
+    const sec = $('#equipo');
+    if (!sec) return;
+    const E = typeof EQUIPO !== 'undefined' ? EQUIPO : null;
+    const gente = E && Array.isArray(E.personas)
+      ? E.personas.filter(p => puesto(p.nombre)) : [];
+
+    if (!E || !E.mostrar || !gente.length) { sec.remove(); return; }
+
+    const t = $('#equipo-titulo'), i = $('#equipo-intro');
+    if (t) t.textContent = E.titulo || 'Nuestro equipo';
+    if (i) { i.textContent = E.intro || ''; if (!puesto(E.intro)) i.remove(); }
+
+    $('#equipo-grid').innerHTML = gente.map(p => {
+      // Sin foto, la inicial en la tipografía de la marca hace de retrato:
+      // se ve deliberado, no como una imagen que falta.
+      const retrato = puesto(p.foto)
+        ? `<img src="${esc(p.foto)}" alt="${esc(p.nombre)}" width="600" height="600"
+                loading="lazy" decoding="async">`
+        : `<span class="equipo-inicial" aria-hidden="true">${esc(p.nombre.trim().charAt(0))}</span>`;
+
+      return `
+      <article class="equipo-card">
+        <div class="equipo-retrato${puesto(p.foto) ? '' : ' sin-foto'}">${retrato}</div>
+        <div class="equipo-datos">
+          ${puesto(p.cargo) ? `<p class="equipo-cargo">${esc(p.cargo)}</p>` : ''}
+          <h4 class="equipo-nombre">${esc(p.nombre)}</h4>
+          ${puesto(p.texto) ? `<p class="equipo-texto">${esc(p.texto)}</p>` : ''}
+        </div>
+      </article>`;
+    }).join('');
+  }
+
   /* ── Promociones ───────────────────────────────────────────────────────── */
   function pintarPromos() {
     const sec = $('#promos');
@@ -1048,7 +1082,6 @@
     const map = {
       '#txt-frase': TEXTOS.frase, '#txt-autor': '— ' + TEXTOS.fraseAutor,
       '#txt-intro': TEXTOS.intro, '#txt-esencia': TEXTOS.esencia,
-      '#txt-mision': TEXTOS.mision, '#txt-vision': TEXTOS.vision,
       '#txt-eyebrow': `Hysteria Coffee Roasters · Café de especialidad · ${NEGOCIO.ciudad}`,
     };
     Object.keys(map).forEach(k => { const el = $(k); if (el) el.textContent = map[k]; });
@@ -1278,6 +1311,7 @@
     pintarTextos();
     fondoDiferido($('.esencia-cabecera'));
     pintarFiltros();
+    pintarEquipo();
     pintarColecciones();
     pintarPrecios();
     pintarPromos();

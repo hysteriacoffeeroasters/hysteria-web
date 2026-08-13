@@ -398,15 +398,7 @@
 
     // La foto de la cabecera se pide solo cuando la sección se acerca,
     // para que no compita con la foto de portada durante la carga inicial.
-    const cab = $('.prep-cabecera', sec);
-    if (cab) {
-      if ('IntersectionObserver' in window) {
-        const io = new IntersectionObserver((es, ob) => {
-          es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('lista'); ob.disconnect(); } });
-        }, { rootMargin: '600px 0px' });
-        io.observe(cab);
-      } else { cab.classList.add('lista'); }
-    }
+    fondoDiferido($('.prep-cabecera', sec));
 
     function activar(b, enfocar) {
       $$('.ptab', tabs).forEach(x => {
@@ -1268,10 +1260,23 @@
     document.head.appendChild(s);
   }
 
+  // Fondos que se descargan solo cuando su sección se acerca al viewport:
+  // el elemento recibe .lista y el CSS recién ahí declara la imagen.
+  function fondoDiferido(el) {
+    if (!el) return;
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es, ob) => {
+        es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('lista'); ob.disconnect(); } });
+      }, { rootMargin: '600px 0px' });
+      io.observe(el);
+    } else { el.classList.add('lista'); }
+  }
+
   /* ── Arranque ──────────────────────────────────────────────────────────── */
   function iniciar() {
     cargarCarrito();
     pintarTextos();
+    fondoDiferido($('.esencia-cabecera'));
     pintarFiltros();
     pintarColecciones();
     pintarPrecios();

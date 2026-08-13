@@ -315,6 +315,23 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
 .esencia-intro { max-width: 62ch; margin: 0 auto 3.5rem; text-align: center; }
 .esencia-intro .sec-tag { margin-bottom: 0.8rem; }
 .esencia-intro p { font-size: 16px; line-height: 1.85; color: var(--ink-3); margin-top: 1.4rem; }
+
+/* Cabecera con la flor de café de fondo: misma franja que abre la guía de
+   preparación. La imagen se pide solo cuando la sección se acerca (app.js
+   agrega .lista) y el velo mantiene el contraste del texto. */
+.esencia-cabecera {
+  max-width: 1180px;
+  border: 1px solid var(--border-soft);
+  padding: clamp(2.2rem, 5vw, 3.6rem) clamp(1.2rem, 4vw, 3rem);
+  background-size: cover;
+  background-position: center 42%;
+}
+.esencia-cabecera.lista {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.66) 0%, rgba(0,0,0,0.82) 100%),
+    url('../fotos/esencia-flor.jpg');
+}
+.esencia-cabecera p { max-width: 62ch; margin-left: auto; margin-right: auto; color: var(--ink-2); }
 .esencia-grid {
   display: grid; grid-template-columns: 0.72fr 1fr 1fr;
   gap: 1px; background: var(--border-soft);

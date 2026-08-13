@@ -594,6 +594,7 @@ const PREPARACION = {
     {
       id: 'aeropress',
       nombre: 'AeroPress',
+      foto: 'assets/fotos/prep-aeropress.jpg',
       equipo: 'AeroPress',
       rinde: 'Para una taza',
       ficha: [

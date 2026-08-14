@@ -34,11 +34,23 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const llavePublica = process.env.WOMPI_PUBLIC_KEY;
-  const secreto = process.env.WOMPI_INTEGRITY_SECRET;
+  // .trim(): al copiar del panel de Wompi suele colarse un espacio o un salto
+  // de línea invisible, y bastaría eso para que la firma no cuadre nunca.
+  const llavePublica = (process.env.WOMPI_PUBLIC_KEY || '').trim();
+  const secreto = (process.env.WOMPI_INTEGRITY_SECRET || '').trim();
   if (!llavePublica || !secreto) {
     console.error('Faltan WOMPI_PUBLIC_KEY o WOMPI_INTEGRITY_SECRET');
     return res.status(503).json({ error: 'Pagos no configurados todavía' });
+  }
+
+  // Aviso claro en los logs si la variable trae el secreto equivocado: el panel
+  // de Wompi muestra juntos el de Eventos y el de Integridad, y se confunden.
+  if (!secreto.includes('integrity')) {
+    console.error('WOMPI_INTEGRITY_SECRET no parece el secreto de integridad. ' +
+      'Empieza por: ' + secreto.slice(0, 14) + '… (se espera prod_integrity_ o test_integrity_)');
+  }
+  if (llavePublica.startsWith('pub_prod_') && secreto.startsWith('test_')) {
+    console.error('Ambiente cruzado: llave de producción con secreto de pruebas');
   }
 
   let body;

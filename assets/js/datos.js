@@ -147,7 +147,7 @@ const DESTACADO_MENU = {
 
    Dentro de cada colección puede haber UNO O VARIOS LOTES.
    Cada lote es un café distinto y sale como su propia tarjeta en la web.
-   Hoy Deseo tiene dos: Borbón Rojo (Huila) y Ombligón (Tolima).
+   Hoy Pasión e Ilusión tienen dos cada una; Deseo y Euforia, uno.
 
    👉 PARA AGREGAR UN LOTE: copia un bloque de "lotes" y cambia los datos.
       Necesita un "id" único y una imagen en assets/products/.
@@ -202,6 +202,20 @@ const COLECCIONES = [
         insignias: ['Más vendido'],
         agotado:   false,
       },
+      {
+        id: 'pasion-narino',
+        imagen:    'assets/products/bolsa-pasion.jpg',
+        origen:    'Nariño',
+        variedad:  'Caturra',
+        proceso:   'Lavado',
+        notas:     'Caramelo · naranja · nuez tostada',
+        altura:    '2.000 msnm',
+        productor: '',
+        tueste:    'Medio',
+        perfil:    { aroma: 3, dulzura: 4, sabor: 4, acidez: 3, residual: 3, cuerpo: 4 },
+        insignias: [],
+        agotado:   false,
+      },
     ],
   },
 
@@ -222,16 +236,30 @@ const COLECCIONES = [
 
     lotes: [
       {
-        id: 'ilusion-gesha',
+        id: 'ilusion-borbon-rosado',
         imagen:    'assets/products/bolsa-ilusion.jpg',
         origen:    'Huila',
-        variedad:  'Gesha',
-        proceso:   'Lavado',
-        notas:     'Limoncillo · flores blancas · miel',
-        altura:    '1.750 msnm',
+        variedad:  'Borbón Rosado',
+        proceso:   'Honey',
+        notas:     'Cítrico · melocotón · caramelo',
+        altura:    '1.710 msnm',
         productor: '',
         tueste:    'Medio',
-        perfil:    { aroma: 4, dulzura: 4, sabor: 3, acidez: 4, residual: 3, cuerpo: 2 },
+        perfil:    { aroma: 3, dulzura: 3, sabor: 4, acidez: 3, residual: 4, cuerpo: 3 },
+        insignias: [],
+        agotado:   false,
+      },
+      {
+        id: 'ilusion-borbon-amarillo',
+        imagen:    'assets/products/bolsa-ilusion.jpg',
+        origen:    'Nariño',
+        variedad:  'Borbón Amarillo',
+        proceso:   'Honey',
+        notas:     'Tropical · alicorado · caña de azúcar',
+        altura:    '2.200 msnm',
+        productor: '',
+        tueste:    'Medio',
+        perfil:    { aroma: 4, dulzura: 4, sabor: 4, acidez: 4, residual: 4, cuerpo: 3 },
         insignias: [],
         agotado:   false,
       },
@@ -266,20 +294,6 @@ const COLECCIONES = [
         productor: '',
         tueste:    'Medio',
         perfil:    { aroma: 5, dulzura: 5, sabor: 4, acidez: 3, residual: 4, cuerpo: 3 },
-        insignias: ['Edición limitada'],
-        agotado:   false,
-      },
-      {
-        id: 'deseo-ombligon',
-        imagen:      'assets/products/bolsa-deseo.jpg',
-        origen:    'Tolima',
-        variedad:  'Ombligón',
-        proceso:   'Natural · 72 h de fermentación',
-        notas:     'Cacao · ciruela · avinado',
-        altura:    '1.700 msnm',
-        productor: '',
-        tueste:    'Medio',
-        perfil:    { aroma: 4, dulzura: 4, sabor: 3, acidez: 3, residual: 4, cuerpo: 3 },
         insignias: ['Edición limitada'],
         agotado:   false,
       },
@@ -784,7 +798,7 @@ const TEXTOS = {
   frase: 'El café es ese tipo de magia que te puedes tomar.',
   fraseAutor: 'Cmv',
 
-  intro: 'Somos la unión de un sinfín de emociones, sentimientos y sensaciones que nos produce el café. Te traemos los mejores cafés colombianos de diferentes orígenes, variedades y procesos.',
+  intro: 'Somos la unión de un sinfín de emociones, sentimientos y sensaciones que nos produce el café. Te traemos los mejores cafés de diferentes orígenes, variedades y procesos.',
 
   esencia: 'Queremos transmitir toda esa pasión y amor brindando los mejores cafés de diferentes orígenes, variedades y procesos, siempre resaltando y respetando el trabajo que hay detrás de un café especial.',
 };

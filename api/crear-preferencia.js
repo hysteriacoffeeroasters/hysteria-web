@@ -29,9 +29,11 @@ const CATALOGO = {
   // Debe coincidir con COLECCIONES[].presentaciones en assets/js/datos.js
   'pasion-colombia':        { nombre: 'Café Pasión · Colombia',                      precio: 39500,
                               presentaciones: { 340: 39500, 1000: 85000, 2500: 185000 } },
-  'ilusion-gesha':          { nombre: 'Café Ilusión · Gesha · Bolsa 340 g',          precio: 59500 },
+  'pasion-narino':          { nombre: 'Café Pasión · Caturra',                       precio: 39500,
+                              presentaciones: { 340: 39500, 1000: 85000, 2500: 185000 } },
+  'ilusion-borbon-rosado':  { nombre: 'Café Ilusión · Borbón Rosado · Bolsa 340 g',  precio: 59500 },
+  'ilusion-borbon-amarillo':{ nombre: 'Café Ilusión · Borbón Amarillo · Bolsa 340 g',precio: 59500 },
   'deseo-borbon-rojo':      { nombre: 'Café Deseo · Borbón Rojo · Bolsa 340 g',      precio: 75000 },
-  'deseo-ombligon':         { nombre: 'Café Deseo · Ombligón · Bolsa 340 g',         precio: 75000 },
   'euforia-borbon-naranja': { nombre: 'Café Euforia · Borbón Naranja · Bolsa 250 g', precio: 75000 },
   'pasaporte':              { nombre: 'Pasaporte Compass',                           precio: 25000 },
 };

@@ -43,12 +43,15 @@ const NEGOCIO = {
    --------------------------------------------------------------------------- */
 const PAGOS = {
 
+  // 'wompi'       → checkout real: tarjetas, PSE, Nequi, Bancolombia, efectivo
   // 'mercadopago' → checkout real: tarjetas, PSE, Efecty, cuotas
   // 'whatsapp'    → el pedido se cierra por WhatsApp, sin cobro en línea
   //
-  // 👉 CUANDO SE DESBLOQUEE TU CUENTA DE MERCADO PAGO:
-  //    1. cambia esta línea a  modo: 'mercadopago'
-  //    2. pon MP_ACCESS_TOKEN en Vercel y vuelve a desplegar
+  // 👉 PARA COBRAR CON WOMPI:
+  //    1. cambia esta línea a  modo: 'wompi'
+  //    2. en Vercel pon WOMPI_PUBLIC_KEY y WOMPI_INTEGRITY_SECRET
+  //       (comercios.wompi.co → Desarrolladores → Llaves de API)
+  //    3. vuelve a desplegar
   //    Los textos de los botones se ajustan solos.
   modo: 'whatsapp',
 

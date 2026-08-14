@@ -963,11 +963,69 @@
       .join('');
   }
 
+  /* ── Wompi ─────────────────────────────────────────────────────────────── */
+  // El servidor calcula el monto y lo firma; aquí solo se arma el formulario
+  // con lo que devuelve y se envía al checkout de Wompi.
+  async function pagarWompi(datos) {
+    const btn = $('#envio-pagar');
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Conectando…';
+
+    try {
+      const r = await fetch('/api/wompi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: carrito.map(l => ({
+            id: l.id, cantidad: l.cant,
+            gramos: l.esCafe ? l.gramos : 0,
+            molienda: l.esCafe ? l.molienda : ''
+          })),
+          datosEnvio: datos
+        })
+      });
+
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      if (!data.url || !data.campos) throw new Error('respuesta incompleta');
+
+      // Se recuerda la referencia para reconocer el pedido al volver
+      try { sessionStorage.setItem('hysteria_ref', data.referencia || ''); } catch (e) {}
+
+      const form = document.createElement('form');
+      form.method = 'GET';
+      form.action = data.url;
+      Object.keys(data.campos).forEach(k => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = k;
+        input.value = data.campos[k];
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
+      return;
+
+    } catch (err) {
+      console.warn('Wompi no disponible:', err);
+      btn.disabled = false;
+      btn.textContent = original;
+      if (PAGOS.respaldoWhatsapp) {
+        avisar('Cerramos tu pedido por WhatsApp');
+        irWhatsapp(datos);
+      } else {
+        avisar('No pudimos conectar con el pago. Intenta de nuevo.');
+      }
+    }
+  }
+
   async function pagar(datos) {
     if (!carrito.length) return;
     const btn = $('#envio-pagar');
     const original = btn.textContent;
 
+    if (PAGOS.modo === 'wompi') return pagarWompi(datos);
     if (PAGOS.modo !== 'mercadopago') return irWhatsapp(datos);
 
     btn.disabled = true;
@@ -1018,14 +1076,16 @@
     pintarDocumentos();
 
     // Los textos dicen la verdad según cómo se esté cobrando hoy
-    const porWhatsapp = PAGOS.modo !== 'mercadopago';
+    const enLinea = PAGOS.modo === 'wompi' || PAGOS.modo === 'mercadopago';
+    const porWhatsapp = !enLinea;
+    const pasarela = PAGOS.modo === 'wompi' ? 'Wompi' : 'Mercado Pago';
     const btnPagar = $('#envio-pagar');
     if (btnPagar) btnPagar.textContent = porWhatsapp ? 'Enviar pedido' : 'Ir a pagar';
     const notaEnvio = $('#nota-envio');
     if (notaEnvio) {
       notaEnvio.innerHTML = porWhatsapp
         ? 'Usamos tus datos solo para el envío y tu factura.<br>Coordinamos el pago contigo por WhatsApp.'
-        : 'Usamos tus datos solo para el envío y tu factura electrónica.<br>El cobro lo procesa Mercado Pago.';
+        : `Usamos tus datos solo para el envío y tu factura electrónica.<br>El cobro lo procesa ${esc(pasarela)}.`;
     }
     const notaResumen = $('#nota-resumen');
     if (notaResumen) {
@@ -1373,6 +1433,33 @@
     } else { el.classList.add('lista'); }
   }
 
+  // Consulta el estado real de la transacción antes de decirle nada al cliente
+  async function confirmarWompi(id, ref) {
+    const limpio = String(id || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+    if (!limpio) { avisar('No pudimos confirmar tu pago'); return; }
+
+    try {
+      const r = await fetch('/api/wompi-estado?id=' + encodeURIComponent(limpio));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const { estado, referencia } = await r.json();
+      const num = referencia || ref;
+
+      if (estado === 'APPROVED') {
+        carrito = []; guardarCarrito(); pintarCarrito();
+        avisar(num ? `¡Gracias! Tu pedido ${num} está confirmado` : '¡Gracias! Recibimos tu pedido');
+      } else if (estado === 'PENDING') {
+        // PSE y efectivo pueden tardar: el carrito NO se vacía todavía
+        avisar(num ? `Pedido ${num}: pago pendiente de confirmación`
+                   : 'Tu pago quedó pendiente de confirmación');
+      } else {
+        avisar('El pago no se completó. Tu carrito sigue intacto.');
+      }
+    } catch (err) {
+      console.warn('No pudimos confirmar el pago:', err);
+      avisar('No pudimos confirmar tu pago. Escríbenos y lo revisamos.');
+    }
+  }
+
   /* ── Arranque ──────────────────────────────────────────────────────────── */
   function iniciar() {
     cargarCarrito();
@@ -1398,10 +1485,15 @@
     iniciarReveal();
     inyectarSchema();
 
-    // Mensaje de vuelta desde Mercado Pago
+    // Mensaje de vuelta desde la pasarela
     const params = new URLSearchParams(location.search);
     const p = params.get('pago');
-    const ref = (params.get('ref') || '').replace(/[^A-Z0-9-]/gi, '').slice(0, 20);
+    const ref = (params.get('ref') || '').replace(/[^A-Z0-9-]/gi, '').slice(0, 24);
+
+    // Wompi devuelve a la MISMA dirección pase lo que pase, así que no se
+    // puede dar por hecho que el pago salió bien: hay que preguntárselo.
+    if (p === 'wompi') { confirmarWompi(params.get('id'), ref); return; }
+
     if (p === 'exito') {
       carrito = []; guardarCarrito(); pintarCarrito();
       avisar(ref ? `¡Gracias! Tu pedido ${ref} está confirmado` : '¡Gracias! Recibimos tu pedido');

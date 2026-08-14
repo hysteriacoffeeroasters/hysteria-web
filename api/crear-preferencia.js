@@ -16,54 +16,19 @@
    Después de guardarlo, vuelve a desplegar (Deployments → ⋯ → Redeploy).
    ========================================================================== */
 
-/* ⚠️ IMPORTANTE — PRECIOS DE SEGURIDAD
-   Los precios se vuelven a calcular AQUÍ, en el servidor. Nunca se confía en
-   lo que manda el navegador: si no fuera así, cualquiera podría editar el
-   carrito desde su navegador y pagar $1.
+/* ⚠️ PRECIOS DE SEGURIDAD
+   El catálogo y el armado del pedido viven en lib/pedido.js, compartidos con
+   Wompi: así el precio existe en un solo lugar y las dos pasarelas no pueden
+   quedar desincronizadas. Nunca se confía en lo que manda el navegador. */
+import {
+  construirPedido, leerDestino, validarDestino, nuevaReferencia,
+  SITE_URL, MOLIENDAS,
+} from '../lib/pedido.js';
 
-   👉 Si cambias un precio en assets/js/datos.js, cámbialo también aquí.
-   👉 Si agregas un LOTE nuevo, agrégalo también aquí con su mismo "id".
-      Si no está en esta lista, no se puede comprar.                          */
-const CATALOGO = {
-  // Con "presentaciones", el precio sale del tamaño que pidió el cliente.
-  // Debe coincidir con COLECCIONES[].presentaciones en assets/js/datos.js
-  'pasion-colombia':        { nombre: 'Café Pasión · Colombia',                      precio: 39500,
-                              presentaciones: { 340: 39500, 1000: 85000, 2500: 185000 } },
-  'pasion-narino':          { nombre: 'Café Pasión · Caturra',                       precio: 39500,
-                              presentaciones: { 340: 39500, 1000: 85000, 2500: 185000 } },
-  'ilusion-borbon-rosado':  { nombre: 'Café Ilusión · Borbón Rosado · Bolsa 340 g',  precio: 59500 },
-  'ilusion-borbon-amarillo':{ nombre: 'Café Ilusión · Borbón Amarillo · Bolsa 340 g',precio: 59500 },
-  'deseo-borbon-rojo':      { nombre: 'Café Deseo · Borbón Rojo · Bolsa 340 g',      precio: 75000 },
-  'euforia-borbon-naranja': { nombre: 'Café Euforia · Borbón Naranja · Bolsa 250 g', precio: 75000 },
-  'pasaporte':              { nombre: 'Pasaporte Compass',                           precio: 25000 },
-};
-
-const ENVIO = 15000;
-const ENVIO_GRATIS_DESDE = 120000;
-const MAX_UNIDADES = 50;
-
-// Dominio canónico fijo para las URLs de retorno del pago. No se deriva de las
-// cabeceras del request (evita el anti-patrón host-header). Se puede sobrescribir
-// con la variable de entorno SITE_URL en Vercel.
-const SITE_URL = (process.env.SITE_URL || 'https://www.hysteriacoffeeroasters.com').replace(/\/$/, '');
-
-/* Tipos de documento admitidos. Debe coincidir con DOCUMENTOS en assets/js/datos.js.
-   Mercado Pago Colombia solo reconoce CC, CE y NIT en payer.identification; los
+/* Mercado Pago Colombia solo reconoce CC, CE y NIT en payer.identification; los
    demás viajan como "Otro" en el pago, pero el tipo real se guarda en metadata
    porque es el que necesita la factura electrónica. */
-const DOCS_VALIDOS = ['CC', 'CE', 'NIT', 'PA', 'PEP', 'PPT', 'TI'];
 const DOC_MERCADOPAGO = { CC: 'CC', CE: 'CE', NIT: 'NIT' };
-
-/* Puntos de molienda. Debe coincidir con MOLIENDAS en assets/js/datos.js.
-   'grano' significa que la bolsa va sin moler. */
-const MOLIENDAS = {
-  'grano':        'grano entero',
-  'fina':         'molienda fina',
-  'medio-fina':   'molienda medio fina',
-  'media':        'molienda media',
-  'media-gruesa': 'molienda media gruesa',
-  'gruesa':       'molienda gruesa',
-};
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -92,84 +57,30 @@ export default async function handler(req, res) {
     }
 
     // Reconstruimos el pedido usando SOLO nuestros precios
-    const items = [];
-    const moliendas = [];
-    let subtotal = 0;
-
-    for (const linea of entrada) {
-      const prod = CATALOGO[linea.id];
-      if (!prod) continue;
-
-      let cant = parseInt(linea.cantidad, 10);
-      if (!Number.isFinite(cant) || cant < 1) cant = 1;
-      if (cant > MAX_UNIDADES) cant = MAX_UNIDADES;
-
-      // La molienda solo aplica al café; el pasaporte no la lleva
-      const esCafe = linea.id !== 'pasaporte';
-      const cod = String(linea.molienda || '').trim();
-      const molienda = esCafe ? (MOLIENDAS[cod] ? cod : 'grano') : '';
-      if (molienda) moliendas.push(`${prod.nombre}: ${MOLIENDAS[molienda]}`);
-
-      // Tamaño de la bolsa. Solo se acepta uno de los declarados aquí: lo que
-      // manda el navegador nunca fija el precio, solo elige entre los nuestros.
-      let precio = prod.precio;
-      let etiquetaTamano = '';
-      if (prod.presentaciones) {
-        const g = String(parseInt(linea.gramos, 10) || '');
-        const elegido = Object.prototype.hasOwnProperty.call(prod.presentaciones, g)
-          ? g
-          : String(Object.keys(prod.presentaciones)[0]);
-        precio = prod.presentaciones[elegido];
-        const n = Number(elegido);
-        etiquetaTamano = ' · Bolsa ' + (n < 1000 ? `${n} g` : `${String(n / 1000).replace('.', ',')} kg`);
-      }
-
-      subtotal += precio * cant;
-      items.push({
-        id: linea.id,
-        title: prod.nombre + etiquetaTamano + (molienda ? ` · ${MOLIENDAS[molienda]}` : ''),
-        quantity: cant,
-        unit_price: precio,
-        currency_id: 'COP',
-      });
-    }
-
-    if (!items.length) {
+    const pedido = construirPedido(entrada);
+    if (!pedido.lineas.length) {
       return res.status(400).json({ error: 'No reconocimos ningún producto' });
     }
 
-    const costoEnvio =
-      (ENVIO_GRATIS_DESDE > 0 && subtotal >= ENVIO_GRATIS_DESDE) ? 0 : ENVIO;
-
+    const items = pedido.lineas.map(l => ({
+      id: l.id,
+      title: l.titulo,
+      quantity: l.cantidad,
+      unit_price: l.precio,
+      currency_id: 'COP',
+    }));
+    const moliendas = pedido.moliendas;
+    const subtotal = pedido.subtotal;
+    const costoEnvio = pedido.costoEnvio;
     const base = SITE_URL;
 
     // Datos de envío que el cliente escribió antes de pagar. Se recortan y
     // validan aquí también: nunca se confía en lo que llega del navegador.
-    const limpio = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
-    const e = body.datosEnvio || {};
-    const dest = {
-      nombre:    limpio(e.nombre, 80),
-      telefono:  limpio(e.telefono, 30),
-      correo:    limpio(e.correo, 254).toLowerCase(),
-      doctipo:   limpio(e.doctipo, 6).toUpperCase(),
-      docnum:    limpio(e.docnum, 25),
-      ciudad:    limpio(e.ciudad, 60),
-      direccion: limpio(e.direccion, 160),
-      notas:     limpio(e.notas, 200),
-    };
+    const dest = leerDestino(body.datosEnvio);
+    const problema = validarDestino(dest);
+    if (problema) return res.status(400).json({ error: problema });
 
-    // Acepta dominios con varios niveles (unal.edu.co, empresa.com.co…)
-    const correoOk = /^[^\s@,;:<>()[\]\\]+@[^\s@.,;:<>()[\]\\]+(\.[^\s@.,;:<>()[\]\\]+)*\.[A-Za-z]{2,}$/.test(dest.correo);
-    if (!dest.nombre || !dest.telefono || !dest.ciudad || !dest.direccion ||
-        !correoOk || !dest.doctipo || dest.docnum.replace(/[\s.-]/g, '').length < 5) {
-      return res.status(400).json({ error: 'Faltan datos de envío o facturación' });
-    }
-    if (!DOCS_VALIDOS.includes(dest.doctipo)) {
-      return res.status(400).json({ error: 'Tipo de documento no válido' });
-    }
-
-    // Nº de pedido corto y legible, para cruzar el pago con el despacho
-    const referencia = 'HYS-' + Date.now().toString(36).toUpperCase().slice(-6);
+    const referencia = nuevaReferencia();
 
     const partes = dest.nombre.split(/\s+/);
     const preferencia = {

@@ -12,7 +12,9 @@
    ========================================================================== */
 
 import { construirPedido, leerDestino, validarDestino } from '../lib/pedido.js';
-import { enviarCorreoPedido, enviarCorreoCliente, yaAvisado } from '../lib/correo-pedido.js';
+import {
+  enviarCorreoPedido, enviarCorreoCliente, yaAvisado, yaAvisadoCliente,
+} from '../lib/correo-pedido.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -73,19 +75,29 @@ export default async function handler(req, res) {
       return res.status(200).json({ estado: 'APPROVED', avisado: false });
     }
 
-    // Si el evento de Wompi llegó primero y ya avisó, no se duplica nada
-    if (await yaAvisado(t.reference || id)) {
-      return res.status(200).json({ estado: 'APPROVED', avisado: false, duplicado: true });
+    const referencia = t.reference || id;
+
+    /* Si la hoja de despacho CON detalle ya salió, no se duplica nada. Ojo con
+       el matiz: si lo que salió fue el aviso provisional del webhook (etiqueta
+       distinta), esto NO lo bloquea — y es justo lo que se quiere, porque el
+       provisional no dice qué café despachar y este sí. */
+    if (await yaAvisado(referencia)) {
+      return res.status(200).json({ estado: 'APPROVED', avisado: true, duplicado: true });
     }
+
+    // Al cliente no se le escribe dos veces si el webhook ya le confirmó
+    const clienteYaTiene = await yaAvisadoCliente(referencia, dest.correo);
 
     const [avisado, clienteAvisado] = await Promise.all([
       enviarCorreoPedido({
-        referencia: t.reference || id,
+        referencia,
         pedido, dest,
         pasarela: 'Wompi',
         transaccion: id,
       }),
-      enviarCorreoCliente({ referencia: t.reference || id, pedido, dest }),
+      clienteYaTiene
+        ? Promise.resolve(true)
+        : enviarCorreoCliente({ referencia, pedido, dest }),
     ]);
 
     console.log('Wompi · pedido confirmado', JSON.stringify({

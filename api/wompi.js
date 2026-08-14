@@ -72,6 +72,9 @@ export default async function handler(req, res) {
     }
 
     const dest = leerDestino(body.datosEnvio);
+    // Solo se acepta 'en'; cualquier otra cosa cae en español. Este valor viaja
+    // a la dirección de regreso, así que no puede venir suelto del navegador.
+    const idioma = body.idioma === 'en' ? 'en' : 'es';
     const problema = validarDestino(dest);
     if (problema) return res.status(400).json({ error: problema });
 
@@ -106,7 +109,10 @@ export default async function handler(req, res) {
         'amount-in-cents': String(centavos),
         'reference': referencia,
         'signature:integrity': firma,
-        'redirect-url': `${SITE_URL}/?pago=wompi&ref=${encodeURIComponent(referencia)}`,
+        // Se vuelve a la portada del idioma en que se compró: el momento de
+        // "¿me cobraron o no?" es el peor para cambiarle el idioma a alguien.
+        'redirect-url': `${SITE_URL}${idioma === 'en' ? '/en' : '/'}` +
+                        `?pago=wompi&ref=${encodeURIComponent(referencia)}`,
         'customer-data:email': dest.correo,
         'customer-data:full-name': dest.nombre,
         'customer-data:phone-number': dest.telefono.replace(/\D/g, '').slice(-10),

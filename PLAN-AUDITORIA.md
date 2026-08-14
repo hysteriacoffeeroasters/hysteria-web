@@ -36,7 +36,7 @@ Informe legible: https://claude.ai/code/artifact/383339f5-7715-4a4d-94f7-8a87e51
 
 | Grupo | Hallazgos | Estado |
 |---|---|---|
-| A · Pedidos y avisos | 01, 02, 08, 09, 13 | [ ] pendiente |
+| A · Pedidos y avisos | 01, 02, 08, 09, 13 | [x] **hecho** · commit `GRUPO A` |
 | B · Carrito | 03, 10, 11, 12, 24, 25 | [ ] pendiente |
 | C · Bilingüe | 04, 14, 15, 16 | [ ] pendiente |
 | D · SEO y documentación | 05, 06, 17, 18, 22, 23 | [ ] pendiente |
@@ -46,7 +46,7 @@ Informe legible: https://claude.ai/code/artifact/383339f5-7715-4a4d-94f7-8a87e51
 
 ## GRUPO A · Pedidos y avisos
 
-### [ ] 01 · ALTO — Si Brevo falla, el pedido se pierde y el cliente ve "confirmado"
+### [x] 01 · ALTO — Si Brevo falla, el pedido se pierde y el cliente ve "confirmado"
 
 **Enfoque decidido.** No hay almacén (ni KV ni Blob; `package.json` no tiene
 dependencias). No se va a fingir que se arregló la persistencia. Se ataca el
@@ -66,7 +66,7 @@ DAÑO, que son tres cosas:
 Requiere que él cree un store en el panel de Vercel (Blob o KV) y pegue el
 token; sin eso no se puede hacer desde aquí. Anotarlo como pendiente suyo.
 
-### [ ] 02 · MEDIO — El aviso de Wompi le gana la carrera y la hoja llega sin detalle
+### [x] 02 · MEDIO — El aviso de Wompi le gana la carrera y la hoja llega sin detalle
 
 **Enfoque decidido.** Hoy las dos vías se excluyen con `yaAvisado(referencia)`
 y gana la primera. Cambiar a etiquetas distintas:
@@ -84,15 +84,15 @@ detalle. Hoy llega uno solo y es inútil.
 **Además:** quitar del correo provisional la frase *"el cliente no volvió a la
 web tras pagar"*, que es falsa cuando sí volvió. Decir "detalle en camino".
 
-### [ ] 08 · BAJO — El antiduplicados es un check-then-act contra el log de Brevo
+### [x] 08 · BAJO — El antiduplicados es un check-then-act contra el log de Brevo
 Se mitiga con lo de 02 (etiquetas separadas). Documentar la ventana que queda
 en un comentario. No se puede cerrar del todo sin almacén propio.
 
-### [ ] 09 · BAJO — Si falla el correo al negocio, el cliente recibe hasta 3 copias
+### [x] 09 · BAJO — Si falla el correo al negocio, el cliente recibe hasta 3 copias
 `api/wompi-eventos.js` (~114-129): separar el estado de los dos correos.
 Reintentar solo lo que falló; no volver a enviar al cliente si el suyo sí salió.
 
-### [ ] 13 · BAJO — Tras pagar, Wompi devuelve siempre a la portada en español
+### [x] 13 · BAJO — Tras pagar, Wompi devuelve siempre a la portada en español
 `api/wompi.js` (~109): aceptar el idioma en el cuerpo de la petición y armar
 `redirect-url` con `/en` cuando corresponda. En `assets/js/app.js`, `pagarWompi`
 debe mandar `idioma: IDIOMA`.

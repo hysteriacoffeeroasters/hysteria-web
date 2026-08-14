@@ -971,7 +971,7 @@
     const btn = $('#envio-pagar');
     const original = btn.textContent;
     btn.disabled = true;
-    btn.textContent = 'Conectando…';
+    btn.textContent = traducir('Conectando…');
 
     try {
       const r = await fetch('/api/wompi', {
@@ -983,7 +983,9 @@
             gramos: l.esCafe ? l.gramos : 0,
             molienda: l.esCafe ? l.molienda : ''
           })),
-          datosEnvio: datos
+          datosEnvio: datos,
+          // Para que Wompi devuelva a la portada del idioma en que se compró
+          idioma: typeof IDIOMA !== 'undefined' ? IDIOMA : 'es'
         })
       });
 
@@ -1466,13 +1468,24 @@
         })
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      const { estado } = await r.json();
+      const { estado, avisado } = await r.json();
       const num = ref;
 
-      if (estado === 'APPROVED') {
+      if (estado === 'APPROVED' && avisado) {
         carrito = []; guardarCarrito(); pintarCarrito();
         avisar(num ? traducir('¡Gracias! Tu pedido') + ' ' + num + ' ' + traducir('está confirmado')
                    : traducir('¡Gracias! Recibimos tu pedido'));
+
+      } else if (estado === 'APPROVED') {
+        /* El pago sí entró, pero el aviso al negocio no salió. Antes se decía
+           "confirmado" igual y se vaciaba el carrito, que era la única copia
+           del detalle: el cliente quedaba tranquilo y el pedido se perdía.
+           Ahora se le dice la verdad y el carrito NO se toca. */
+        avisar(num
+          ? traducir('Tu pago se procesó. Estamos confirmando el pedido') + ' ' + num +
+            '. ' + traducir('Guarda esta referencia.')
+          : traducir('Tu pago se procesó. Estamos confirmando tu pedido.'));
+
       } else if (estado === 'PENDING') {
         // PSE y efectivo pueden tardar: el carrito NO se vacía todavía
         avisar(num ? traducir('Pedido') + ' ' + num + ': ' + traducir('pago pendiente de confirmación')

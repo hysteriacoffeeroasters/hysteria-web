@@ -15,7 +15,10 @@
    ========================================================================== */
 
 import { createHash } from 'node:crypto';
-import { enviarCorreoPedido, enviarCorreoCliente, yaAvisado } from '../lib/correo-pedido.js';
+import {
+  enviarCorreoPedido, enviarCorreoCliente,
+  yaAvisado, yaAvisadoProvisional, yaAvisadoCliente,
+} from '../lib/correo-pedido.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -87,20 +90,32 @@ export default async function handler(req, res) {
       notas:     '',
     };
 
-    // Si esta referencia ya se avisó (porque el cliente volvió a la web y esa
-    // vía llegó primero), aquí no hay nada más que hacer.
     const referencia = t.reference || id;
+
+    // Si ya salió la hoja de despacho CON detalle (porque el cliente volvió a
+    // la web), aquí no hay nada que hacer: la buena ya está enviada.
     if (await yaAvisado(referencia)) {
       return res.status(200).json({ recibido: true, avisado: false, duplicado: true });
     }
+    // Y si ya salió el provisional, tampoco: es un reintento de este mismo
+    // webhook. Se responde 200 para que Wompi deje de reintentar.
+    if (await yaAvisadoProvisional(referencia)) {
+      return res.status(200).json({ recibido: true, avisado: false, duplicado: 'provisional' });
+    }
 
-    // El detalle de productos vive en el navegador del cliente; si no volvió
-    // a la web, aquí solo se conoce el monto. La nota es SOLO para el negocio.
+    /* El detalle de productos vive en el navegador del cliente. Este aviso es
+       PROVISIONAL: sale etiquetado aparte, así que no bloquea a la hoja de
+       despacho con detalle si el cliente vuelve un momento después.
+
+       Antes esta línea afirmaba que el cliente no había vuelto a la web, y era
+       falso en el caso más común: que el evento simplemente corriera más que
+       la redirección del navegador. */
     const pedidoInterno = {
       lineas: [{
         id: 'pedido',
-        titulo: `Pedido por ${'$' + total.toLocaleString('es-CO')} — detalle no transmitido ` +
-                `(el cliente no volvió a la web tras pagar). Confírmalo con él o con la referencia.`,
+        titulo: `Pago recibido por ${'$' + total.toLocaleString('es-CO')} — el detalle del ` +
+                `pedido llega en un segundo correo con esta misma referencia. Si no llega ` +
+                `en unos minutos, confírmalo con el cliente.`,
         cantidad: 1,
         precio: total,
       }],
@@ -111,22 +126,33 @@ export default async function handler(req, res) {
     // El cliente ya sabe qué pidió: su correo solo confirma pago y total
     const pedidoCliente = { lineas: [], subtotal: total, costoEnvio: 0, total };
 
-    const [avisado] = await Promise.all([
+    /* Los dos correos se piden a la vez pero se resuelven por separado: antes
+       el código de respuesta miraba solo el del negocio, así que un fallo suyo
+       hacía que Wompi reintentara y el cliente recibiera su confirmación
+       repetida hasta tres veces. */
+    const clienteYaTiene = await yaAvisadoCliente(referencia, dest.correo);
+
+    const [avisado, clienteAvisado] = await Promise.all([
       enviarCorreoPedido({
         referencia,
         pedido: pedidoInterno, dest,
         pasarela: `Wompi (${t.payment_method_type || 'evento'})`,
         transaccion: id,
+        provisional: true,
       }),
-      enviarCorreoCliente({ referencia, pedido: pedidoCliente, dest, sinDetalle: true }),
+      clienteYaTiene
+        ? Promise.resolve(true)
+        : enviarCorreoCliente({ referencia, pedido: pedidoCliente, dest, sinDetalle: true }),
     ]);
 
     console.log('Wompi · evento procesado', JSON.stringify({
-      referencia: t.reference, total, avisado, metodo: t.payment_method_type,
+      referencia: t.reference, total, avisado, clienteAvisado,
+      metodo: t.payment_method_type,
     }));
 
-    // Si el correo falló, 500: Wompi reintenta hasta 3 veces en 24 horas
-    return res.status(avisado ? 200 : 500).json({ recibido: true, avisado });
+    // Si el aviso al negocio falló, 500: Wompi reintenta hasta 3 veces en 24 h.
+    // El del cliente no entra en esta decisión, a propósito.
+    return res.status(avisado ? 200 : 500).json({ recibido: true, avisado, clienteAvisado });
 
   } catch (err) {
     console.error('Error procesando el evento de Wompi:', err);

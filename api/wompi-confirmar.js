@@ -12,7 +12,7 @@
    ========================================================================== */
 
 import { construirPedido, leerDestino, validarDestino } from '../lib/pedido.js';
-import { enviarCorreoPedido } from '../lib/correo-pedido.js';
+import { enviarCorreoPedido, enviarCorreoCliente } from '../lib/correo-pedido.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -73,15 +73,19 @@ export default async function handler(req, res) {
       return res.status(200).json({ estado: 'APPROVED', avisado: false });
     }
 
-    const avisado = await enviarCorreoPedido({
-      referencia: t.reference || id,
-      pedido, dest,
-      pasarela: 'Wompi',
-      transaccion: id,
-    });
+    const [avisado, clienteAvisado] = await Promise.all([
+      enviarCorreoPedido({
+        referencia: t.reference || id,
+        pedido, dest,
+        pasarela: 'Wompi',
+        transaccion: id,
+      }),
+      enviarCorreoCliente({ referencia: t.reference || id, pedido, dest }),
+    ]);
 
     console.log('Wompi · pedido confirmado', JSON.stringify({
-      referencia: t.reference, total: pedido.total, ciudad: dest.ciudad, avisado,
+      referencia: t.reference, total: pedido.total, ciudad: dest.ciudad,
+      avisado, clienteAvisado,
       items: pedido.lineas.map(l => `${l.cantidad}x ${l.titulo}`).join(' | '),
     }));
 

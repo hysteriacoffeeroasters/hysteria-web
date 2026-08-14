@@ -1509,7 +1509,13 @@
 
     // Wompi devuelve a la MISMA dirección pase lo que pase, así que no se
     // puede dar por hecho que el pago salió bien: hay que preguntárselo.
-    if (p === 'wompi') { confirmarWompi(params.get('id'), ref); return; }
+    // La dirección se limpia para que un refresco no repita la confirmación.
+    if (p === 'wompi') {
+      const idPago = params.get('id');
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+      confirmarWompi(idPago, ref);
+      return;
+    }
 
     if (p === 'exito') {
       carrito = []; guardarCarrito(); pintarCarrito();

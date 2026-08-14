@@ -1137,8 +1137,11 @@ body.hub { padding-top: 0; display: flex; min-height: 100vh; }
   display: flex; flex-wrap: wrap; gap: 0.6rem;
   justify-content: center; margin-top: 1.6rem;
 }
+/* Esta página se toca con el pulgar y nada más: los 44 px de alto mínimo no
+   son decorativos, son el tamaño por debajo del cual se falla el toque. */
 .hub-directo {
-  border: 1px solid var(--border-soft); padding: 9px 16px;
+  display: inline-flex; align-items: center; min-height: 44px;
+  border: 1px solid var(--border-soft); padding: 9px 18px;
   font-family: var(--label); font-size: 10.5px;
   letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--ink-3); text-decoration: none;
@@ -1146,10 +1149,12 @@ body.hub { padding-top: 0; display: flex; min-height: 100vh; }
 }
 .hub-directo:hover, .hub-directo:focus-visible { border-color: var(--white); color: var(--white); }
 
-.hub-pie { margin-top: auto; padding-top: 2.2rem; text-align: center; }
+.hub-pie { margin-top: auto; padding-top: 1.4rem; text-align: center; }
 .hub-pie a {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 0 18px;
   font-family: var(--label); font-size: 10.5px;
   letter-spacing: 0.22em; text-transform: uppercase;
   color: var(--ink-4); text-decoration: none;
 }
-.hub-pie a:hover { color: var(--white); }
+.hub-pie a:hover, .hub-pie a:focus-visible { color: var(--white); }

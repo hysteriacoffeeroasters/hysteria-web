@@ -17,18 +17,23 @@ Informe legible: https://claude.ai/code/artifact/383339f5-7715-4a4d-94f7-8a87e51
 
 1. **El español es la fuente.** El inglés es una capa (`assets/js/en.js`, GENERADO).
    Si una frase no está traducida, sale en español — nunca rota.
-2. **`assets/js/en.js` no se edita a mano.** Se regenera desde
+2. **Ojo con el orden de traduccion:** `traducirDatos()` traduce los datos ANTES
+   de que se pinten, asi que en el momento del pintado `L.tueste` ya viene en
+   ingles. Componer etiqueta + valor con `traducir()` en las dos partes
+   duplica palabras. El generador tiene un bloque de `overrides` que gana al
+   workflow, justo para estos choques.
+3. **`assets/js/en.js` no se edita a mano.** Se regenera desde
    `scratchpad/ui-en.json` + la salida del workflow de traducción. Si el
    scratchpad ya no existe, editar `en.js` directamente y anotarlo aquí.
-3. **No se usa "Colombian coffee" como reclamo.** La Federación Nacional de
+4. **No se usa "Colombian coffee" como reclamo.** La Federación Nacional de
    Cafeteros lo prohíbe a quien no es miembro. Sí se nombra el origen concreto.
-4. **Los correos de pedido van en español a propósito**, aunque el cliente
+5. **Los correos de pedido van en español a propósito**, aunque el cliente
    compre desde `/en`. Decisión de Andrés, no es un fallo.
-5. **El favicon está congelado** hasta el 4 de septiembre esperando que Google
+6. **El favicon está congelado** hasta el 4 de septiembre esperando que Google
    lo rastree. NO tocar `favicon.ico` ni los `favicon-*.png`.
-6. **Nunca escribir secretos en archivos del repo.** Van en variables de
+7. **Nunca escribir secretos en archivos del repo.** Van en variables de
    entorno de Vercel. `lib/` se sirve público (hallazgo 23).
-7. **Verificar en producción tras cada despliegue**, no solo en local.
+8. **Verificar en producción tras cada despliegue**, no solo en local.
 
 ---
 
@@ -38,7 +43,7 @@ Informe legible: https://claude.ai/code/artifact/383339f5-7715-4a4d-94f7-8a87e51
 |---|---|---|
 | A · Pedidos y avisos | 01, 02, 08, 09, 13 | [x] **hecho** · commit `GRUPO A` |
 | B · Carrito | 03, 10, 11, 12, 24, 25 | [x] **hecho** · commit `GRUPO B` |
-| C · Bilingüe | 04, 14, 15, 16 | [ ] pendiente |
+| C · Bilingüe | 04, 14, 15, 16 | [x] **hecho** · commit `GRUPO C` |
 | D · SEO y documentación | 05, 06, 17, 18, 22, 23 | [ ] pendiente |
 | E · Accesibilidad y contenido | 07, 19, 20, 21 | [ ] pendiente |
 
@@ -132,25 +137,25 @@ hacen los botones de cantidad de esa misma fila.
 
 ## GRUPO C · Bilingüe
 
-### [ ] 04 · MEDIO — Tres textos en español visibles al cargar /en
+### [x] 04 · MEDIO — Tres textos en español visibles al cargar /en
 - `assets/js/app.js:197` → "En barra, taza filtrada $11.500"
 - `assets/js/app.js:506` → "DE LA CASA"
 - `assets/js/enlaces.js:43` → "Cómo llegar" (ya llama a `traducir()`, falta la
   entrada en el diccionario)
 
-### [ ] 14 · BAJO — Siete textos más, al interactuar
+### [x] 14 · BAJO — Siete textos más, al interactuar
 "✓ ENVÍO GRATIS APLICADO", "Conectando…", "Enviando…", "Experiencia",
 el `aria-label` del botón del carrito, `tu@correo.com` en los dos formularios
 de `/en`, y el **tueste que se lee "Roast medium roast"** (el diccionario
 traduce "Medio"→"Medium roast" y el código le antepone "Roast": quitar la
 palabra repetida).
 
-### [ ] 15 · BAJO — El carrito se congela en el idioma en que se agregó
+### [x] 15 · BAJO — El carrito se congela en el idioma en que se agregó
 **Cuidado:** arreglarlo guardando solo el id invalidaría los carritos que los
 clientes tienen guardados hoy. Enfoque seguro: guardar el `id` junto al nombre
 y, al pintar, preferir el nombre del catálogo actual si el lote existe.
 
-### [ ] 16 · BAJO — No se dice que los precios son en pesos colombianos
+### [x] 16 · BAJO — No se dice que los precios son en pesos colombianos
 `assets/js/app.js:12` (`money`): en inglés, añadir "COP" junto al importe.
 
 ---

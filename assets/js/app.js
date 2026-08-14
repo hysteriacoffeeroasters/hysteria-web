@@ -9,7 +9,12 @@
   const $  = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-  const money = n => '$' + Number(n || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 });
+  /* Los importes se escriben siempre a la colombiana ($39.500), que es como
+     los ve el cliente en la tienda y en Wompi. En inglés se añade "COP"
+     detrás: un lector anglófono lee "$39.500" como treinta y nueve dólares
+     con cincuenta, y no descubría el importe real hasta llegar a la pasarela. */
+  const money = n => '$' + Number(n || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 }) +
+    (typeof IDIOMA !== 'undefined' && IDIOMA === 'en' ? ' COP' : '');
 
   const esc = s => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -218,7 +223,12 @@
       const extras = [
         L.altura ? traducir('Altura') + ': ' + L.altura : '',
         L.productor ? L.productor : '',
-        L.tueste ? traducir('Tueste') + ' ' + traducir(String(L.tueste)).toLowerCase() : ''
+        /* Ojo: para cuando esto se pinta, traducirDatos() ya pasó L.tueste al
+           idioma de la página. Si el diccionario tradujera "Medio" como
+           "Medium roast", esta línea diría "Roast medium roast"; por eso la
+           entrada del diccionario es "Medium" a secas y la etiqueta pone el
+           resto. En español no hay diccionario, así que sale "Tueste medio". */
+        L.tueste ? traducir('Tueste') + ': ' + String(L.tueste).toLowerCase() : ''
       ].filter(Boolean).join(' · ');
 
       const badges = (L.agotado ? ['<span class="badge agotado">' + esc(traducir('Agotado')) + '</span>'] : [])
@@ -257,7 +267,7 @@
             <div>
               <div class="coffee-price-k">${esc(traducir('Bolsa'))} ${c.gramos} g</div>
               <div class="coffee-price">${money(c.precios.bolsa)}</div>
-              ${c.precios.taza ? `<div class="coffee-cup">En barra, taza filtrada ${money(c.precios.taza)}</div>` : ''}
+              ${c.precios.taza ? `<div class="coffee-cup">${esc(traducir('En barra, taza filtrada'))} ${money(c.precios.taza)}</div>` : ''}
             </div>
             <button class="btn btn-ghost btn-sm js-add" data-id="${esc(L.id)}" ${L.agotado ? 'disabled' : ''}>
               ${esc(traducir(L.agotado ? 'Agotado' : 'Agregar'))}
@@ -566,7 +576,7 @@
              width="800" height="1000" loading="lazy" decoding="async">
       </figure>
       <div class="destacado-info">
-        <p class="sec-tag">De la casa</p>
+        <p class="sec-tag">${esc(traducir('De la casa'))}</p>
         <h3 class="destacado-titulo">${esc(d.titulo)}</h3>
         ${d.bajada ? `<p class="destacado-bajada">${esc(d.bajada)}</p>` : ''}
         ${precio !== null ? `<p class="destacado-precio">${money(precio)}</p>` : ''}
@@ -626,10 +636,15 @@
     const id = b.dataset.id;
 
     if (id === 'pasaporte') {
-      agregar({ id: 'pasaporte', nombre: PASAPORTE.nombre, variante: 'Experiencia',
-                // Ruta absoluta a propósito: sin la barra inicial, en las páginas de
-      // /en el navegador la buscaba en /en/assets/ y la miniatura salía rota.
-      precio: PASAPORTE.precio, img: '/assets/logo/icono-white.png' });
+      agregar({
+        id: 'pasaporte',
+        nombre: PASAPORTE.nombre,
+        variante: traducir('Experiencia'),
+        precio: PASAPORTE.precio,
+        // Ruta absoluta a propósito: sin la barra inicial, en las páginas de
+        // inglés el navegador la buscaba una carpeta más abajo y salía rota.
+        img: '/assets/logo/icono-white.png',
+      });
       return;
     }
     const hit = buscarLote(id);
@@ -645,6 +660,22 @@
       img: L.imagen
     });
   });
+
+  /* El nombre que se muestra de una línea guardada.
+     El carrito guarda el nombre ya armado, así que quien metía un café
+     navegando en español y luego pasaba a /en seguía viendo "Café Ilusión ·
+     Borbón Rosado" dentro de un carrito por lo demás inglés. Si el producto
+     sigue en el catálogo, manda el catálogo —que ya está en el idioma de la
+     página—; si no, se usa el nombre guardado, que es mejor que nada. */
+  function nombreVigente(l) {
+    if (l.id === 'pasaporte') {
+      return (typeof PASAPORTE !== 'undefined' && PASAPORTE.nombre) || l.nombre;
+    }
+    const hit = buscarLote(l.id);
+    if (!hit) return l.nombre;
+    const { col: c, lote: L } = hit;
+    return traducir('Café') + ' ' + c.nombre + (puesto(L.variedad) ? ' · ' + L.variedad : '');
+  }
 
   /* ── Molienda ──────────────────────────────────────────────────────────── */
   const nombreMolienda = cod => {
@@ -756,7 +787,7 @@
     const badge = $('#cart-count');
     if (badge) { badge.textContent = n; badge.classList.toggle('on', n > 0); }
     const lbl = $('#cart-btn');
-    if (lbl) lbl.setAttribute('aria-label', n ? `Carrito, ${n} producto${n > 1 ? 's' : ''}` : 'Carrito vacío');
+    if (lbl) lbl.setAttribute('aria-label', n ? traducir('Carrito') + ', ' + n + ' ' + traducir(n > 1 ? 'productos' : 'producto') : traducir('Carrito vacío'));
 
     if (!cont || !foot) return;
 
@@ -794,18 +825,18 @@
       <div class="cart-line">
         <img class="cart-line-img" src="${esc(l.img)}" alt="" loading="lazy">
         <div class="cart-line-mid">
-          <div class="cart-line-name">${esc(l.nombre)}</div>
+          <div class="cart-line-name">${esc(nombreVigente(l))}</div>
           <div class="cart-line-var">${esc(varianteDe(l))}</div>
           <div class="cart-line-price">${money(l.precio)} ${esc(traducir('c/u'))}</div>
         </div>
         <div class="cart-line-right">
           <div class="qty">
-            <button data-menos="${esc(k)}" aria-label="${esc(traducir('Quitar una unidad de'))} ${esc(l.nombre)}">−</button>
+            <button data-menos="${esc(k)}" aria-label="${esc(traducir('Quitar una unidad de'))} ${esc(nombreVigente(l))}">−</button>
             <span>${l.cant}</span>
-            <button data-mas="${esc(k)}" aria-label="${esc(traducir('Agregar una unidad de'))} ${esc(l.nombre)}">+</button>
+            <button data-mas="${esc(k)}" aria-label="${esc(traducir('Agregar una unidad de'))} ${esc(nombreVigente(l))}">+</button>
           </div>
           <button class="cart-line-del" data-quitar="${esc(k)}"
-                  aria-label="${esc(traducir('Quitar'))} ${esc(l.nombre)}">${esc(traducir('Quitar'))}</button>
+                  aria-label="${esc(traducir('Quitar'))} ${esc(nombreVigente(l))}">${esc(traducir('Quitar'))}</button>
         </div>
         ${l.esCafe ? `
         <div class="cart-line-opts">
@@ -813,7 +844,7 @@
             const tam = presentacionesDe(l.id);
             return tam.length > 1 ? `
           <label class="opt">
-            <span class="sr-only">${esc(traducir('Tamaño de la bolsa de'))} ${esc(l.nombre)}</span>
+            <span class="sr-only">${esc(traducir('Tamaño de la bolsa de'))} ${esc(nombreVigente(l))}</span>
             <select data-tamano="${esc(k)}">
               ${tam.map(p => `
                 <option value="${esc(p.gramos)}" ${Number(l.gramos) === Number(p.gramos) ? 'selected' : ''}
@@ -822,7 +853,7 @@
           </label>` : '';
           })()}
           <label class="opt">
-            <span class="sr-only">${esc(traducir('Presentación de'))} ${esc(l.nombre)}</span>
+            <span class="sr-only">${esc(traducir('Presentación de'))} ${esc(nombreVigente(l))}</span>
             <select data-forma="${esc(k)}">
               <option value="grano" ${l.molienda === 'grano' ? 'selected' : ''}>${esc(traducir('Grano entero'))}</option>
               <option value="molido" ${molido ? 'selected' : ''}>${esc(traducir('Molido'))}</option>
@@ -830,7 +861,7 @@
           </label>
           ${molido ? `
           <label class="opt">
-            <span class="sr-only">${esc(traducir('Punto de molienda de'))} ${esc(l.nombre)}</span>
+            <span class="sr-only">${esc(traducir('Punto de molienda de'))} ${esc(nombreVigente(l))}</span>
             <select data-molienda="${esc(k)}">
               ${listaMoliendas.map(m => `
                 <option value="${esc(m.codigo)}" ${l.molienda === m.codigo ? 'selected' : ''}
@@ -844,7 +875,7 @@
     const falta = PAGOS.envioGratisDesde > 0 ? PAGOS.envioGratisDesde - subtotal() : -1;
     $('#cart-sums').innerHTML = `
       ${falta > 0 ? `<div class="cart-row"><span>${esc(traducir('Te faltan'))} ${money(falta)} ${esc(traducir('para el envío gratis'))}</span></div>` : ''}
-      ${falta <= 0 && PAGOS.envioGratisDesde > 0 ? `<div class="cart-envio-libre">✓ Envío gratis aplicado</div>` : ''}
+      ${falta <= 0 && PAGOS.envioGratisDesde > 0 ? `<div class="cart-envio-libre">✓ ${esc(traducir('Envío gratis aplicado'))}</div>` : ''}
       <div class="cart-row"><span>${esc(traducir('Subtotal'))}</span><span>${money(subtotal())}</span></div>
       <div class="cart-row"><span>${esc(traducir('Envío'))}</span><span>${envio() === 0 ? esc(traducir('Gratis')) : money(envio())}</span></div>
       <div class="cart-row total"><span>${esc(traducir('Total'))}</span><span>${money(total())}</span></div>`;
@@ -1311,7 +1342,7 @@
       const textoBtn = btn.textContent;
       btn.disabled = true;
       msg.style.color = '';
-      msg.textContent = 'Enviando…';
+      msg.textContent = traducir('Enviando…');
 
       const respaldoCorreo = () => {
         window.location.href = `mailto:${NEGOCIO.correo}` +

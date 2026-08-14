@@ -126,7 +126,7 @@
       <label class="campo">
         <span>${traducir('Correo')} <em>${traducir('(ahí llega tu factura)')}</em></span>
         <input type="email" id="env-correo" name="correo" autocomplete="email"
-               inputmode="email" placeholder="tu@correo.com" required>
+               inputmode="email" placeholder="${traducir('tu@correo.com')}" required>
       </label>
 
       <div class="campo-fila">

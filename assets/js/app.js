@@ -1288,24 +1288,31 @@
     document.body.classList.remove('no-scroll');
   }
   function iniciarNav() {
+    // Las páginas de sección llevan una barra simplificada, sin menú móvil:
+    // cada parte se activa solo si existe, para no romper el resto del arranque.
     const t = $('#nav-toggle'), m = $('#nav-mobile');
-    m.setAttribute('inert', '');   // arranca cerrado, fuera del orden de tabulación
-    t.addEventListener('click', () => {
-      const abierto = m.classList.toggle('open');
-      m.toggleAttribute('inert', !abierto);
-      t.setAttribute('aria-expanded', String(abierto));
-      t.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
-      document.body.classList.toggle('no-scroll', abierto);
-    });
-    $$('a', m).forEach(a => a.addEventListener('click', cerrarNavMovil));
+    if (t && m) {
+      m.setAttribute('inert', '');   // arranca cerrado, fuera del orden de tabulación
+      t.addEventListener('click', () => {
+        const abierto = m.classList.toggle('open');
+        m.toggleAttribute('inert', !abierto);
+        t.setAttribute('aria-expanded', String(abierto));
+        t.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
+        document.body.classList.toggle('no-scroll', abierto);
+      });
+      $$('a', m).forEach(a => a.addEventListener('click', cerrarNavMovil));
+    }
 
     const nav = $('#nav');
-    const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 12);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
+    if (nav) {
+      const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 12);
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    }
 
-    // Resalta la sección visible
-    const enlaces = $$('.nav-links a');
+    // Resalta la sección visible. Solo aplica a anclas internas (#seccion):
+    // en las landings los enlaces salen a otras páginas.
+    const enlaces = $$('.nav-links a').filter(a => (a.getAttribute('href') || '').startsWith('#'));
     const secciones = enlaces.map(a => $(a.getAttribute('href'))).filter(Boolean);
     if ('IntersectionObserver' in window && secciones.length) {
       const io = new IntersectionObserver(entries => {

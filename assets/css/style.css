@@ -899,10 +899,27 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
   border-radius: 0; -webkit-appearance: none; appearance: none;
 }
 .campo input::placeholder { color: rgba(255,255,255,0.32); }
+
+/* Foco y error se repartían el MISMO recurso —el color del borde— y ganaba el
+   rojo: al pagar con algún dato incompleto, el campo donde estaba el cursor no
+   se distinguía en nada de los demás campos en rojo. El caso sin ninguna pista
+   era el desplegable de tipo de documento, que ni siquiera tiene cursor
+   parpadeante.
+
+   Ahora cada uno tiene lo suyo: el BORDE dice qué corregir, el CONTORNO dice
+   dónde estás. Como son propiedades distintas no compiten, y el orden de abajo
+   deja que el error mande siempre sobre el borde. */
 .campo input:focus,
 .campo select:focus { border-color: var(--white); }
+
 .campo input[aria-invalid="true"],
 .campo select[aria-invalid="true"] { border-color: #FF6B6B; }
+
+.campo input:focus-visible,
+.campo select:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
+}
 
 /* el desplegable necesita su propia flecha al quitarle la del sistema */
 .campo select {

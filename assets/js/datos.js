@@ -284,7 +284,7 @@ const COLECCIONES = [
       parDeTazas: 22500,
     },
 
-    // Deseo tiene DOS lotes activos. Los dos salen en la web.
+    // Deseo tiene un solo lote activo: el Borbón Rojo.
     lotes: [
       {
         id: 'deseo-borbon-rojo',
@@ -532,7 +532,7 @@ const PREPARACION = {
       ficha: [
         { k: 'Café peso', v: '15 g' },
         { k: 'Tiempo total', v: '3:00–3:30 minutos' },
-        { k: 'Agua filtrada', v: '250 ml (ratio 1:16.6)' },
+        { k: 'Agua filtrada', v: '250 ml (ratio 1:17)' },
         { k: 'Nº de filtros', v: '1 filtro V60 tamaño 01/02' },
         { k: 'Molienda', v: 'media-fina' },
         { k: 'Método', v: 'vertido / pour over' },
@@ -555,7 +555,7 @@ const PREPARACION = {
       ficha: [
         { k: 'Café peso', v: '30 g' },
         { k: 'Tiempo total', v: '4:00–4:30 minutos' },
-        { k: 'Agua filtrada', v: '500 ml (ratio 1:16)' },
+        { k: 'Agua filtrada', v: '500 ml (ratio 1:17)' },
         { k: 'Nº de filtros', v: '1 filtro Chemex' },
         { k: 'Molienda', v: 'media-gruesa' },
         { k: 'Método', v: 'vertido / pour over' },
@@ -670,7 +670,7 @@ const PREPARACION = {
       equipo: 'Olleta Tradicional',
       rinde: '4 tazas',
       ficha: [
-        { k: 'Café peso', v: '40 g (aprox. 5 cucharadas)' },
+        { k: 'Café peso', v: '40 g (4 cucharadas colmadas, una por taza)' },
         { k: 'Tiempo total', v: '10 minutos' },
         { k: 'Agua filtrada', v: '600 ml' },
         { k: 'Nº de filtros', v: 'colador de tela para servir' },
@@ -716,7 +716,7 @@ const PREPARACION = {
       equipo: 'Cafetera de Filtro',
       rinde: '1 litro',
       ficha: [
-        { k: 'Café peso', v: '60 g por litro (ratio 1:16)' },
+        { k: 'Café peso', v: '60 g por litro (ratio 1:17)' },
         { k: 'Tiempo total', v: '4–6 minutos de ciclo' },
         { k: 'Agua filtrada', v: '1000 ml en el tanque' },
         { k: 'Nº de filtros', v: '1 filtro de papel de canasta' },

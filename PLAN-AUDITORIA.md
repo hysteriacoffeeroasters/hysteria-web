@@ -45,7 +45,7 @@ Informe legible: https://claude.ai/code/artifact/383339f5-7715-4a4d-94f7-8a87e51
 | B · Carrito | 03, 10, 11, 12, 24, 25 | [x] **hecho** · commit `GRUPO B` |
 | C · Bilingüe | 04, 14, 15, 16 | [x] **hecho** · commit `GRUPO C` |
 | D · SEO y documentación | 05, 06, 17, 18, 22, 23 | [x] **hecho** · commit `GRUPO D` |
-| E · Accesibilidad y contenido | 07, 19, 20, 21 | [ ] pendiente |
+| E · Accesibilidad y contenido | 07, 19, 20, 21 | [x] **hecho** · commit `GRUPO E` |
 
 ---
 
@@ -196,22 +196,22 @@ servidor", porque también se sirve como archivo estático.
 
 ## GRUPO E · Accesibilidad y contenido
 
-### [ ] 07 · MEDIO — El foco se pierde entre los campos en rojo del checkout
+### [x] 07 · MEDIO — El foco se pierde entre los campos en rojo del checkout
 `assets/css/style.css` (~897, 902-905) con `assets/js/app.js` (~1116-1120):
 el borde rojo del error gana al del foco, y el checkout desactiva el contorno
 general. Darle al campo enfocado un contorno propio para que error y foco no
 peleen por el mismo color.
 
-### [ ] 19 · BAJO — La guía de Olleta se contradice en las cucharadas
+### [x] 19 · BAJO — La guía de Olleta se contradice en las cucharadas
 `assets/js/datos.js` ~671, 673, 683: la ficha dice "40 g (aprox. 5 cucharadas)"
 pero la guía dice 4 tazas a una cucharada por taza, y Colador de tela fija
 10 g por cucharada. Corregir a 4.
 
-### [ ] 20 · BAJO — El mismo ratio con dos etiquetas
+### [x] 20 · BAJO — El mismo ratio con dos etiquetas
 `assets/js/datos.js` ~535, 558, 719: V60 dice 1:16.6 y Chemex 1:16, y los dos
 son 16,67. Unificar el redondeo.
 
-### [ ] 21 · BAJO — Comentario huérfano: dice que Deseo tiene dos lotes
+### [x] 21 · BAJO — Comentario huérfano: dice que Deseo tiene dos lotes
 `assets/js/datos.js` ~287: solo hay uno. Borrar o corregir.
 
 ---

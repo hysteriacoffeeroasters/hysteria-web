@@ -68,7 +68,7 @@ const PAGOS = {
        Valor:   tu "Access Token" de producción de Mercado Pago
                 (mercadopago.com.co/developers → Tus integraciones → Credenciales)
 
-     La función segura ya está lista en  api/crear-preferencia.js          */
+     La función segura ya está lista en  lib/pedido.js          */
 
   // Costo de envío en pesos. Pon 0 para envío gratis siempre.
   envio: 15000,
@@ -108,7 +108,7 @@ const DOCUMENTOS = [
 
    El "metodo" es solo la ayuda que aparece junto a cada opción, para que
    sepa cuál escoger. Puedes editarlo, agregar o quitar puntos de molienda.
-   Si cambias los "codigo", cámbialos también en api/crear-preferencia.js
+   Si cambias los "codigo", cámbialos también en lib/pedido.js
    --------------------------------------------------------------------------- */
 /* Las ayudas de "metodo" siguen las recetas de la sección ¿Cómo preparar
    tu café? — si cambias una guía, revisa que esta tabla siga coincidiendo. */
@@ -158,7 +158,7 @@ const DESTACADO_MENU = {
    👉 PARA QUITAR UN LOTE: bórralo del arreglo, o ponle  agotado: true
       si quieres que siga visible pero sin poder comprarse.
 
-   ⚠️ Si agregas un lote nuevo, agrégalo también en api/crear-preferencia.js
+   ⚠️ Si agregas un lote nuevo, agrégalo también en lib/pedido.js
       (es la lista con la que se cobra de verdad).
 
    Los datos salen de "infografía hysteria final.pdf".
@@ -182,7 +182,7 @@ const COLECCIONES = [
 
     // Tamaños que el cliente elige en el carrito. La primera es la que se
     // agrega por defecto y la que muestra la tarjeta.
-    // ⚠️ Si cambias un precio, cámbialo también en api/crear-preferencia.js
+    // ⚠️ Si cambias un precio, cámbialo también en lib/pedido.js
     presentaciones: [
       { gramos: 340,  precio: 39500 },
       { gramos: 1000, precio: 85000 },

@@ -44,7 +44,7 @@ Informe legible: https://claude.ai/code/artifact/383339f5-7715-4a4d-94f7-8a87e51
 | A · Pedidos y avisos | 01, 02, 08, 09, 13 | [x] **hecho** · commit `GRUPO A` |
 | B · Carrito | 03, 10, 11, 12, 24, 25 | [x] **hecho** · commit `GRUPO B` |
 | C · Bilingüe | 04, 14, 15, 16 | [x] **hecho** · commit `GRUPO C` |
-| D · SEO y documentación | 05, 06, 17, 18, 22, 23 | [ ] pendiente |
+| D · SEO y documentación | 05, 06, 17, 18, 22, 23 | [x] **hecho** · commit `GRUPO D` |
 | E · Accesibilidad y contenido | 07, 19, 20, 21 | [ ] pendiente |
 
 ---
@@ -162,32 +162,32 @@ y, al pintar, preferir el nombre del catálogo actual si el lote existe.
 
 ## GRUPO D · SEO y documentación
 
-### [ ] 05 · MEDIO — La documentación manda a editar el archivo de cobro equivocado
+### [x] 05 · MEDIO — La documentación manda a editar el archivo de cobro equivocado
 `assets/js/datos.js` líneas ~111, ~161, ~185 y cinco menciones en `LEEME.md`:
 cambiar `api/crear-preferencia.js` por `lib/pedido.js`.
 
-### [ ] 06 · MEDIO — JSON-LD de productos en páginas sin productos
+### [x] 06 · MEDIO — JSON-LD de productos en páginas sin productos
 `assets/js/app.js` (~1518, `inyectarSchema`): inyectar los `Product` solo en
 portada, `/tienda` y `/cafes` (y sus equivalentes `/en`). En el resto, dejar
 solo la ficha del negocio.
 
-### [ ] 17 · BAJO — Tres imprecisiones del JSON-LD
+### [x] 17 · BAJO — Tres imprecisiones del JSON-LD
 - Doble barra en las imágenes (`…com//assets/…`): `app.js:1352` ya no debe
   anteponer la barra, porque `arreglarRutas()` de `idioma.js:154` ya la puso.
 - Nombres de característica (Origen, Variedad, Proceso, Altura, Tueste) en
   español con valores en inglés: pasarlos por `traducir()`.
 - `offers.url` apunta siempre a la portada española: usar `ruta()`.
 
-### [ ] 18 · BAJO — La descripción de /en/brewing anuncia un método que no existe
+### [x] 18 · BAJO — La descripción de /en/brewing anuncia un método que no existe
 `en/brewing.html:9`: menciona "Clever", que no está entre las diez guías, y se
 salta Olleta y Colador de tela.
 
-### [ ] 22 · BAJO — Las imágenes de compartir no tienen formato de tarjeta
+### [x] 22 · BAJO — Las imágenes de compartir no tienen formato de tarjeta
 Generar versiones 1200×630 para `og:`. El caso duro es `/cafes`, que declara
 una de 430 px (por debajo del mínimo de WhatsApp y Facebook).
 **Excepción:** la portada está congelada esperando el archivo de cámara.
 
-### [ ] 23 · BAJO — LEEME.md y lib/ se sirven públicos
+### [x] 23 · BAJO — LEEME.md y lib/ se sirven públicos
 `vercel.json`: añadir `X-Robots-Tag: noindex` para `/LEEME.md` y `/lib/(.*)`.
 Y corregir el comentario de `lib/pedido.js` que dice "corre SOLO en el
 servidor", porque también se sirve como archivo estático.

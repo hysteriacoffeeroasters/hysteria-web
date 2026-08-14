@@ -1446,30 +1446,43 @@
   /* ── Datos estructurados para Google ───────────────────────────────────── */
   function inyectarSchema() {
     const base = location.origin;
-    const productos = todosLosLotes().map(({ col: c, lote: L }) => {
+
+    /* Las fichas de producto SOLO se declaran donde el visitante ve productos:
+       portada, tienda y cafés. Antes se inyectaban en todas las páginas, así
+       que en /visitanos (horarios) y /menu (carta de barra) Google recibía los
+       seis cafés con precio y "disponible" sin que hubiera ninguno en pantalla.
+       Su guía lo prohíbe expresamente y lo cita como causa de sanción manual. */
+    const hayProductos = !!($('#shop-grid') || $('#coffee-grid'));
+
+    const productos = !hayProductos ? [] : todosLosLotes().map(({ col: c, lote: L }) => {
       const p = {
         '@type': 'Product',
         name: traducir('Café') + ' ' + c.nombre + (puesto(L.variedad) ? ' · ' + L.variedad : '') +
               ' · ' + traducir('Bolsa') + ' ' + c.gramos + ' g',
         description: [c.descripcion, puesto(L.notas) ? traducir('Notas') + ': ' + L.notas + '.' : '']
           .filter(Boolean).join(' '),
-        image: base + '/' + L.imagen,
+        // arreglarRutas() ya dejó L.imagen con la barra inicial: volver a
+        // ponerla producía direcciones con doble barra (…com//assets/…)
+        image: base + L.imagen,
         brand: { '@type': 'Brand', name: 'Hysteria Coffee Roasters' },
         weight: { '@type': 'QuantitativeValue', value: c.gramos, unitCode: 'GRM' },
         offers: {
           '@type': 'Offer', price: c.precios.bolsa, priceCurrency: 'COP',
           availability: L.agotado
             ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
-          url: base + '/#tienda'
+          // Al comprador anglófono se le manda a la tienda en su idioma
+          url: base + (typeof ruta === 'function' ? ruta('/') : '/') + '#tienda'
         }
       };
+      // Los nombres van traducidos: antes salían en español con los valores
+      // ya en inglés, que es lo peor de los dos mundos.
       const props = [
         ['Origen', L.origen], ['Variedad', L.variedad],
         ['Proceso', L.proceso], ['Altura', L.altura], ['Tueste', L.tueste]
       ].filter(x => puesto(x[1]));
       if (props.length) {
         p.additionalProperty = props.map(x => ({
-          '@type': 'PropertyValue', name: x[0], value: x[1]
+          '@type': 'PropertyValue', name: traducir(x[0]), value: x[1]
         }));
       }
       return p;

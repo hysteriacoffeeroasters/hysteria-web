@@ -56,7 +56,7 @@ Para agregar un lote, copia un bloque dentro de `lotes` de esa colección:
 },
 ```
 
-⚠️ **Todo lote nuevo debe agregarse también en `api/crear-preferencia.js`**, con el
+⚠️ **Todo lote nuevo debe agregarse también en `lib/pedido.js`**, con el
 mismo `id`. Si no está ahí, no se puede comprar (es la lista con la que se cobra).
 
 Para retirar un lote: bórralo, o ponle `agotado: true` si quieres que siga visible
@@ -66,7 +66,7 @@ El resto del sitio (tienda, tarjetas, Google) se actualiza solo.
 
 ⚠️ **Si cambias un PRECIO**, cámbialo en **dos** lugares:
 1. `assets/js/datos.js` → lo que ve el cliente
-2. `api/crear-preferencia.js` → lo que se cobra de verdad
+2. `lib/pedido.js` → lo que se cobra de verdad
 
 Están separados por seguridad: así nadie puede editar el precio desde su navegador y pagar $1.
 
@@ -216,7 +216,7 @@ hysteria-web/
 ├── site.webmanifest            Ícono al guardar en el celular
 │
 ├── api/
-│   └── crear-preferencia.js    Cobro seguro (corre en el servidor)
+│   └── crear-preferencia.js    Mercado Pago (en desuso; hoy se cobra con Wompi)
 │
 └── assets/
     ├── css/style.css           Diseño
@@ -252,7 +252,7 @@ propiedades que no reconoce (JSON no admite comentarios).
 ## 6. Preguntas frecuentes
 
 **¿Cómo cambio un precio?**
-En `datos.js` **y** en `api/crear-preferencia.js`. Los dos.
+En `datos.js` **y** en `lib/pedido.js`. Los dos.
 
 **¿Cómo marco un café como agotado?**
 En `datos.js`, esa colección → `agotado: true`. El botón se desactiva solo.
@@ -263,7 +263,7 @@ En `datos.js`, esa colección → `agotado: true`. El botón se desactiva solo.
 
 **¿Cómo cambio el costo de envío?**
 `PAGOS.envio` y `PAGOS.envioGratisDesde` en `datos.js`, **y** las constantes
-`ENVIO` y `ENVIO_GRATIS_DESDE` en `api/crear-preferencia.js`.
+`ENVIO` y `ENVIO_GRATIS_DESDE` en `lib/pedido.js`.
 
 **¿Cómo publico un cambio?**
 Si conectaste GitHub: subes el cambio y Vercel lo publica solo en ~40 segundos.

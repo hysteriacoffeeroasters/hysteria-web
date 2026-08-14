@@ -993,18 +993,15 @@
       // Se recuerda la referencia para reconocer el pedido al volver
       try { sessionStorage.setItem('hysteria_ref', data.referencia || ''); } catch (e) {}
 
-      const form = document.createElement('form');
-      form.method = 'GET';
-      form.action = data.url;
+      // El checkout de Wompi es un GET: se navega con los datos en la
+      // dirección. Se hace con location y no enviando un <form>, porque el
+      // envío de formularios a otro dominio falla en silencio (sin error)
+      // y el cliente se quedaría mirando un botón que dice "Conectando…".
+      const destino = new URL(data.url);
       Object.keys(data.campos).forEach(k => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = k;
-        input.value = data.campos[k];
-        form.appendChild(input);
+        destino.searchParams.set(k, data.campos[k]);
       });
-      document.body.appendChild(form);
-      form.submit();
+      window.location.href = destino.toString();
       return;
 
     } catch (err) {

@@ -23,7 +23,13 @@
       ]
     },
     {
-      "source": "/(LEEME.md|lib/(.*))",
+      "source": "/LEEME.md",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    },
+    {
+      "source": "/lib/(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]

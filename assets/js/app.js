@@ -169,8 +169,8 @@
         <div class="coffee-media${L.imagenFicha ? ' media-ficha' : ''}">
           <img src="${esc(L.imagen)}"
                alt="${L.imagenFicha
-                 ? `Ficha de cata de ${esc(c.nombre)}${puesto(L.variedad) ? ', variedad ' + esc(L.variedad) : ''}`
-                 : `Bolsa de café ${esc(c.nombre)}${puesto(L.variedad) ? ' · ' + esc(L.variedad) : ''}`}"
+                 ? `${esc(traducir('Ficha de cata de'))} ${esc(c.nombre)}${puesto(L.variedad) ? ', ' + esc(traducir('variedad')) + ' ' + esc(L.variedad) : ''}`
+                 : `${esc(traducir('Bolsa de café'))} ${esc(c.nombre)}${puesto(L.variedad) ? ' · ' + esc(L.variedad) : ''}`}"
                width="${L.imagenFicha ? '900' : '430'}" height="${L.imagenFicha ? '1687' : '538'}"
                loading="lazy" decoding="async">
           <span class="coffee-dot" aria-hidden="true"></span>
@@ -1491,6 +1491,7 @@
     // Antes que nada: si estamos en /en, los datos de datos.js se pasan a
     // inglés en el sitio. A partir de aquí ninguna función pintarX() necesita
     // saber en qué idioma está — pinta lo que encuentra.
+    if (typeof arreglarRutas === 'function') arreglarRutas();
     if (typeof traducirDatos === 'function') traducirDatos();
 
     cargarCarrito();

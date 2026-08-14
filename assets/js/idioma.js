@@ -138,6 +138,42 @@ var RUTAS_IDIOMA = [
      es undefined y un bucle sobre nombres en texto no encuentra nada — hay que
      nombrar cada variable de verdad. El typeof protege de las páginas que no
      cargan datos.js entero. */
+  /* ── Rutas de los recursos ────────────────────────────────────────────────
+     datos.js guarda las imágenes en relativo ('assets/products/x.jpg'), que
+     funciona mientras la página cuelgue de la raíz. En /en/coffees eso apunta
+     a /en/assets/products/x.jpg y la imagen no existe.
+
+     Se les pone la barra inicial al arrancar, para TODAS las páginas: en las
+     españolas es indiferente, y así el sitio aguanta cualquier subcarpeta que
+     se cree en el futuro sin volver a caer en esto. */
+  var CLAVES_RECURSO = { imagen: 1, img: 1, foto: 1, flor: 1, icono: 1 };
+
+  function absolutizarRecursos(nodo, clave) {
+    if (nodo == null) return nodo;
+    if (typeof nodo === 'string') {
+      return (CLAVES_RECURSO[clave] && /^assets\//.test(nodo)) ? '/' + nodo : nodo;
+    }
+    if (typeof nodo !== 'object') return nodo;
+    if (Array.isArray(nodo)) {
+      for (var i = 0; i < nodo.length; i++) nodo[i] = absolutizarRecursos(nodo[i], clave);
+      return nodo;
+    }
+    for (var k in nodo) {
+      if (Object.prototype.hasOwnProperty.call(nodo, k)) nodo[k] = absolutizarRecursos(nodo[k], k);
+    }
+    return nodo;
+  }
+
+  window.arreglarRutas = function () {
+    if (typeof COLECCIONES    !== 'undefined') absolutizarRecursos(COLECCIONES, null);
+    if (typeof PREPARACION    !== 'undefined') absolutizarRecursos(PREPARACION, null);
+    if (typeof EQUIPO         !== 'undefined') absolutizarRecursos(EQUIPO, null);
+    if (typeof DESTACADO_MENU !== 'undefined') absolutizarRecursos(DESTACADO_MENU, null);
+    if (typeof PROMOCIONES    !== 'undefined') absolutizarRecursos(PROMOCIONES, null);
+    if (typeof PASAPORTE      !== 'undefined') absolutizarRecursos(PASAPORTE, null);
+    if (typeof MENU           !== 'undefined') absolutizarRecursos(MENU, null);
+  };
+
   window.traducirDatos = function () {
     if (IDIOMA !== 'en' || !DIC) return;
     vistos = new WeakSet();

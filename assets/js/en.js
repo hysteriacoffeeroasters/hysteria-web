@@ -130,6 +130,8 @@ var DICCIONARIO_EN = {
   'Punto de molienda de': 'Grind setting for',
   'Ver en el mapa': 'View on the map',
   'molienda': 'ground',
+  'Ficha de cata de': 'Cupping card for',
+  'variedad': 'variety',
   'Todas': 'All',
   'Paso a paso': 'Step by step',
   'Gratis': 'Free',

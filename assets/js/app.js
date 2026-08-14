@@ -32,54 +32,117 @@
   const LLAVE = 'hysteria_carrito_v1';
   let carrito = [];
 
-  // Precio vigente de una línea guardada: el del tamaño elegido si la colección
-  // tiene presentaciones, si no el de la bolsa; y el guardado como último recurso.
+  /* ¿Este id se puede comprar hoy? El servidor tiene la última palabra
+     (lib/pedido.js), pero el carrito no debe mostrar lo que allí no existe. */
+  function existeEnCatalogo(id) {
+    if (id === 'pasaporte') {
+      return typeof PASAPORTE !== 'undefined' && !!PASAPORTE.activo;
+    }
+    return !!buscarLote(id);
+  }
+
+  /* Precio vigente de una línea guardada. Cuando la colección tiene tamaños y
+     el guardado ya no está en la lista, se cae al PRIMERO de la lista con su
+     precio de hoy — que es exactamente lo que hace el servidor. Antes se caía
+     al precio guardado, así que pantalla y cobro podían separarse el día que
+     se tocaran las presentaciones. */
   function precioDeCatalogo(hit, gramos, guardado) {
     if (hit) {
       const lista = Array.isArray(hit.col.presentaciones) ? hit.col.presentaciones : [];
       const p = lista.find(x => Number(x.gramos) === Number(gramos));
       if (p) return Number(p.precio);
-      if (!lista.length) return hit.col.precios.bolsa;
+      if (lista.length) return Number(lista[0].precio);
+      return hit.col.precios.bolsa;
     }
     return Math.max(0, Number(guardado) || 0);
   }
 
-  function cargarCarrito() {
+  /* Los gramos que corresponden al precio de arriba: si el tamaño guardado ya
+     no existe, la línea se ajusta al primero para que no queden desparejados. */
+  function gramosDeCatalogo(hit, gramos) {
+    if (!hit) return Math.max(0, Number(gramos) || 0);
+    const lista = Array.isArray(hit.col.presentaciones) ? hit.col.presentaciones : [];
+    if (!lista.length) return hit.col.gramos;
+    return lista.some(x => Number(x.gramos) === Number(gramos))
+      ? Number(gramos)
+      : Number(lista[0].gramos);
+  }
+
+  // Cuántas líneas se descartaron en la última carga por haber desaparecido
+  // del catálogo. Se usa para avisar al cliente una sola vez, al arrancar.
+  let descartadasAlCargar = 0;
+
+  function leerCarritoGuardado() {
+    let bruto = [];
     try {
       const raw = localStorage.getItem(LLAVE);
-      const bruto = raw ? JSON.parse(raw) : [];
-      // Saneamos: cantidad numérica y acotada, precio numérico. Así, editar
-      // localStorage a mano no burla el tope ni mete valores raros en el DOM.
-      const validas = ['grano'].concat(
-        (typeof MOLIENDAS !== 'undefined' ? MOLIENDAS : []).map(m => m.codigo));
-      carrito = (Array.isArray(bruto) ? bruto : [])
-        .filter(l => l && typeof l.id === 'string')
-        .map(l => {
-          // Carritos guardados antes de existir la molienda no traen esCafe ni
-          // gramos: se deducen del catálogo para que no pierdan el selector.
-          const hit = buscarLote(l.id);
-          const esCafe = l.esCafe !== undefined ? !!l.esCafe : !!hit;
-          const gramos = Number(l.gramos) || (hit ? hit.col.gramos : 0);
-          return {
-            id: l.id,
-            nombre: String(l.nombre || ''),
-            variante: String(l.variante || ''),
-            img: String(l.img || ''),
-            esCafe,
-            gramos: Math.max(0, gramos),
-            molienda: validas.includes(l.molienda) ? l.molienda : (esCafe ? 'grano' : ''),
-            // El precio manda el catálogo actual: si cambió en datos.js, el
-            // carrito guardado se actualiza al volver (no se cobra el viejo).
-            // Con varias presentaciones, manda la que coincida con los gramos.
-            precio: precioDeCatalogo(hit, gramos, l.precio),
-            cant: Math.min(MAX_UNIDADES, Math.max(1, Math.floor(Number(l.cant) || 1))),
-          };
-        });
-    } catch (e) { carrito = []; }
+      bruto = raw ? JSON.parse(raw) : [];
+    } catch (e) { return { lineas: [], descartadas: 0 }; }
+
+    // Saneamos: cantidad numérica y acotada, precio numérico. Así, editar
+    // localStorage a mano no burla el tope ni mete valores raros en el DOM.
+    const validas = ['grano'].concat(
+      (typeof MOLIENDAS !== 'undefined' ? MOLIENDAS : []).map(m => m.codigo));
+
+    const candidatas = (Array.isArray(bruto) ? bruto : [])
+      .filter(l => l && typeof l.id === 'string');
+
+    /* Se tiran las líneas cuyo producto ya no está en el catálogo. Antes se
+       conservaban: el cliente las veía con su precio y entraban en el total,
+       pero el servidor las descartaba al cobrar y Wompi le cobraba menos de lo
+       que había visto. */
+    const vivas = candidatas.filter(l => existeEnCatalogo(l.id));
+    const descartadas = candidatas.length - vivas.length;
+
+    const lineas = vivas.map(l => {
+      // Carritos guardados antes de existir la molienda no traen esCafe ni
+      // gramos: se deducen del catálogo para que no pierdan el selector.
+      const hit = buscarLote(l.id);
+      const esCafe = l.esCafe !== undefined ? !!l.esCafe : !!hit;
+      const gramos = gramosDeCatalogo(hit, Number(l.gramos) || (hit ? hit.col.gramos : 0));
+      return {
+        id: l.id,
+        nombre: String(l.nombre || ''),
+        variante: String(l.variante || ''),
+        img: String(l.img || ''),
+        esCafe,
+        gramos: Math.max(0, gramos),
+        molienda: validas.includes(l.molienda) ? l.molienda : (esCafe ? 'grano' : ''),
+        // El precio manda el catálogo actual: si cambió en datos.js, el
+        // carrito guardado se actualiza al volver (no se cobra el viejo).
+        precio: precioDeCatalogo(hit, gramos, l.precio),
+        cant: Math.min(MAX_UNIDADES, Math.max(1, Math.floor(Number(l.cant) || 1))),
+      };
+    });
+
+    return { lineas, descartadas };
   }
+
+  function cargarCarrito() {
+    const { lineas, descartadas } = leerCarritoGuardado();
+    carrito = lineas;
+    descartadasAlCargar = descartadas;
+    if (descartadas) guardarCarrito();   // se limpia lo que ya no se puede comprar
+  }
+
   function guardarCarrito() {
     try { localStorage.setItem(LLAVE, JSON.stringify(carrito)); } catch (e) {}
   }
+
+  /* Dos pestañas abiertas —muy normal viniendo de Instagram o de "Sigue
+     explorando"— se borraban el carrito la una a la otra: cada una guardaba su
+     copia en memoria, que ya estaba vieja.
+
+     Se sincronizan por el evento `storage`, que solo salta en las OTRAS
+     pestañas: cuando una escribe, las demás releen y se repintan. No se
+     fusiona nada a mano a propósito — fusionar resucitaría las líneas que el
+     cliente acaba de quitar, que es peor que el problema original. */
+  window.addEventListener('storage', e => {
+    if (e.key !== LLAVE) return;
+    const { lineas } = leerCarritoGuardado();
+    carrito = lineas;
+    pintarCarrito();
+  });
 
   const unidades  = () => carrito.reduce((a, l) => a + l.cant, 0);
   const subtotal  = () => carrito.reduce((a, l) => a + l.precio * l.cant, 0);
@@ -564,7 +627,9 @@
 
     if (id === 'pasaporte') {
       agregar({ id: 'pasaporte', nombre: PASAPORTE.nombre, variante: 'Experiencia',
-                precio: PASAPORTE.precio, img: 'assets/logo/icono-white.png' });
+                // Ruta absoluta a propósito: sin la barra inicial, en las páginas de
+      // /en el navegador la buscaba en /en/assets/ y la miniatura salía rota.
+      precio: PASAPORTE.precio, img: '/assets/logo/icono-white.png' });
       return;
     }
     const hit = buscarLote(id);
@@ -739,7 +804,8 @@
             <span>${l.cant}</span>
             <button data-mas="${esc(k)}" aria-label="${esc(traducir('Agregar una unidad de'))} ${esc(l.nombre)}">+</button>
           </div>
-          <button class="cart-line-del" data-quitar="${esc(k)}">${esc(traducir('Quitar'))}</button>
+          <button class="cart-line-del" data-quitar="${esc(k)}"
+                  aria-label="${esc(traducir('Quitar'))} ${esc(l.nombre)}">${esc(traducir('Quitar'))}</button>
         </div>
         ${l.esCafe ? `
         <div class="cart-line-opts">
@@ -861,8 +927,13 @@
   document.addEventListener('keydown', e => {
     atraparFoco(e);
     if (e.key !== 'Escape') return;
-    if ($('#cart').classList.contains('open')) abrirCarrito(false);
-    if ($('#nav-mobile').classList.contains('open')) cerrarNavMovil();
+    const panel = $('#cart');
+    if (panel && panel.classList.contains('open')) abrirCarrito(false);
+    // #nav-mobile solo existe en las dos portadas. En las 12 páginas de
+    // sección no hay menú móvil, y sin esta comprobación cada Escape lanzaba
+    // un TypeError (el carrito sí se cerraba, porque esa línea va antes).
+    const movil = $('#nav-mobile');
+    if (movil && movil.classList.contains('open')) cerrarNavMovil();
   });
 
   /* ── Pago ──────────────────────────────────────────────────────────────── */
@@ -1508,6 +1579,13 @@
     if (typeof traducirDatos === 'function') traducirDatos();
 
     cargarCarrito();
+    // Si el carrito traía cafés que ya no están en el catálogo, se le dice.
+    // Callarlo dejaba al cliente creyendo que iba a recibir algo que no existe.
+    if (descartadasAlCargar) {
+      setTimeout(() => avisar(descartadasAlCargar === 1
+        ? traducir('Un café de tu carrito ya no está disponible')
+        : traducir('Algunos cafés de tu carrito ya no están disponibles')), 900);
+    }
     pintarTextos();
     fondoDiferido($('.esencia-cabecera'));
     fondoDiferido($('.colecciones-cabecera'));

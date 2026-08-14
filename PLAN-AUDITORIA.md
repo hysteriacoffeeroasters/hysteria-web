@@ -37,7 +37,7 @@ Informe legible: https://claude.ai/code/artifact/383339f5-7715-4a4d-94f7-8a87e51
 | Grupo | Hallazgos | Estado |
 |---|---|---|
 | A · Pedidos y avisos | 01, 02, 08, 09, 13 | [x] **hecho** · commit `GRUPO A` |
-| B · Carrito | 03, 10, 11, 12, 24, 25 | [ ] pendiente |
+| B · Carrito | 03, 10, 11, 12, 24, 25 | [x] **hecho** · commit `GRUPO B` |
 | C · Bilingüe | 04, 14, 15, 16 | [ ] pendiente |
 | D · SEO y documentación | 05, 06, 17, 18, 22, 23 | [ ] pendiente |
 | E · Accesibilidad y contenido | 07, 19, 20, 21 | [ ] pendiente |
@@ -101,30 +101,30 @@ debe mandar `idioma: IDIOMA`.
 
 ## GRUPO B · Carrito
 
-### [ ] 03 · MEDIO — El carrito conserva cafés borrados del catálogo
+### [x] 03 · MEDIO — El carrito conserva cafés borrados del catálogo
 `assets/js/app.js` (~55-77, `cargarCarrito`): descartar las líneas cuyo `id` ya
 no exista en el catálogo (`buscarLote` + `PASAPORTE`), y avisar al cliente con
 un toast. Ojo: no romper el Pasaporte, que no es un lote.
 
-### [ ] 10 · BAJO — Dos pestañas se pisan el carrito
+### [x] 10 · BAJO — Dos pestañas se pisan el carrito
 `assets/js/app.js` (~33, 80-82): releer `localStorage` justo antes de escribir
 y fusionar, en vez de sobrescribir con el estado en memoria.
 
-### [ ] 11 · BAJO — Precio viejo si cambian los tamaños de bolsa
+### [x] 11 · BAJO — Precio viejo si cambian los tamaños de bolsa
 `assets/js/app.js` (~37-45, `precioDeCatalogo`): si la colección tiene
 presentaciones y la guardada ya no existe, caer a la primera presentación con
 su precio de hoy (igual que hace el servidor en `lib/pedido.js`), no al precio
 guardado.
 
-### [ ] 12 · BAJO — La foto del Pasaporte sale rota en /en
+### [x] 12 · BAJO — La foto del Pasaporte sale rota en /en
 `assets/js/app.js` (~567): la ruta va sin barra inicial. Ya existe
 `arreglarRutas()` en `idioma.js`; lo más limpio es que esa ruta salga de
 `PASAPORTE` en `datos.js` o ponerle la barra.
 
-### [ ] 24 · BAJO — Escape lanza TypeError en las 12 páginas de sección
+### [x] 24 · BAJO — Escape lanza TypeError en las 12 páginas de sección
 `assets/js/app.js` (~865): comprobar que `#nav-mobile` exista antes de usarlo.
 
-### [ ] 25 · BAJO — El botón QUITAR no dice qué producto quita
+### [x] 25 · BAJO — El botón QUITAR no dice qué producto quita
 `assets/js/app.js` (~742): añadir `aria-label` con el nombre, igual que ya
 hacen los botones de cantidad de esa misma fila.
 

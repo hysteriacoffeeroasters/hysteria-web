@@ -136,6 +136,8 @@ var DICCIONARIO_EN = {
   'Tu pago se procesó. Estamos confirmando el pedido': 'Your payment went through. We are confirming order',
   'Guarda esta referencia.': 'Please keep this reference.',
   'Tu pago se procesó. Estamos confirmando tu pedido.': 'Your payment went through. We are confirming your order.',
+  'Un café de tu carrito ya no está disponible': 'One coffee in your cart is no longer available',
+  'Algunos cafés de tu carrito ya no están disponibles': 'Some coffees in your cart are no longer available',
   'Todas': 'All',
   'Paso a paso': 'Step by step',
   'Gratis': 'Free',

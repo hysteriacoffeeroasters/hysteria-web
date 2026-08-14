@@ -990,8 +990,9 @@
       const data = await r.json();
       if (!data.url || !data.campos) throw new Error('respuesta incompleta');
 
-      // Se recuerda la referencia para reconocer el pedido al volver
-      try { sessionStorage.setItem('hysteria_ref', data.referencia || ''); } catch (e) {}
+      // Los datos de envío ya quedaron guardados en LLAVE_ENVIO al enviar el
+      // formulario; de ahí se recuperan al volver, porque la página se recarga
+      // y el aviso de despacho los necesita.
 
       // El checkout de Wompi es un GET: se navega con los datos en la
       // dirección. Se hace con location y no enviando un <form>, porque el
@@ -1430,16 +1431,35 @@
     } else { el.classList.add('lista'); }
   }
 
-  // Consulta el estado real de la transacción antes de decirle nada al cliente
+  // Consulta el estado real de la transacción antes de decirle nada al cliente.
+  // De paso manda el carrito y los datos de envío para que salga el aviso de
+  // despacho: Wompi solo conoce el monto, no qué café ni en qué molienda va.
   async function confirmarWompi(id, ref) {
     const limpio = String(id || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
     if (!limpio) { avisar('No pudimos confirmar tu pago'); return; }
 
+    // Los datos de envío quedaron guardados al enviar el formulario, antes
+    // de salir hacia Wompi (la misma memoria que autocompleta el checkout).
+    let guardado = {};
+    try { guardado = JSON.parse(localStorage.getItem(LLAVE_ENVIO) || '{}'); } catch (e) {}
+
     try {
-      const r = await fetch('/api/wompi-estado?id=' + encodeURIComponent(limpio));
+      const r = await fetch('/api/wompi-confirmar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: limpio,
+          items: carrito.map(l => ({
+            id: l.id, cantidad: l.cant,
+            gramos: l.esCafe ? l.gramos : 0,
+            molienda: l.esCafe ? l.molienda : ''
+          })),
+          datosEnvio: guardado
+        })
+      });
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      const { estado, referencia } = await r.json();
-      const num = referencia || ref;
+      const { estado } = await r.json();
+      const num = ref;
 
       if (estado === 'APPROVED') {
         carrito = []; guardarCarrito(); pintarCarrito();

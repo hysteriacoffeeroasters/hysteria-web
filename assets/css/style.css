@@ -194,6 +194,27 @@ section { padding: clamp(3.5rem, 8vw, 7rem) var(--gut); }
   transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
 }
 .cart-btn:hover { border-color: var(--white); background: rgba(255,255,255,0.05); }
+
+/* Selector de idioma. Deliberadamente más discreto que el carrito: es una
+   salida, no una acción. En pantallas anchas dice "English"; a partir de ahí
+   se queda solo el código de dos letras, que es lo que se reconoce igual. */
+.lang-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 0 12px;
+  border: 1px solid var(--border);
+  font-family: var(--label); font-size: 11px;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--ink-2); text-decoration: none; white-space: nowrap;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+.lang-btn:hover, .lang-btn:focus-visible { border-color: var(--white); color: var(--white); }
+.lang-btn > span:first-child { display: none; }
+.lang-btn-largo { display: inline; }
+@media (max-width: 900px) {
+  .lang-btn { padding: 0 10px; }
+  .lang-btn > span:first-child { display: inline; }
+  .lang-btn-largo { display: none; }
+}
 .cart-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
 .cart-count {
   min-width: 19px; height: 19px; padding: 0 5px;

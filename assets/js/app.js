@@ -97,18 +97,18 @@
     const nuevo = Object.assign({ cant: 1 }, item);
     const ex = carrito.find(l => claveLinea(l) === claveLinea(nuevo));
     if (ex) {
-      if (ex.cant >= MAX_UNIDADES) { avisar('Máximo ' + MAX_UNIDADES + ' por producto'); return; }
+      if (ex.cant >= MAX_UNIDADES) { avisar(traducir('Máximo') + ' ' + MAX_UNIDADES + ' ' + traducir('por producto')); return; }
       ex.cant += 1;
     } else {
       carrito.push(nuevo);
     }
     guardarCarrito(); pintarCarrito();
-    avisar(item.nombre + ' agregado');
+    avisar(item.nombre + ' ' + traducir('agregado'));
   }
   function cambiarCant(clave, d) {
     const l = carrito.find(x => claveLinea(x) === clave);
     if (!l) return;
-    if (d > 0 && l.cant >= MAX_UNIDADES) { avisar('Máximo ' + MAX_UNIDADES + ' por producto'); return; }
+    if (d > 0 && l.cant >= MAX_UNIDADES) { avisar(traducir('Máximo') + ' ' + MAX_UNIDADES + ' ' + traducir('por producto')); return; }
     l.cant = Math.min(MAX_UNIDADES, l.cant + d);
     if (l.cant < 1) carrito = carrito.filter(x => claveLinea(x) !== clave);
     guardarCarrito(); pintarCarrito();
@@ -149,16 +149,16 @@
 
     cont.innerHTML = todosLosLotes().map(({ col: c, lote: L }) => {
       const specs = [
-        ['Origen', L.origen], ['Variedad', L.variedad], ['Proceso', L.proceso]
+        [traducir('Origen'), L.origen], [traducir('Variedad'), L.variedad], [traducir('Proceso'), L.proceso]
       ].filter(x => puesto(x[1]));
 
       const extras = [
-        L.altura ? 'Altura: ' + L.altura : '',
+        L.altura ? traducir('Altura') + ': ' + L.altura : '',
         L.productor ? L.productor : '',
-        L.tueste ? 'Tueste ' + String(L.tueste).toLowerCase() : ''
+        L.tueste ? traducir('Tueste') + ' ' + traducir(String(L.tueste)).toLowerCase() : ''
       ].filter(Boolean).join(' · ');
 
-      const badges = (L.agotado ? ['<span class="badge agotado">Agotado</span>'] : [])
+      const badges = (L.agotado ? ['<span class="badge agotado">' + esc(traducir('Agotado')) + '</span>'] : [])
         .concat((L.insignias || []).map(t => '<span class="badge">' + esc(t) + '</span>'))
         .join('');
 
@@ -192,12 +192,12 @@
 
           <div class="coffee-buy">
             <div>
-              <div class="coffee-price-k">Bolsa ${c.gramos} g</div>
+              <div class="coffee-price-k">${esc(traducir('Bolsa'))} ${c.gramos} g</div>
               <div class="coffee-price">${money(c.precios.bolsa)}</div>
               ${c.precios.taza ? `<div class="coffee-cup">En barra, taza filtrada ${money(c.precios.taza)}</div>` : ''}
             </div>
             <button class="btn btn-ghost btn-sm js-add" data-id="${esc(L.id)}" ${L.agotado ? 'disabled' : ''}>
-              ${L.agotado ? 'Agotado' : 'Agregar'}
+              ${esc(traducir(L.agotado ? 'Agotado' : 'Agregar'))}
             </button>
           </div>
         </div>
@@ -209,7 +209,7 @@
     const cont = $('#cfilters');
     if (!cont) return;
     cont.innerHTML =
-      '<button class="cfilt on" aria-pressed="true" data-f="all">Todas</button>' +
+      `<button class="cfilt on" aria-pressed="true" data-f="all">${esc(traducir('Todas'))}</button>` +
       COLECCIONES.map(c => `<button class="cfilt" aria-pressed="false" data-f="${esc(c.id)}">${esc(c.nombre)}</button>`).join('');
 
     cont.addEventListener('click', e => {
@@ -242,24 +242,24 @@
     if (!cont) return;
     cont.innerHTML = `
       <table>
-        <caption class="sr-only">Precios por colección</caption>
+        <caption class="sr-only">${esc(traducir('Precios por colección'))}</caption>
         <thead>
           <tr>
-            <th scope="col"><span class="sr-only">Presentación</span></th>
+            <th scope="col"><span class="sr-only">${esc(traducir('Presentación'))}</span></th>
             ${COLECCIONES.map(c => `<th scope="col" style="color:${esc(colorTexto(c.id))}">${esc(c.nombre)}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
           <tr>
-            <th scope="row">Taza · método filtrado</th>
+            <th scope="row">${esc(traducir('Taza · método filtrado'))}</th>
             ${COLECCIONES.map(c => `<td>${c.precios.taza ? money(c.precios.taza) : '—'}</td>`).join('')}
           </tr>
           <tr>
-            <th scope="row">Par de tazas</th>
+            <th scope="row">${esc(traducir('Par de tazas'))}</th>
             ${COLECCIONES.map(c => `<td>${c.precios.parDeTazas ? money(c.precios.parDeTazas) : '—'}</td>`).join('')}
           </tr>
           <tr>
-            <th scope="row">Bolsa para llevar</th>
+            <th scope="row">${esc(traducir('Bolsa para llevar'))}</th>
             ${COLECCIONES.map(c => `<td>${money(c.precios.bolsa)}<span class="cell-sub">${c.gramos} g</span></td>`).join('')}
           </tr>
         </tbody>
@@ -277,7 +277,7 @@
     if (!E || !E.mostrar || !gente.length) { sec.remove(); return; }
 
     const t = $('#equipo-titulo'), i = $('#equipo-intro');
-    if (t) t.textContent = E.titulo || 'Nuestro equipo';
+    if (t) t.textContent = E.titulo || traducir('Nuestro equipo');
     if (i) { i.textContent = E.intro || ''; if (!puesto(E.intro)) i.remove(); }
 
     $('#equipo-grid').innerHTML = gente.map(p => {
@@ -314,7 +314,7 @@
 
     $('#promo-grid').innerHTML = activas.map(p => `
       <article class="promo${p.destacada ? ' destacada' : ''}">
-        <div class="promo-tag">${p.destacada ? 'Promoción principal' : 'Promoción'}</div>
+        <div class="promo-tag">${esc(traducir(p.destacada ? 'Promoción principal' : 'Promoción'))}</div>
         <h3 class="promo-name">${esc(p.nombre)}</h3>
         <p class="promo-desc">${esc(p.resumen)}</p>
         ${(p.incluye || []).length ? `<ul class="promo-includes">${p.incluye.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}
@@ -431,7 +431,7 @@
             </dl>
           </aside>
           <div class="prep-pasos">
-            <h4 class="prep-h3">Paso a paso</h4>
+            <h4 class="prep-h3">${esc(traducir('Paso a paso'))}</h4>
             <ol>${(m.pasos || []).map(p => `
               <li>
                 <span class="paso-titulo">${esc(p.titulo)}</span>
@@ -521,18 +521,18 @@
       <article class="shop-card" style="--c:${esc(c.color)};--c-t:${esc(colorTexto(c.id))}">
         <div class="shop-media${L.imagenFicha ? ' media-ficha' : ''}">
           <img src="${esc(L.imagen)}"
-               alt="${L.imagenFicha ? 'Ficha de cata' : 'Bolsa de café'} ${esc(c.nombre)} ${esc(L.variedad)}"
+               alt="${esc(traducir(L.imagenFicha ? 'Ficha de cata' : 'Bolsa de café'))} ${esc(c.nombre)} ${esc(L.variedad)}"
                width="${L.imagenFicha ? '900' : '430'}" height="${L.imagenFicha ? '1687' : '538'}"
                loading="lazy" decoding="async">
         </div>
         <div class="shop-info">
           <div class="shop-coll">${esc(c.nombre)}</div>
-          <div class="shop-name">${puesto(L.variedad) ? esc(L.variedad) : 'Bolsa ' + c.gramos + ' g'}</div>
-          <div class="shop-meta">Bolsa ${c.gramos} g · grano entero${meta ? '<br>' + esc(meta) : ''}</div>
+          <div class="shop-name">${puesto(L.variedad) ? esc(L.variedad) : esc(traducir('Bolsa')) + ' ' + c.gramos + ' g'}</div>
+          <div class="shop-meta">${esc(traducir('Bolsa'))} ${c.gramos} g · ${esc(traducir('grano entero'))}${meta ? '<br>' + esc(meta) : ''}</div>
           <div class="shop-foot">
             <span class="shop-price">${money(c.precios.bolsa)}</span>
             <button class="btn btn-ghost btn-sm js-add" data-id="${esc(L.id)}" ${L.agotado ? 'disabled' : ''}>
-              ${L.agotado ? 'Agotado' : 'Agregar'}
+              ${esc(traducir(L.agotado ? 'Agotado' : 'Agregar'))}
             </button>
           </div>
         </div>
@@ -550,7 +550,7 @@
           </div>
           <div class="pasaporte-buy">
             <span class="pasaporte-price">${money(PASAPORTE.precio)}</span>
-            <button class="btn btn-solid btn-sm js-add" data-id="pasaporte">Agregar</button>
+            <button class="btn btn-solid btn-sm js-add" data-id="pasaporte">${esc(traducir('Agregar'))}</button>
           </div>`;
       }
     }
@@ -572,7 +572,7 @@
     const { col: c, lote: L } = hit;
     agregar({
       id: L.id,
-      nombre: 'Café ' + c.nombre + (puesto(L.variedad) ? ' · ' + L.variedad : ''),
+      nombre: traducir('Café') + ' ' + c.nombre + (puesto(L.variedad) ? ' · ' + L.variedad : ''),
       gramos: c.gramos,
       esCafe: true,
       molienda: 'grano',          // por defecto sale en grano entero
@@ -605,10 +605,10 @@
   // Texto que ve el cliente y que viaja al pago
   function varianteDe(l) {
     if (!l.esCafe) return l.variante || '';
-    const base = 'Bolsa ' + nombreGramos(l.gramos);
+    const base = traducir('Bolsa') + ' ' + nombreGramos(l.gramos);
     return l.molienda === 'grano'
-      ? base + ' · grano entero'
-      : base + ' · molienda ' + nombreMolienda(l.molienda).toLowerCase();
+      ? base + ' · ' + traducir('grano entero')
+      : base + ' · ' + traducir('molienda') + ' ' + nombreMolienda(l.molienda).toLowerCase();
   }
 
   // La clave de una línea combina café, tamaño y molienda: el mismo café en
@@ -631,7 +631,7 @@
       carrito = carrito.filter(x => x !== l);
     }
     guardarCarrito(); pintarCarrito();
-    avisar('Bolsa de ' + nombreGramos(p.gramos));
+    avisar(traducir('Bolsa de') + ' ' + nombreGramos(p.gramos));
   }
 
   /* ── Perfil de taza ────────────────────────────────────────────────────── */
@@ -641,7 +641,7 @@
   const EJES_PERFIL = [
     ['aroma', 'Aroma'], ['dulzura', 'Dulzura'], ['sabor', 'Sabor'],
     ['acidez', 'Acidez'], ['residual', 'Residual'], ['cuerpo', 'Cuerpo'],
-  ];
+  ].map(([k, etiqueta]) => [k, traducir(etiqueta)]);
 
   function perfilHTML(p) {
     if (!p) return '';
@@ -656,11 +656,11 @@
             Array.from({ length: 5 }, (_, i) =>
               `<i class="${i < v ? 'on' : ''}"></i>`).join('')
           }</span>
-          <span class="sr-only">${v} de 5</span>
+          <span class="sr-only">${v} ${esc(traducir('de 5'))}</span>
         </div>`;
       });
     if (!filas.length) return '';
-    return `<div class="perfil"><p class="perfil-tit">Perfil de taza</p>${filas.join('')}</div>`;
+    return `<div class="perfil"><p class="perfil-tit">${esc(traducir('Perfil de taza'))}</p>${filas.join('')}</div>`;
   }
 
   function cambiarMolienda(clave, nuevaMolienda) {
@@ -677,8 +677,9 @@
     }
     guardarCarrito(); pintarCarrito();
     if (anterior !== nuevaMolienda) {
-      avisar(nuevaMolienda === 'grano' ? 'En grano entero'
-                                       : 'Molienda ' + nombreMolienda(nuevaMolienda).toLowerCase());
+      avisar(nuevaMolienda === 'grano'
+        ? traducir('En grano entero')
+        : traducir('Molienda') + ' ' + nombreMolienda(nuevaMolienda).toLowerCase());
     }
   }
 
@@ -706,8 +707,8 @@
     if (!carrito.length) {
       cont.innerHTML = `
         <div class="cart-empty">
-          <p>Tu carrito está vacío</p>
-          <button class="btn btn-ghost btn-sm" data-cerrar-carrito>Ver los cafés</button>
+          <p>${esc(traducir('Tu carrito está vacío'))}</p>
+          <button class="btn btn-ghost btn-sm" data-cerrar-carrito>${esc(traducir('Ver los cafés'))}</button>
         </div>`;
       foot.hidden = true;
       const f = $('#cart-envio');
@@ -730,15 +731,15 @@
         <div class="cart-line-mid">
           <div class="cart-line-name">${esc(l.nombre)}</div>
           <div class="cart-line-var">${esc(varianteDe(l))}</div>
-          <div class="cart-line-price">${money(l.precio)} c/u</div>
+          <div class="cart-line-price">${money(l.precio)} ${esc(traducir('c/u'))}</div>
         </div>
         <div class="cart-line-right">
           <div class="qty">
-            <button data-menos="${esc(k)}" aria-label="Quitar una unidad de ${esc(l.nombre)}">−</button>
+            <button data-menos="${esc(k)}" aria-label="${esc(traducir('Quitar una unidad de'))} ${esc(l.nombre)}">−</button>
             <span>${l.cant}</span>
-            <button data-mas="${esc(k)}" aria-label="Agregar una unidad de ${esc(l.nombre)}">+</button>
+            <button data-mas="${esc(k)}" aria-label="${esc(traducir('Agregar una unidad de'))} ${esc(l.nombre)}">+</button>
           </div>
-          <button class="cart-line-del" data-quitar="${esc(k)}">Quitar</button>
+          <button class="cart-line-del" data-quitar="${esc(k)}">${esc(traducir('Quitar'))}</button>
         </div>
         ${l.esCafe ? `
         <div class="cart-line-opts">
@@ -746,7 +747,7 @@
             const tam = presentacionesDe(l.id);
             return tam.length > 1 ? `
           <label class="opt">
-            <span class="sr-only">Tamaño de la bolsa de ${esc(l.nombre)}</span>
+            <span class="sr-only">${esc(traducir('Tamaño de la bolsa de'))} ${esc(l.nombre)}</span>
             <select data-tamano="${esc(k)}">
               ${tam.map(p => `
                 <option value="${esc(p.gramos)}" ${Number(l.gramos) === Number(p.gramos) ? 'selected' : ''}
@@ -755,15 +756,15 @@
           </label>` : '';
           })()}
           <label class="opt">
-            <span class="sr-only">Presentación de ${esc(l.nombre)}</span>
+            <span class="sr-only">${esc(traducir('Presentación de'))} ${esc(l.nombre)}</span>
             <select data-forma="${esc(k)}">
-              <option value="grano" ${l.molienda === 'grano' ? 'selected' : ''}>Grano entero</option>
-              <option value="molido" ${molido ? 'selected' : ''}>Molido</option>
+              <option value="grano" ${l.molienda === 'grano' ? 'selected' : ''}>${esc(traducir('Grano entero'))}</option>
+              <option value="molido" ${molido ? 'selected' : ''}>${esc(traducir('Molido'))}</option>
             </select>
           </label>
           ${molido ? `
           <label class="opt">
-            <span class="sr-only">Punto de molienda de ${esc(l.nombre)}</span>
+            <span class="sr-only">${esc(traducir('Punto de molienda de'))} ${esc(l.nombre)}</span>
             <select data-molienda="${esc(k)}">
               ${listaMoliendas.map(m => `
                 <option value="${esc(m.codigo)}" ${l.molienda === m.codigo ? 'selected' : ''}
@@ -776,11 +777,11 @@
 
     const falta = PAGOS.envioGratisDesde > 0 ? PAGOS.envioGratisDesde - subtotal() : -1;
     $('#cart-sums').innerHTML = `
-      ${falta > 0 ? `<div class="cart-row"><span>Te faltan ${money(falta)} para el envío gratis</span></div>` : ''}
+      ${falta > 0 ? `<div class="cart-row"><span>${esc(traducir('Te faltan'))} ${money(falta)} ${esc(traducir('para el envío gratis'))}</span></div>` : ''}
       ${falta <= 0 && PAGOS.envioGratisDesde > 0 ? `<div class="cart-envio-libre">✓ Envío gratis aplicado</div>` : ''}
-      <div class="cart-row"><span>Subtotal</span><span>${money(subtotal())}</span></div>
-      <div class="cart-row"><span>Envío</span><span>${envio() === 0 ? 'Gratis' : money(envio())}</span></div>
-      <div class="cart-row total"><span>Total</span><span>${money(total())}</span></div>`;
+      <div class="cart-row"><span>${esc(traducir('Subtotal'))}</span><span>${money(subtotal())}</span></div>
+      <div class="cart-row"><span>${esc(traducir('Envío'))}</span><span>${envio() === 0 ? esc(traducir('Gratis')) : money(envio())}</span></div>
+      <div class="cart-row total"><span>${esc(traducir('Total'))}</span><span>${money(total())}</span></div>`;
 
     // Devuelve el foco al control equivalente (o al cierre si su línea ya no está)
     if (focoEn) {
@@ -870,8 +871,8 @@
     return [
       'Hola Hysteria, quiero hacer un pedido:', '',
       lineas.join('\n'), '',
-      `Subtotal: ${money(subtotal())}`,
-      `Envío: ${envio() === 0 ? 'Gratis' : money(envio())}`,
+      `${traducir('Subtotal')}: ${money(subtotal())}`,
+      `${traducir('Envío')}: ${envio() === 0 ? traducir('Gratis') : money(envio())}`,
       `Total: ${money(total())}`
     ].join('\n');
   }
@@ -1010,10 +1011,10 @@
       btn.disabled = false;
       btn.textContent = original;
       if (PAGOS.respaldoWhatsapp) {
-        avisar('Cerramos tu pedido por WhatsApp');
+        avisar(traducir('Cerramos tu pedido por WhatsApp'));
         irWhatsapp(datos);
       } else {
-        avisar('No pudimos conectar con el pago. Intenta de nuevo.');
+        avisar(traducir('No pudimos conectar con el pago. Intenta de nuevo.'));
       }
     }
   }
@@ -1059,10 +1060,10 @@
       btn.disabled = false;
       btn.textContent = original;
       if (PAGOS.respaldoWhatsapp) {
-        avisar('Cerramos tu pedido por WhatsApp');
+        avisar(traducir('Cerramos tu pedido por WhatsApp'));
         irWhatsapp(datos);
       } else {
-        avisar('No pudimos conectar con el pago. Intenta de nuevo.');
+        avisar(traducir('No pudimos conectar con el pago. Intenta de nuevo.'));
       }
     }
   }
@@ -1078,21 +1079,21 @@
     const porWhatsapp = !enLinea;
     const pasarela = PAGOS.modo === 'wompi' ? 'Wompi' : 'Mercado Pago';
     const btnPagar = $('#envio-pagar');
-    if (btnPagar) btnPagar.textContent = porWhatsapp ? 'Enviar pedido' : 'Ir a pagar';
+    if (btnPagar) btnPagar.textContent = traducir(porWhatsapp ? 'Enviar pedido' : 'Ir a pagar');
     const notaEnvio = $('#nota-envio');
     if (notaEnvio) {
       notaEnvio.innerHTML = porWhatsapp
-        ? 'Usamos tus datos solo para el envío y tu factura.<br>Coordinamos el pago contigo por WhatsApp.'
-        : `Usamos tus datos solo para el envío y tu factura electrónica.<br>El cobro lo procesa ${esc(pasarela)}.`;
+        ? traducir('Usamos tus datos solo para el envío y tu factura.') + '<br>' + traducir('Coordinamos el pago contigo por WhatsApp.')
+        : traducir('Usamos tus datos solo para el envío y tu factura electrónica.') + '<br>' + traducir('El cobro lo procesa') + ' ' + esc(pasarela) + '.';
     }
     const notaResumen = $('#nota-resumen');
     if (notaResumen) {
-      notaResumen.textContent = porWhatsapp
+      notaResumen.textContent = traducir(porWhatsapp
         ? 'Cerramos tu pedido por WhatsApp'
-        : 'Pago con tarjeta, PSE o cierre por WhatsApp';
+        : 'Pago con tarjeta, PSE o cierre por WhatsApp');
     }
     const btnResumen = $('#cart-checkout');
-    if (btnResumen) btnResumen.textContent = porWhatsapp ? 'Continuar' : 'Finalizar compra';
+    if (btnResumen) btnResumen.textContent = traducir(porWhatsapp ? 'Continuar' : 'Finalizar compra');
 
     $('#cart-checkout').addEventListener('click', () => {
       if (!carrito.length) return;
@@ -1114,7 +1115,7 @@
       const faltan = validarEnvio(d);
       const err = $('#envio-error');
       if (faltan.length) {
-        err.textContent = 'Revisa: ' + faltan.map(k => ROTULO[k] || k).join(', ') + '.';
+        err.textContent = traducir('Revisa') + ': ' + faltan.map(k => traducir(ROTULO[k] || k)).join(', ') + '.';
         const primero = $('#env-' + faltan[0]);
         if (primero) primero.focus();
         return;
@@ -1156,7 +1157,7 @@
         <div class="visit-tag">${esc(tag)}</div>
         <div class="visit-name">${esc(t.nombre)}</div>
         <p class="visit-detail">${esc(t.direccion)}<br>${esc(NEGOCIO.ciudad)}, ${esc(NEGOCIO.pais)}</p>
-        <a class="visit-link" href="${esc(mapa)}" target="_blank" rel="noopener">Ver en el mapa</a>
+        <a class="visit-link" href="${esc(mapa)}" target="_blank" rel="noopener">${esc(traducir('Ver en el mapa'))}</a>
         <div class="visit-hours">
           ${(t.horarios || []).map(h => `
             <div class="visit-hour"><b>${esc(h.dias)}</b><span>${esc(h.horas)}</span></div>`).join('')}
@@ -1175,7 +1176,7 @@
       filas.push(`<a href="tel:${esc(String(NEGOCIO.telefono).replace(/\s/g, ''))}">${esc(NEGOCIO.telefono)}</a>`);
     }
     if (puesto(NEGOCIO.whatsapp)) {
-      filas.push(`<a href="https://wa.me/${esc(NEGOCIO.whatsapp)}" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>`);
+      filas.push(`<a href="https://wa.me/${esc(NEGOCIO.whatsapp)}" target="_blank" rel="noopener">${esc(traducir('Escríbenos por WhatsApp'))}</a>`);
     }
     if (NEGOCIO.instagram) {
       filas.push(`<a href="${esc(NEGOCIO.instagram)}" target="_blank" rel="noopener">@hysteriacoffeeroasters</a>`);
@@ -1208,7 +1209,7 @@
     const map = {
       '#txt-frase': TEXTOS.frase, '#txt-autor': '— ' + TEXTOS.fraseAutor,
       '#txt-intro': TEXTOS.intro, '#txt-esencia': TEXTOS.esencia,
-      '#txt-eyebrow': `Hysteria Coffee Roasters · Café de especialidad · ${NEGOCIO.ciudad}`,
+      '#txt-eyebrow': `Hysteria Coffee Roasters · ${traducir('Café de especialidad')} · ${NEGOCIO.ciudad}`,
     };
     Object.keys(map).forEach(k => { const el = $(k); if (el) el.textContent = map[k]; });
 
@@ -1228,7 +1229,7 @@
       const msg = $('#nl-msg', form);
       const email = input.value.trim();
       if (!email) {
-        if (msg) msg.textContent = 'Escribe tu correo para suscribirte.';
+        if (msg) msg.textContent = traducir('Escribe tu correo para suscribirte.');
         input.focus();
         return;
       }
@@ -1243,7 +1244,7 @@
         window.location.href = `mailto:${NEGOCIO.correo}` +
           `?subject=${encodeURIComponent('Suscripción al boletín')}` +
           `&body=${encodeURIComponent('Quiero suscribirme con el correo: ' + email)}`;
-        msg.textContent = 'Abrimos tu correo para confirmar la suscripción.';
+        msg.textContent = traducir('Abrimos tu correo para confirmar la suscripción.');
       };
 
       try {
@@ -1260,17 +1261,17 @@
 
         if (r.ok) {
           form.reset();
-          msg.textContent = '¡Listo! Te escribiremos pronto.';
+          msg.textContent = traducir('¡Listo! Te escribiremos pronto.');
         } else if (r.status === 400) {
-          msg.textContent = 'Revisa el correo, parece incompleto.';
+          msg.textContent = traducir('Revisa el correo, parece incompleto.');
         } else {
           // Tropiezo pasajero del servidor (502/500): se pide reintentar.
           // El respaldo por correo queda solo para el 503 "sin configurar".
-          msg.textContent = 'No pudimos registrarte en este momento. Inténtalo de nuevo en unos minutos.';
+          msg.textContent = traducir('No pudimos registrarte en este momento. Inténtalo de nuevo en unos minutos.');
         }
       } catch (err) {
         console.warn('Boletín:', err);
-        msg.textContent = 'No pudimos registrarte en este momento. Inténtalo de nuevo en unos minutos.';
+        msg.textContent = traducir('No pudimos registrarte en este momento. Inténtalo de nuevo en unos minutos.');
       } finally {
         btn.disabled = false;
         btn.textContent = textoBtn;
@@ -1284,7 +1285,7 @@
     m.classList.remove('open');
     m.setAttribute('inert', '');
     t.setAttribute('aria-expanded', 'false');
-    t.setAttribute('aria-label', 'Abrir menú');
+    t.setAttribute('aria-label', traducir('Abrir menú'));
     document.body.classList.remove('no-scroll');
   }
   function iniciarNav() {
@@ -1297,7 +1298,7 @@
         const abierto = m.classList.toggle('open');
         m.toggleAttribute('inert', !abierto);
         t.setAttribute('aria-expanded', String(abierto));
-        t.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
+        t.setAttribute('aria-label', abierto ? traducir('Cerrar menú') : traducir('Abrir menú'));
         document.body.classList.toggle('no-scroll', abierto);
       });
       $$('a', m).forEach(a => a.addEventListener('click', cerrarNavMovil));
@@ -1344,9 +1345,9 @@
     const productos = todosLosLotes().map(({ col: c, lote: L }) => {
       const p = {
         '@type': 'Product',
-        name: 'Café ' + c.nombre + (puesto(L.variedad) ? ' · ' + L.variedad : '') +
-              ' · Bolsa ' + c.gramos + ' g',
-        description: [c.descripcion, puesto(L.notas) ? 'Notas: ' + L.notas + '.' : '']
+        name: traducir('Café') + ' ' + c.nombre + (puesto(L.variedad) ? ' · ' + L.variedad : '') +
+              ' · ' + traducir('Bolsa') + ' ' + c.gramos + ' g',
+        description: [c.descripcion, puesto(L.notas) ? traducir('Notas') + ': ' + L.notas + '.' : '']
           .filter(Boolean).join(' '),
         image: base + '/' + L.imagen,
         brand: { '@type': 'Brand', name: 'Hysteria Coffee Roasters' },
@@ -1374,14 +1375,14 @@
       '@type': 'CafeOrCoffeeShop',
       '@id': base + '/#negocio',
       name: 'Hysteria Coffee Roasters',
-      description: 'Tostadora y café de especialidad en ' + NEGOCIO.ciudad + '. Colecciones Pasión, Ilusión, Deseo y Euforia.',
+      description: traducir('Tostadora y café de especialidad en') + ' ' + NEGOCIO.ciudad + '. ' + traducir('Colecciones Pasión, Ilusión, Deseo y Euforia.'),
       url: base + '/',
       // Google pinta estos logos sobre fondo blanco: el imagotipo de marca es
       // blanco y quedaría invisible, por eso aquí va la variante oscura.
       image: base + '/assets/fotos/og.jpg',
       logo: base + '/assets/logo/logo-schema.png',
       email: NEGOCIO.correo,
-      servesCuisine: 'Café de especialidad',
+      servesCuisine: traducir('Café de especialidad'),
       priceRange: '$$',
       address: {
         '@type': 'PostalAddress',
@@ -1443,7 +1444,7 @@
   // despacho: Wompi solo conoce el monto, no qué café ni en qué molienda va.
   async function confirmarWompi(id, ref) {
     const limpio = String(id || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
-    if (!limpio) { avisar('No pudimos confirmar tu pago'); return; }
+    if (!limpio) { avisar(traducir('No pudimos confirmar tu pago')); return; }
 
     // Los datos de envío quedaron guardados al enviar el formulario, antes
     // de salir hacia Wompi (la misma memoria que autocompleta el checkout).
@@ -1470,22 +1471,28 @@
 
       if (estado === 'APPROVED') {
         carrito = []; guardarCarrito(); pintarCarrito();
-        avisar(num ? `¡Gracias! Tu pedido ${num} está confirmado` : '¡Gracias! Recibimos tu pedido');
+        avisar(num ? traducir('¡Gracias! Tu pedido') + ' ' + num + ' ' + traducir('está confirmado')
+                   : traducir('¡Gracias! Recibimos tu pedido'));
       } else if (estado === 'PENDING') {
         // PSE y efectivo pueden tardar: el carrito NO se vacía todavía
-        avisar(num ? `Pedido ${num}: pago pendiente de confirmación`
-                   : 'Tu pago quedó pendiente de confirmación');
+        avisar(num ? traducir('Pedido') + ' ' + num + ': ' + traducir('pago pendiente de confirmación')
+                   : traducir('Tu pago quedó pendiente de confirmación'));
       } else {
-        avisar('El pago no se completó. Tu carrito sigue intacto.');
+        avisar(traducir('El pago no se completó. Tu carrito sigue intacto.'));
       }
     } catch (err) {
       console.warn('No pudimos confirmar el pago:', err);
-      avisar('No pudimos confirmar tu pago. Escríbenos y lo revisamos.');
+      avisar(traducir('No pudimos confirmar tu pago. Escríbenos y lo revisamos.'));
     }
   }
 
   /* ── Arranque ──────────────────────────────────────────────────────────── */
   function iniciar() {
+    // Antes que nada: si estamos en /en, los datos de datos.js se pasan a
+    // inglés en el sitio. A partir de aquí ninguna función pintarX() necesita
+    // saber en qué idioma está — pinta lo que encuentra.
+    if (typeof traducirDatos === 'function') traducirDatos();
+
     cargarCarrito();
     pintarTextos();
     fondoDiferido($('.esencia-cabecera'));
@@ -1526,12 +1533,13 @@
 
     if (p === 'exito') {
       carrito = []; guardarCarrito(); pintarCarrito();
-      avisar(ref ? `¡Gracias! Tu pedido ${ref} está confirmado` : '¡Gracias! Recibimos tu pedido');
+      avisar(ref ? traducir('¡Gracias! Tu pedido') + ' ' + ref + ' ' + traducir('está confirmado')
+                 : traducir('¡Gracias! Recibimos tu pedido'));
     } else if (p === 'fallo') {
-      avisar('El pago no se completó');
+      avisar(traducir('El pago no se completó'));
     } else if (p === 'pendiente') {
-      avisar(ref ? `Pedido ${ref}: pago pendiente de confirmación`
-                 : 'Tu pago quedó pendiente de confirmación');
+      avisar(ref ? traducir('Pedido') + ' ' + ref + ': ' + traducir('pago pendiente de confirmación')
+                 : traducir('Tu pago quedó pendiente de confirmación'));
     }
   }
 

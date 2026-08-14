@@ -25,22 +25,22 @@
   const directos = [];
 
   if (puesto(NEGOCIO.whatsapp)) {
-    const texto = encodeURIComponent('Hola Hysteria, quiero saber más sobre sus cafés.');
+    const texto = encodeURIComponent(traducir('Hola Hysteria, quiero saber más sobre sus cafés.'));
     directos.push(`<a class="hub-directo" href="https://wa.me/${esc(NEGOCIO.whatsapp)}?text=${texto}"
-      target="_blank" rel="noopener">WhatsApp</a>`);
+      target="_blank" rel="noopener">${esc(traducir('WhatsApp'))}</a>`);
   }
   if (puesto(NEGOCIO.instagram)) {
     directos.push(`<a class="hub-directo" href="${esc(NEGOCIO.instagram)}"
-      target="_blank" rel="noopener">Instagram</a>`);
+      target="_blank" rel="noopener">${esc(traducir('Instagram'))}</a>`);
   }
   if (puesto(NEGOCIO.correo)) {
-    directos.push(`<a class="hub-directo" href="mailto:${esc(NEGOCIO.correo)}">Correo</a>`);
+    directos.push(`<a class="hub-directo" href="mailto:${esc(NEGOCIO.correo)}">${esc(traducir('Correo'))}</a>`);
   }
   if (tienda) {
     const mapa = tienda.mapa || ('https://www.google.com/maps/search/?api=1&query=' +
       encodeURIComponent(`${tienda.direccion}, ${NEGOCIO.ciudad}, ${NEGOCIO.pais}`));
     directos.push(`<a class="hub-directo" href="${esc(mapa)}"
-      target="_blank" rel="noopener">Cómo llegar</a>`);
+      target="_blank" rel="noopener">${esc(traducir('Cómo llegar'))}</a>`);
   }
 
   const cont = document.getElementById('hub-directos');

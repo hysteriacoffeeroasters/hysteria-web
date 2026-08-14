@@ -15,7 +15,7 @@
    ========================================================================== */
 
 import { createHash } from 'node:crypto';
-import { enviarCorreoPedido, enviarCorreoCliente } from '../lib/correo-pedido.js';
+import { enviarCorreoPedido, enviarCorreoCliente, yaAvisado } from '../lib/correo-pedido.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -87,9 +87,16 @@ export default async function handler(req, res) {
       notas:     '',
     };
 
+    // Si esta referencia ya se avisó (porque el cliente volvió a la web y esa
+    // vía llegó primero), aquí no hay nada más que hacer.
+    const referencia = t.reference || id;
+    if (await yaAvisado(referencia)) {
+      return res.status(200).json({ recibido: true, avisado: false, duplicado: true });
+    }
+
     // El detalle de productos vive en el navegador del cliente; si no volvió
-    // a la web, aquí solo se conoce el monto. El correo lo dice claramente.
-    const pedido = {
+    // a la web, aquí solo se conoce el monto. La nota es SOLO para el negocio.
+    const pedidoInterno = {
       lineas: [{
         id: 'pedido',
         titulo: `Pedido por ${'$' + total.toLocaleString('es-CO')} — detalle no transmitido ` +
@@ -101,15 +108,17 @@ export default async function handler(req, res) {
       costoEnvio: 0,
       total,
     };
+    // El cliente ya sabe qué pidió: su correo solo confirma pago y total
+    const pedidoCliente = { lineas: [], subtotal: total, costoEnvio: 0, total };
 
     const [avisado] = await Promise.all([
       enviarCorreoPedido({
-        referencia: t.reference || id,
-        pedido, dest,
+        referencia,
+        pedido: pedidoInterno, dest,
         pasarela: `Wompi (${t.payment_method_type || 'evento'})`,
         transaccion: id,
       }),
-      enviarCorreoCliente({ referencia: t.reference || id, pedido, dest }),
+      enviarCorreoCliente({ referencia, pedido: pedidoCliente, dest, sinDetalle: true }),
     ]);
 
     console.log('Wompi · evento procesado', JSON.stringify({

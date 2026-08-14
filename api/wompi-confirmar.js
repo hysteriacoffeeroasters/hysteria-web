@@ -12,7 +12,7 @@
    ========================================================================== */
 
 import { construirPedido, leerDestino, validarDestino } from '../lib/pedido.js';
-import { enviarCorreoPedido, enviarCorreoCliente } from '../lib/correo-pedido.js';
+import { enviarCorreoPedido, enviarCorreoCliente, yaAvisado } from '../lib/correo-pedido.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -71,6 +71,11 @@ export default async function handler(req, res) {
     }
     if (validarDestino(dest)) {
       return res.status(200).json({ estado: 'APPROVED', avisado: false });
+    }
+
+    // Si el evento de Wompi llegó primero y ya avisó, no se duplica nada
+    if (await yaAvisado(t.reference || id)) {
+      return res.status(200).json({ estado: 'APPROVED', avisado: false, duplicado: true });
     }
 
     const [avisado, clienteAvisado] = await Promise.all([

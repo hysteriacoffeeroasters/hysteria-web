@@ -53,7 +53,7 @@ const PAGOS = {
   //       (comercios.wompi.co → Desarrolladores → Llaves de API)
   //    3. vuelve a desplegar
   //    Los textos de los botones se ajustan solos.
-  modo: 'whatsapp',
+  modo: 'wompi',
 
   // Si Mercado Pago falla o aún no lo has configurado, el carrito
   // cae automáticamente en WhatsApp para no perder la venta.

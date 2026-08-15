@@ -293,6 +293,27 @@ En `datos.js`, esa colección → `agotado: true`. El botón se desactiva solo.
 `PAGOS.envio` y `PAGOS.envioGratisDesde` en `datos.js`, **y** las constantes
 `ENVIO` y `ENVIO_GRATIS_DESDE` en `lib/pedido.js`.
 
+**¿Cómo creo un código de descuento?**
+En `CODIGOS`, dentro de `lib/pedido.js` — un solo lugar, la web lo consulta
+sola. Tres tipos:
+
+```js
+'BIENVENIDA10': { tipo: 'porcentaje', valor: 10, activo: true },   // 10% menos
+'CAFETERO':     { tipo: 'fijo', valor: 5000, activo: true },       // $5.000 menos
+'SINENVIO':     { tipo: 'enviogratis', activo: true },             // envío gratis
+```
+
+Para apagar uno: `activo: false`. El descuento se aplica sobre los productos,
+y el envío gratis por monto se gana con el subtotal ya descontado.
+El nombre del código va en MAYÚSCULAS y solo letras, números, guion o guion
+bajo — un código con tildes o minúsculas nunca validará.
+
+⚠️ Los códigos son visibles para quien sepa mirar (lib/ se sirve público, como
+el menú): no pongas ahí un código que deba ser secreto.
+
+⚠️ Funcionan solo con Wompi, la pasarela actual. Si algún día vuelves a
+Mercado Pago, la caja del código desaparece sola y ningún cupón se aplica.
+
 **¿Cómo publico un cambio?**
 Si conectaste GitHub: subes el cambio y Vercel lo publica solo en ~40 segundos.
 

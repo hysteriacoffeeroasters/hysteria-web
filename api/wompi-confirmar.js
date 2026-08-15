@@ -15,7 +15,7 @@ import { construirPedido, leerDestino, validarDestino } from '../lib/pedido.js';
 import {
   enviarCorreoPedido, enviarCorreoCliente, yaAvisado, yaAvisadoCliente,
 } from '../lib/correo-pedido.js';
-import { olvidarPedido } from '../lib/guardado.js';
+import { leerPedido, olvidarPedido } from '../lib/guardado.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -61,16 +61,32 @@ export default async function handler(req, res) {
     }
 
     // 2. El pedido se reconstruye con nuestros precios, no con los del navegador
-    const pedido = construirPedido(Array.isArray(body.items) ? body.items : []);
+    let pedido = construirPedido(Array.isArray(body.items) ? body.items : [], body.codigo);
     const dest = leerDestino(body.datosEnvio);
 
     // 3. El carrito tiene que cuadrar con lo que Wompi cobró de verdad
     const cobrado = Number(t.amount_in_cents) || 0;
     if (!pedido.lineas.length || Math.round(pedido.total) * 100 !== cobrado) {
-      console.error('El carrito no coincide con lo cobrado', {
-        referencia: t.reference, cobrado, carrito: Math.round(pedido.total) * 100,
-      });
-      return res.status(200).json({ estado: 'APPROVED', avisado: false });
+      /* Antes de rendirse, se mira el pedido que el servidor guardó al crear
+         el pago (lib/guardado.js): lo escribió este mismo servidor, así que es
+         de fiar. Cubre los casos en que el navegador ya no tiene lo que tenía
+         al pagar: borró el código de descuento, cambió un precio del catálogo
+         entre el pago y el regreso, o se perdió el localStorage. */
+      const g = await leerPedido(t.reference || id);
+      if (g && g.pedido && Array.isArray(g.pedido.lineas) && g.pedido.lineas.length &&
+          Math.round(Number(g.pedido.total)) * 100 === cobrado) {
+        pedido = g.pedido;
+        if (g.dest) {
+          for (const k of Object.keys(dest)) {
+            if (!dest[k] && g.dest[k]) dest[k] = g.dest[k];
+          }
+        }
+      } else {
+        console.error('El carrito no coincide con lo cobrado', {
+          referencia: t.reference, cobrado, carrito: Math.round(pedido.total) * 100,
+        });
+        return res.status(200).json({ estado: 'APPROVED', avisado: false });
+      }
     }
     if (validarDestino(dest)) {
       return res.status(200).json({ estado: 'APPROVED', avisado: false });

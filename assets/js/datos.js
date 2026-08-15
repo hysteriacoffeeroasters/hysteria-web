@@ -774,7 +774,10 @@ const TIENDAS = [
     nombre: 'Hysteria Coffee Roasters',
     direccion: 'Calle 92 #15-62',
     barrio: '',                       // opcional, ej: 'Chicó'
-    mapa: '',                         // opcional: enlace exacto de Google Maps
+    // La ficha del negocio en Google (reseñas, fotos, horarios), no el punto
+    // pelado en el mapa. Si algún día falla, déjalo en '' y el enlace se
+    // genera solo con la dirección.
+    mapa: 'https://share.google/b2Vp3evL9AUTecJUY',
 
     // Lo que ve el cliente en la web.
     horarios: [

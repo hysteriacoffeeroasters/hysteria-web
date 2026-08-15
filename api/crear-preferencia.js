@@ -56,7 +56,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'El carrito está vacío' });
     }
 
-    // Reconstruimos el pedido usando SOLO nuestros precios
+    // Reconstruimos el pedido usando SOLO nuestros precios.
+    // A propósito SIN código de descuento: Mercado Pago arma el cobro sumando
+    // los items y un descuento de pedido no cabe en ese formato. El navegador
+    // tampoco ofrece la caja del cupón cuando el modo no es 'wompi'
+    // (cuponesDisponibles en app.js), así que pantalla y cobro coinciden.
     const pedido = construirPedido(entrada);
     if (!pedido.lineas.length) {
       return res.status(400).json({ error: 'No reconocimos ningún producto' });

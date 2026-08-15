@@ -154,20 +154,70 @@
      fusiona nada a mano a propósito — fusionar resucitaría las líneas que el
      cliente acaba de quitar, que es peor que el problema original. */
   window.addEventListener('storage', e => {
-    if (e.key !== LLAVE) return;
-    const { lineas } = leerCarritoGuardado();
-    carrito = lineas;
-    pintarCarrito();
+    if (e.key === LLAVE) {
+      const { lineas } = leerCarritoGuardado();
+      carrito = lineas;
+      pintarCarrito();
+    } else if (e.key === LLAVE_DESC) {
+      cupon = leerCupon();
+      pintarDescuento();
+      pintarCarrito();
+    }
   });
+
+  /* ── Código de descuento ───────────────────────────────────────────────────
+     El navegador solo PINTA el descuento; quien lo cobra es el servidor
+     (construirPedido en lib/pedido.js). Por eso el cupón se guarda únicamente
+     después de que /api/descuento lo valida, y se revalida al cargar: si el
+     código se apagó entre visita y visita, se suelta solo y la pantalla nunca
+     promete un precio que el cobro no va a respetar. */
+  const LLAVE_DESC = 'hysteria_descuento_v1';
+  let cupon = null;   // { codigo, tipo, valor } confirmado por el servidor
+
+  /* Los cupones existen SOLO con Wompi. Mercado Pago arma su cobro sumando
+     los items y un descuento de pedido no cabe en ese formato: si el modo
+     volviera a 'mercadopago', la caja no aparece y un cupón guardado deja de
+     aplicarse — así la pantalla y el cobro coinciden por construcción, en
+     lugar de prometer un precio que esa pasarela no puede respetar. */
+  const cuponesDisponibles = () =>
+    typeof PAGOS !== 'undefined' && PAGOS.modo === 'wompi';
+
+  function leerCupon() {
+    try {
+      const c = JSON.parse(localStorage.getItem(LLAVE_DESC) || 'null');
+      return (c && typeof c.codigo === 'string' &&
+              ['porcentaje', 'fijo', 'enviogratis'].includes(c.tipo))
+        ? { codigo: c.codigo, tipo: c.tipo, valor: Math.max(0, Number(c.valor) || 0) }
+        : null;
+    } catch (e) { return null; }
+  }
+  function guardarCupon() {
+    try {
+      if (cupon) localStorage.setItem(LLAVE_DESC, JSON.stringify(cupon));
+      else localStorage.removeItem(LLAVE_DESC);
+    } catch (e) {}
+  }
+  cupon = leerCupon();
 
   const unidades  = () => carrito.reduce((a, l) => a + l.cant, 0);
   const subtotal  = () => carrito.reduce((a, l) => a + l.precio * l.cant, 0);
+  /* Réplica exacta de las reglas del servidor: porcentaje redondeado, fijo
+     acotado al subtotal. Si esto y lib/pedido.js divergen, la pantalla miente. */
+  const montoDescuento = () => {
+    if (!cuponesDisponibles() || !cupon || !carrito.length) return 0;
+    if (cupon.tipo === 'porcentaje') return Math.round(subtotal() * cupon.valor / 100);
+    if (cupon.tipo === 'fijo')       return Math.min(cupon.valor, subtotal());
+    return 0;   // 'enviogratis' actúa sobre el envío, no sobre los productos
+  };
   const envio     = () => {
     if (!carrito.length) return 0;
-    const libre = PAGOS.envioGratisDesde > 0 && subtotal() >= PAGOS.envioGratisDesde;
+    if (cuponesDisponibles() && cupon && cupon.tipo === 'enviogratis') return 0;
+    // El envío gratis por monto se gana con lo que de verdad se paga
+    const libre = PAGOS.envioGratisDesde > 0 &&
+                  (subtotal() - montoDescuento()) >= PAGOS.envioGratisDesde;
     return libre ? 0 : (PAGOS.envio || 0);
   };
-  const total = () => subtotal() + envio();
+  const total = () => subtotal() - montoDescuento() + envio();
 
   // Mismo tope por línea que aplica el servidor (api/crear-preferencia.js).
   const MAX_UNIDADES = 50;
@@ -796,8 +846,135 @@
     }
   }
 
+  /* La caja del código vive junto a las sumas. Se crea una sola vez desde
+     aquí —no en el HTML— para que exista igual en la portada y en las doce
+     landings sin tocar catorce archivos. */
+  function asegurarCajaDescuento() {
+    if (!cuponesDisponibles()) return;
+    const sums = $('#cart-sums');
+    if (!sums || $('#cart-desc')) return;
+    const d = document.createElement('div');
+    d.id = 'cart-desc';
+    d.className = 'cart-desc';
+    sums.parentNode.insertBefore(d, sums);
+    pintarDescuento();
+  }
+
+  function pintarDescuento() {
+    const d = $('#cart-desc');
+    if (!d) return;
+    if (cupon) {
+      d.innerHTML = `
+        <div class="cart-desc-ok">
+          <span>✓ ${esc(traducir('Código'))} <strong>${esc(cupon.codigo)}</strong></span>
+          <button type="button" class="cart-desc-quitar" data-quitar-codigo
+                  aria-label="${esc(traducir('Quitar el código'))} ${esc(cupon.codigo)}">${esc(traducir('Quitar'))}</button>
+        </div>`;
+    } else {
+      d.innerHTML = `
+        <div class="cart-desc-form">
+          <label class="cart-desc-campo">
+            <span class="sr-only">${esc(traducir('Código de descuento'))}</span>
+            <input id="cart-desc-input" type="text" autocomplete="off" spellcheck="false"
+                   autocapitalize="characters" maxlength="30"
+                   placeholder="${esc(traducir('¿Tienes un código?'))}">
+          </label>
+          <button type="button" class="btn btn-ghost btn-sm" data-aplicar-codigo>${esc(traducir('Aplicar'))}</button>
+        </div>
+        <p class="cart-desc-error" id="cart-desc-error" role="alert"></p>`;
+    }
+  }
+
+  async function aplicarCodigo() {
+    const inp = $('#cart-desc-input');
+    const err = $('#cart-desc-error');
+    const codigo = ((inp && inp.value) || '').trim().toUpperCase();
+    if (!codigo) { if (err) err.textContent = traducir('Escribe un código'); return; }
+    const btn = $('[data-aplicar-codigo]');
+    if (btn) btn.disabled = true;
+    try {
+      const r = await fetch('/api/descuento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo }),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      if (!data.valido) {
+        if (err) err.textContent = traducir('Ese código no existe o ya no está activo');
+        return;
+      }
+      cupon = { codigo: data.codigo, tipo: data.tipo, valor: Math.max(0, Number(data.valor) || 0) };
+      guardarCupon();
+      pintarDescuento();
+      pintarCarrito();
+      // El repintado destruyó el botón que tenía el foco: sin esto, el teclado
+      // cae al <body> y se escapa del diálogo modal del carrito.
+      const q = $('[data-quitar-codigo]');
+      if (q) q.focus();
+      avisar(traducir('Código aplicado'));
+    } catch (e) {
+      if (err) err.textContent = traducir('No pudimos comprobar el código. Intenta de nuevo.');
+    } finally {
+      if (btn) btn.disabled = false;
+      // En el camino de error el botón sigue vivo pero pudo perder el foco
+      if (document.activeElement === document.body) {
+        const b2 = $('[data-aplicar-codigo]');
+        if (b2) b2.focus();
+      }
+    }
+  }
+
+  function quitarCodigo() {
+    cupon = null;
+    guardarCupon();
+    pintarDescuento();
+    pintarCarrito();
+    const i = $('#cart-desc-input');
+    if (i) i.focus();
+  }
+
+  /* Al cargar, el cupón guardado se revalida contra el servidor: puede haberse
+     apagado desde la última visita. Si la red falla se deja como está — el
+     servidor manda al cobrar, y Wompi muestra el monto real antes de pagar. */
+  async function revalidarCupon() {
+    if (!cupon) return;
+    // Se anota QUÉ se consultó: si mientras la red respondía el cliente quitó
+    // el cupón (o la compra se confirmó y lo limpió), la respuesta tardía ya
+    // no aplica a nada y se descarta en vez de resucitar un estado muerto.
+    const consultado = cupon.codigo;
+    try {
+      const r = await fetch('/api/descuento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo: consultado }),
+      });
+      if (!r.ok) return;
+      const data = await r.json();
+      if (!cupon || cupon.codigo !== consultado) return;
+      cupon = data.valido
+        ? { codigo: data.codigo, tipo: data.tipo, valor: Math.max(0, Number(data.valor) || 0) }
+        : null;
+      guardarCupon();
+      pintarDescuento();
+      pintarCarrito();
+    } catch (e) { /* sin red no se decide nada */ }
+  }
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-aplicar-codigo]')) aplicarCodigo();
+    else if (e.target.closest('[data-quitar-codigo]')) quitarCodigo();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target && e.target.id === 'cart-desc-input') {
+      e.preventDefault();
+      aplicarCodigo();
+    }
+  });
+
   /* ── Panel del carrito ─────────────────────────────────────────────────── */
   function pintarCarrito() {
+    asegurarCajaDescuento();
     const cont = $('#cart-body'), foot = $('#cart-foot');
     const n = unidades();
 
@@ -821,12 +998,12 @@
       cont.innerHTML = `
         <div class="cart-empty">
           <p>${esc(traducir('Tu carrito está vacío'))}</p>
-          <button class="btn btn-ghost btn-sm" data-cerrar-carrito>${esc(traducir('Ver los cafés'))}</button>
+          <button class="btn btn-ghost btn-sm" data-ver-cafes>${esc(traducir('Ver los cafés'))}</button>
         </div>`;
       foot.hidden = true;
       const f = $('#cart-envio');
       if (f) f.hidden = true;   // sin productos no tiene sentido pedir la dirección
-      if (focoEn) { const b = $('[data-cerrar-carrito]', cont); if (b) b.focus(); }
+      if (focoEn) { const b = $('[data-ver-cafes]', cont); if (b) b.focus(); }
       return;
     }
     // si el paso de envío está abierto, se respeta; si no, se muestra el resumen
@@ -889,11 +1066,19 @@
       </div>`;
     }).join('');
 
-    const falta = PAGOS.envioGratisDesde > 0 ? PAGOS.envioGratisDesde - subtotal() : -1;
+    /* El aviso de "te faltan X" mide contra lo que de verdad se paga. Con un
+       cupón de envío gratis no falta nada por definición: sin esta guarda se
+       pintaban a la vez "Te faltan $80.500 para el envío gratis" y
+       "Envío: Gratis", empujando a comprar más para ganar lo ya ganado. */
+    const falta = (cuponesDisponibles() && cupon && cupon.tipo === 'enviogratis')
+      ? -1
+      : PAGOS.envioGratisDesde > 0
+        ? PAGOS.envioGratisDesde - (subtotal() - montoDescuento()) : -1;
     $('#cart-sums').innerHTML = `
       ${falta > 0 ? `<div class="cart-row"><span>${esc(traducir('Te faltan'))} ${money(falta)} ${esc(traducir('para el envío gratis'))}</span></div>` : ''}
       ${falta <= 0 && PAGOS.envioGratisDesde > 0 ? `<div class="cart-envio-libre">✓ ${esc(traducir('Envío gratis aplicado'))}</div>` : ''}
       <div class="cart-row"><span>${esc(traducir('Subtotal'))}</span><span>${money(subtotal())}</span></div>
+      ${montoDescuento() > 0 ? `<div class="cart-row descuento"><span>${esc(traducir('Descuento'))} (${esc(cupon.codigo)})</span><span>−${money(montoDescuento())}</span></div>` : ''}
       <div class="cart-row"><span>${esc(traducir('Envío'))}</span><span>${envio() === 0 ? esc(traducir('Gratis')) : money(envio())}</span></div>
       <div class="cart-row total"><span>${esc(traducir('Total'))}</span><span>${money(total())}</span></div>`;
 
@@ -945,6 +1130,23 @@
 
   document.addEventListener('click', e => {
     if (e.target.closest('#cart-btn')) return abrirCarrito(true);
+    /* "Ver los cafés" del carrito vacío. Antes solo cerraba el panel
+       (data-cerrar-carrito): en la portada disimulaba porque los cafés quedaban
+       detrás, pero en la carta o en preparación no llevaba a ninguna parte.
+       Ahora cumple lo que dice: si hay rejilla en esta página, va hasta ella;
+       si no, navega a la tienda del idioma en que estás. */
+    const verCafes = e.target.closest('[data-ver-cafes]');
+    if (verCafes) {
+      abrirCarrito(false);
+      const grid = $('#shop-grid') || $('#coffee-grid');
+      if (grid) {
+        const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        grid.scrollIntoView({ behavior: quieto ? 'auto' : 'smooth', block: 'start' });
+      } else {
+        window.location.href = (typeof ruta === 'function') ? ruta('/tienda') : '/tienda';
+      }
+      return;
+    }
     if (e.target.closest('#cart-close') || e.target.closest('#cart-backdrop') || e.target.closest('[data-cerrar-carrito]')) {
       return abrirCarrito(false);
     }
@@ -991,9 +1193,10 @@
       'Hola Hysteria, quiero hacer un pedido:', '',
       lineas.join('\n'), '',
       `${traducir('Subtotal')}: ${money(subtotal())}`,
+      montoDescuento() > 0 ? `${traducir('Descuento')} (${cupon.codigo}): −${money(montoDescuento())}` : '',
       `${traducir('Envío')}: ${envio() === 0 ? traducir('Gratis') : money(envio())}`,
       `Total: ${money(total())}`
-    ].join('\n');
+    ].filter(Boolean).join('\n');
   }
 
   function irWhatsapp(datos) {
@@ -1103,6 +1306,8 @@
             molienda: l.esCafe ? l.molienda : ''
           })),
           datosEnvio: datos,
+          // El descuento lo aplica el servidor; aquí solo viaja el código
+          codigo: cupon ? cupon.codigo : '',
           // Para que Wompi devuelva a la portada del idioma en que se compró
           idioma: typeof IDIOMA !== 'undefined' ? IDIOMA : 'es'
         })
@@ -1596,7 +1801,9 @@
             gramos: l.esCafe ? l.gramos : 0,
             molienda: l.esCafe ? l.molienda : ''
           })),
-          datosEnvio: guardado
+          datosEnvio: guardado,
+          // El mismo código con el que se pagó: el total tiene que cuadrar
+          codigo: cupon ? cupon.codigo : ''
         })
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -1604,7 +1811,10 @@
       const num = ref;
 
       if (estado === 'APPROVED' && avisado) {
-        carrito = []; guardarCarrito(); pintarCarrito();
+        carrito = []; guardarCarrito();
+        // El cupón ya cumplió con este pedido; el siguiente empieza limpio
+        cupon = null; guardarCupon(); pintarDescuento();
+        pintarCarrito();
         avisar(num ? traducir('¡Gracias! Tu pedido') + ' ' + num + ' ' + traducir('está confirmado')
                    : traducir('¡Gracias! Recibimos tu pedido'));
 
@@ -1668,6 +1878,9 @@
     iniciarEnvio();
     iniciarReveal();
     inyectarSchema();
+    // Sin await a propósito: si el código guardado se apagó, la pantalla se
+    // corrige sola en cuanto responda; mientras tanto nada se bloquea.
+    revalidarCupon();
 
     // Mensaje de vuelta desde la pasarela
     const params = new URLSearchParams(location.search);
@@ -1685,7 +1898,9 @@
     }
 
     if (p === 'exito') {
-      carrito = []; guardarCarrito(); pintarCarrito();
+      carrito = []; guardarCarrito();
+      cupon = null; guardarCupon(); pintarDescuento();
+      pintarCarrito();
       avisar(ref ? traducir('¡Gracias! Tu pedido') + ' ' + ref + ' ' + traducir('está confirmado')
                  : traducir('¡Gracias! Recibimos tu pedido'));
     } else if (p === 'fallo') {

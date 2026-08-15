@@ -67,7 +67,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'El carrito está vacío' });
     }
 
-    const pedido = construirPedido(entrada);
+    // Un código inválido o apagado se ignora: el pedido sale a precio pleno,
+    // y la pantalla del checkout de Wompi muestra el monto real antes de pagar.
+    const pedido = construirPedido(entrada, body.codigo);
     if (!pedido.lineas.length) {
       return res.status(400).json({ error: 'No reconocimos ningún producto' });
     }
@@ -107,6 +109,7 @@ export default async function handler(req, res) {
       referencia, total: pedido.total, ciudad: dest.ciudad,
       items: pedido.lineas.map(l => `${l.cantidad}x ${l.titulo}`).join(' | '),
       molienda: pedido.moliendas.join(' | '),
+      descuento: pedido.codigo ? `${pedido.codigo} (-${pedido.descuento})` : '',
       guardado,
     }));
 

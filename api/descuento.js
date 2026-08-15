@@ -35,10 +35,15 @@ export default async function handler(req, res) {
     return res.status(200).json({ valido: false });
   }
 
+  /* No se comprueba aquí si ya se usó: en este momento el cliente todavía no
+     ha escrito su correo. Solo se avisa de que es de un solo uso, y la
+     comprobación real ocurre al pagar (api/wompi.js), que es cuando se conoce
+     a quién pertenece. */
   return res.status(200).json({
     valido: true,
     codigo: cupon.codigo,
     tipo: cupon.tipo,
     valor: cupon.valor,
+    unicoPorPersona: !!cupon.unicoPorPersona,
   });
 }

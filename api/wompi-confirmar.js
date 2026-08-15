@@ -15,7 +15,8 @@ import { construirPedido, leerDestino, validarDestino } from '../lib/pedido.js';
 import {
   enviarCorreoPedido, enviarCorreoCliente, yaAvisado, yaAvisadoCliente,
 } from '../lib/correo-pedido.js';
-import { leerPedido, olvidarPedido } from '../lib/guardado.js';
+import { leerPedido, olvidarPedido, anotarUsoDelCodigo } from '../lib/guardado.js';
+import { leerCodigo } from '../lib/pedido.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -88,6 +89,17 @@ export default async function handler(req, res) {
         return res.status(200).json({ estado: 'APPROVED', avisado: false });
       }
     }
+    /* El correo manda el que PAGÓ, no el que dice el navegador.
+       Este endpoint solo exige un id de transacción, que viaja a la vista en la
+       URL de regreso: cualquiera podía llamarlo con el id de otro y un correo
+       ajeno, y ese correo se usaba tanto para anotar el canje del código —
+       quemándoselo a alguien que no compró nada— como para mandarle la
+       confirmación de un pedido que no hizo. El webhook ya hacía lo correcto;
+       esta vía no. Del navegador solo se conservan las indicaciones de entrega
+       y demás datos que Wompi no transporta. */
+    const correoPagado = String(t.customer_email || '').trim().toLowerCase();
+    if (correoPagado) dest.correo = correoPagado;
+
     if (validarDestino(dest)) {
       return res.status(200).json({ estado: 'APPROVED', avisado: false });
     }
@@ -123,6 +135,15 @@ export default async function handler(req, res) {
        esto casi ningún pedido llegaría a borrarse nunca. Solo si el aviso SALIÓ:
        si falló, el detalle tiene que seguir ahí para que lo recoja el webhook. */
     if (avisado) await olvidarPedido(referencia);
+
+    /* El canje se anota SOLO con el pago ya aprobado, nunca al crear el pago:
+       si se anotara antes, un cliente que abandona el checkout perdería su
+       código sin haber comprado nada. Se usa el código del pedido que de
+       verdad se cobró (pedido.codigo), no el que mandó el navegador. */
+    const usado = leerCodigo(pedido.codigo);
+    if (usado && usado.unicoPorPersona && dest.correo) {
+      await anotarUsoDelCodigo(usado.codigo, dest.correo, referencia);
+    }
 
     console.log('Wompi · pedido confirmado', JSON.stringify({
       referencia: t.reference, total: pedido.total, ciudad: dest.ciudad,

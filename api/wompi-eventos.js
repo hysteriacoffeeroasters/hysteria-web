@@ -19,7 +19,8 @@ import {
   enviarCorreoPedido, enviarCorreoCliente,
   yaAvisado, yaAvisadoProvisional, yaAvisadoCliente,
 } from '../lib/correo-pedido.js';
-import { leerPedido, olvidarPedido, hayGuardado } from '../lib/guardado.js';
+import { leerPedido, olvidarPedido, hayGuardado, anotarUsoDelCodigo } from '../lib/guardado.js';
+import { leerCodigo } from '../lib/pedido.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -227,6 +228,17 @@ export default async function handler(req, res) {
        teléfono y documento, y no tiene por qué seguir almacenado una vez que
        la hoja llegó al correo. Solo se borra si el aviso SALIÓ: si falló, el
        detalle tiene que sobrevivir para el reintento de Wompi. */
+    /* El canje se anota antes de borrar el pedido guardado, que es de donde
+       sale el código: si el cliente no vuelve a la web, esta es la ÚNICA vía
+       que lo registra. anotarUsoDelCodigo escribe siempre la misma ruta, así
+       que un reintento de Wompi no cuenta dos veces. */
+    if (tieneDetalle) {
+      const usado = leerCodigo(pedidoInterno.codigo);
+      if (usado && usado.unicoPorPersona && dest.correo) {
+        await anotarUsoDelCodigo(usado.codigo, dest.correo, referencia);
+      }
+    }
+
     if (tieneDetalle && avisado) await olvidarPedido(referencia);
 
     console.log('Wompi · evento procesado', JSON.stringify({

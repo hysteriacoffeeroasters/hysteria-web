@@ -314,6 +314,34 @@ el menú): no pongas ahí un código que deba ser secreto.
 ⚠️ Funcionan solo con Wompi, la pasarela actual. Si algún día vuelves a
 Mercado Pago, la caja del código desaparece sola y ningún cupón se aplica.
 
+**¿Y un código secreto, que no se pueda leer en la web?**
+Ese no va en el archivo: va en Vercel → Settings → Environment Variables, en
+la variable `CODIGOS_SECRETOS`. Una línea por código:
+
+```
+NOMBRE:tipo:valor:unico
+```
+
+El cuarto campo es opcional; `unico` significa **una sola vez por persona**,
+medida por el correo con el que se paga. Varios códigos se separan con coma
+o con salto de línea. Un ejemplo del formato:
+
+```
+NOMBRE_DEL_CODIGO:porcentaje:10:unico
+```
+
+⚠️ **No escribas aquí los códigos vivos.** Este archivo se sirve público: un
+código real anotado en esta guía queda a la vista de cualquiera, que es justo
+lo que la variable de entorno viene a evitar. Los códigos vivos existen en un
+solo sitio: Vercel.
+
+Para cambiar el descuento, edita el número y **redespliega** (las variables de
+entorno solo entran en despliegues nuevos). Para retirarlo, borra la variable.
+
+Límite honesto del «una vez por persona»: se mide por el correo del pago, así
+que alguien con otro correo consigue otro descuento. Cerrarlo del todo pediría
+verificar identidad, que no compensa para un 10 %.
+
 **¿Cómo publico un cambio?**
 Si conectaste GitHub: subes el cambio y Vercel lo publica solo en ~40 segundos.
 

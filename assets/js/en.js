@@ -169,6 +169,8 @@ var DICCIONARIO_EN = {
   'Escribe un código': 'Enter a code',
   'Ese código no existe o ya no está activo': 'That code doesn’t exist or is no longer active',
   'No pudimos comprobar el código. Intenta de nuevo.': 'We couldn’t check the code. Please try again.',
+  'Válido una vez por persona': 'Valid once per person',
+  'Ese código es de un solo uso y ya lo usaste con este correo.': 'That code is single-use and you already used it with this email.',
   'Precios por colección': 'Prices by collection',
   'Presentación': 'Size',
   'Taza · método filtrado': 'Cup · filter brew',

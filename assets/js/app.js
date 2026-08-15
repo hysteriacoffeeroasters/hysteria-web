@@ -187,7 +187,8 @@
       const c = JSON.parse(localStorage.getItem(LLAVE_DESC) || 'null');
       return (c && typeof c.codigo === 'string' &&
               ['porcentaje', 'fijo', 'enviogratis'].includes(c.tipo))
-        ? { codigo: c.codigo, tipo: c.tipo, valor: Math.max(0, Number(c.valor) || 0) }
+        ? { codigo: c.codigo, tipo: c.tipo, valor: Math.max(0, Number(c.valor) || 0),
+            unico: !!c.unico }
         : null;
     } catch (e) { return null; }
   }
@@ -203,21 +204,39 @@
   const subtotal  = () => carrito.reduce((a, l) => a + l.precio * l.cant, 0);
   /* Réplica exacta de las reglas del servidor: porcentaje redondeado, fijo
      acotado al subtotal. Si esto y lib/pedido.js divergen, la pantalla miente. */
-  const montoDescuento = () => {
+  // Descuento en bruto, antes de comprobar si de verdad conviene
+  const descuentoBruto = () => {
     if (!cuponesDisponibles() || !cupon || !carrito.length) return 0;
     if (cupon.tipo === 'porcentaje') return Math.round(subtotal() * cupon.valor / 100);
     if (cupon.tipo === 'fijo')       return Math.min(cupon.valor, subtotal());
     return 0;   // 'enviogratis' actúa sobre el envío, no sobre los productos
   };
-  const envio     = () => {
+  const envioSinCupon = () => {
+    if (!carrito.length) return 0;
+    const libre = PAGOS.envioGratisDesde > 0 && subtotal() >= PAGOS.envioGratisDesde;
+    return libre ? 0 : (PAGOS.envio || 0);
+  };
+  const envioConCupon = () => {
     if (!carrito.length) return 0;
     if (cuponesDisponibles() && cupon && cupon.tipo === 'enviogratis') return 0;
     // El envío gratis por monto se gana con lo que de verdad se paga
     const libre = PAGOS.envioGratisDesde > 0 &&
-                  (subtotal() - montoDescuento()) >= PAGOS.envioGratisDesde;
+                  (subtotal() - descuentoBruto()) >= PAGOS.envioGratisDesde;
     return libre ? 0 : (PAGOS.envio || 0);
   };
-  const total = () => subtotal() - montoDescuento() + envio();
+
+  /* Misma guarda de no empeorar que aplica el servidor (construirPedido): si
+     el descuento tira el carrito por debajo del umbral del envío gratis, el
+     total puede SUBIR. En ese caso el cupón no se aplica — ni aquí ni al
+     cobrar. Si estas dos reglas divergen, la pantalla miente. */
+  const cuponConviene = () => {
+    if (!cuponesDisponibles() || !cupon || !carrito.length) return false;
+    return (subtotal() - descuentoBruto() + envioConCupon()) < (subtotal() + envioSinCupon());
+  };
+
+  const montoDescuento = () => (cuponConviene() ? descuentoBruto() : 0);
+  const envio          = () => (cuponConviene() ? envioConCupon() : envioSinCupon());
+  const total          = () => subtotal() - montoDescuento() + envio();
 
   // Mismo tope por línea que aplica el servidor (api/crear-preferencia.js).
   const MAX_UNIDADES = 50;
@@ -869,7 +888,8 @@
           <span>✓ ${esc(traducir('Código'))} <strong>${esc(cupon.codigo)}</strong></span>
           <button type="button" class="cart-desc-quitar" data-quitar-codigo
                   aria-label="${esc(traducir('Quitar el código'))} ${esc(cupon.codigo)}">${esc(traducir('Quitar'))}</button>
-        </div>`;
+        </div>
+        ${cupon.unico ? `<p class="cart-desc-nota">${esc(traducir('Válido una vez por persona'))}</p>` : ''}`;
     } else {
       d.innerHTML = `
         <div class="cart-desc-form">
@@ -904,7 +924,8 @@
         if (err) err.textContent = traducir('Ese código no existe o ya no está activo');
         return;
       }
-      cupon = { codigo: data.codigo, tipo: data.tipo, valor: Math.max(0, Number(data.valor) || 0) };
+      cupon = { codigo: data.codigo, tipo: data.tipo, valor: Math.max(0, Number(data.valor) || 0),
+                unico: !!data.unicoPorPersona };
       guardarCupon();
       pintarDescuento();
       pintarCarrito();
@@ -953,7 +974,8 @@
       const data = await r.json();
       if (!cupon || cupon.codigo !== consultado) return;
       cupon = data.valido
-        ? { codigo: data.codigo, tipo: data.tipo, valor: Math.max(0, Number(data.valor) || 0) }
+        ? { codigo: data.codigo, tipo: data.tipo, valor: Math.max(0, Number(data.valor) || 0),
+            unico: !!data.unicoPorPersona }
         : null;
       guardarCupon();
       pintarDescuento();
@@ -1070,7 +1092,7 @@
        cupón de envío gratis no falta nada por definición: sin esta guarda se
        pintaban a la vez "Te faltan $80.500 para el envío gratis" y
        "Envío: Gratis", empujando a comprar más para ganar lo ya ganado. */
-    const falta = (cuponesDisponibles() && cupon && cupon.tipo === 'enviogratis')
+    const falta = (cuponesDisponibles() && cupon && cupon.tipo === 'enviogratis' && cuponConviene())
       ? -1
       : PAGOS.envioGratisDesde > 0
         ? PAGOS.envioGratisDesde - (subtotal() - montoDescuento()) : -1;
@@ -1313,6 +1335,23 @@
         })
       });
 
+      /* 409: el código es de un solo uso y este correo ya lo gastó. NO es un
+         fallo de la pasarela, así que no se manda a nadie a WhatsApp: se quita
+         el código, se explica en el carrito y el cliente decide si sigue a
+         precio pleno. Es el único momento en que se puede saber, porque el
+         correo se escribe en este paso. */
+      if (r.status === 409) {
+        const data409 = await r.json().catch(() => ({}));
+        cupon = null; guardarCupon();
+        mostrarPaso('resumen');
+        pintarDescuento(); pintarCarrito();
+        const err = $('#cart-desc-error');
+        const msg = traducir('Ese código es de un solo uso y ya lo usaste con este correo.');
+        if (err) err.textContent = msg; else avisar(msg);
+        btn.disabled = false;
+        btn.textContent = original;
+        return;
+      }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const data = await r.json();
       if (!data.url || !data.campos) throw new Error('respuesta incompleta');

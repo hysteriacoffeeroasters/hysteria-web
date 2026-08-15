@@ -23,9 +23,9 @@
 
 import { createHash } from 'node:crypto';
 import {
-  construirPedido, leerDestino, validarDestino, nuevaReferencia, SITE_URL,
+  construirPedido, leerDestino, validarDestino, nuevaReferencia, SITE_URL, leerCodigo,
 } from '../lib/pedido.js';
-import { guardarPedido } from '../lib/guardado.js';
+import { guardarPedido, yaUsoElCodigo } from '../lib/guardado.js';
 
 const CHECKOUT = 'https://checkout.wompi.co/p/';
 
@@ -80,6 +80,22 @@ export default async function handler(req, res) {
     const idioma = body.idioma === 'en' ? 'en' : 'es';
     const problema = validarDestino(dest);
     if (problema) return res.status(400).json({ error: problema });
+
+    /* Códigos de un solo uso por persona. Este es el PRIMER momento en que se
+       conoce el correo del cliente: el carrito valida el código antes de que
+       lo escriba, así que no podía saberlo.
+
+       Se AVISA en vez de ignorar el código en silencio. Ignorarlo cobraría más
+       de lo que el carrito prometió, que es exactamente lo que este sistema
+       existe para impedir. El 409 lo entiende el navegador, que quita el código
+       y lo explica sin mandar a nadie a WhatsApp. */
+    const cupon = leerCodigo(body.codigo);
+    if (cupon && cupon.unicoPorPersona && await yaUsoElCodigo(cupon.codigo, dest.correo)) {
+      return res.status(409).json({
+        error: 'Ese código es de un solo uso y ya lo usaste con este correo.',
+        codigoGastado: cupon.codigo,
+      });
+    }
 
     const referencia = nuevaReferencia();
     const moneda = 'COP';

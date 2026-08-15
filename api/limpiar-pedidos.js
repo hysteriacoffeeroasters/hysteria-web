@@ -38,7 +38,10 @@ export default async function handler(req, res) {
   try {
     const viejos = [];
     let cursor;
-    // list() pagina de a 1000; se recorre entero por si algún día se acumulan
+    /* list() pagina de a 1000; se recorre entero por si algún día se acumulan.
+       OJO con el prefijo: solo 'pedidos/'. La carpeta 'usos/' guarda qué
+       correos ya gastaron un código de un solo uso y NO caduca — barrerla
+       regalaría el descuento otra vez a quien ya lo usó. */
     do {
       const pagina = await list({
         prefix: 'pedidos/',

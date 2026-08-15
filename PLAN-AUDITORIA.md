@@ -296,8 +296,13 @@ idioma en que se escribió no basta.
   evento válido, y el secreto no debe salir de Vercel. Lo cierra el primer
   pedido real. Si algo fallara, el síntoma sería que un pago por PSE o efectivo
   no genere aviso, y el motivo exacto estaría en `EVENTO_WOMPI_RECHAZADO`.
-- [ ] **Fuentes en TTF.** Pasarlas a woff2 es la mejora de rendimiento que
-  queda; pesan bastante menos y las lee cualquier navegador actual.
+- [x] **Fuentes en TTF — medido y descartado.** Vercel YA las sirve con Brotli:
+  237 KB en disco pero **134 KB por la red**. WOFF2 es en esencia Brotli más un
+  reordenado interno, así que lo que queda por ganar son unos 15–25 KB, y solo
+  en la primera visita (después quedan en caché un año). Además hace falta una
+  herramienta que no está instalada (Node con `ttf2woff2` o Python con
+  `fonttools`). Si algún día se retoma, **recortar la tipografía** al latín con
+  acentos del español da más que convertirla.
 
 ---
 
@@ -330,11 +335,16 @@ Panela, Andrés, Jeisson, Juan, Cédula.
 
 ### Lo que la auditoría NO pudo comprobar (sigue abierto)
 
-- No se hizo ningún pago real ni en sandbox. No se sabe si la firma con la que
-  se validan los avisos de Wompi coincide con la de un evento real: si Wompi
-  cambiara esos campos, **todos** los avisos se rechazarían.
-- Nadie vio con sus ojos el campo enfocado del checkout (el hallazgo 07 se
-  sostiene sobre leer el CSS).
+- Sigue sin haber ningún pago real ni en sandbox. Con la firma ya encendida se
+  comprobaron las vías de RECHAZO, no la de aceptación. Lo que YA no aplica de
+  la redacción anterior: el riesgo de que Wompi firmara otros campos, porque la
+  cadena se arma con `signature.properties` y no con un orden fijo.
+- Del hallazgo 07 se comprobó en vivo la mitad del error: en producción, con
+  campos marcados, el borde sale `rgb(255,107,107)` solo en los marcados y los
+  limpios se quedan como estaban. El **anillo de foco** solo está comprobado a
+  nivel de hoja de estilos (la regla `outline` cargada y en el orden correcto);
+  no se pudo capturar bajo un tabulador real porque el panel del navegador no
+  estaba visible y no compone imagen.
 - No se miró Search Console ni se pasaron las páginas por la prueba oficial de
   resultados enriquecidos.
 
@@ -343,6 +353,21 @@ Panela, Andrés, Jeisson, Juan, Cédula.
 - Crear un store en Vercel (Blob o KV) si se quiere persistencia real de
   pedidos (hallazgo 01).
 - Foto de portada en alta resolución, del archivo original de cámara.
+- Foto de Euforia en grande. La que hay se monta desde un render cuya bolsa
+  mide 551 px de alto, frente a los ~3.500 de las otras tres, así que va
+  ampliada 1,62 veces y se ve más blanda que sus vecinas.
+- Llamar a Ginna, +57 310 764 0758, por el pedido `HYS-MSS959YS-D5JA`.
 - Pedir indexación de `/en/brewing` y `/en/visit` (se acabó la cuota diaria
-  el 14 de agosto).
+  el 14 de agosto; la cuota se renueva a diario).
+- Opcional: configurar «Enviar como» en Gmail con el SMTP de Brevo, para poder
+  responder desde `hola@hysteriacoffeeroasters.com`.
+
+### Se cierra solo, con esperar
+
+- **Favicon.** Congelado hasta el 4 de septiembre. Comprobado el 15 de agosto:
+  Google sigue devolviendo el globo genérico (mismo MD5 que el de un dominio
+  inexistente), pero el archivo se sirve bien —2.239 bytes, `image/vnd.microsoft.icon`—.
+  Solo falta que Googlebot-Image lo rastree. NO tocar antes de esa fecha.
+- **El webhook de Wompi.** Lo cierra el primer pedido real que entre por PSE o
+  efectivo.
 - Llamar a Ginna, +57 310 764 0758, por el pedido `HYS-MSS959YS-D5JA`.

@@ -244,7 +244,7 @@
                alt="${L.imagenFicha
                  ? `${esc(traducir('Ficha de cata de'))} ${esc(c.nombre)}${puesto(L.variedad) ? ', ' + esc(traducir('variedad')) + ' ' + esc(L.variedad) : ''}`
                  : `${esc(traducir('Bolsa de café'))} ${esc(c.nombre)}${puesto(L.variedad) ? ' · ' + esc(L.variedad) : ''}`}"
-               width="${L.imagenFicha ? '900' : '430'}" height="${L.imagenFicha ? '1687' : '538'}"
+               width="${L.imagenFicha ? '900' : '800'}" height="${L.imagenFicha ? '1687' : '1000'}"
                loading="lazy" decoding="async">
           <span class="coffee-dot" aria-hidden="true"></span>
           <div class="coffee-badges">${badges}</div>
@@ -595,7 +595,7 @@
         <div class="shop-media${L.imagenFicha ? ' media-ficha' : ''}">
           <img src="${esc(L.imagen)}"
                alt="${esc(traducir(L.imagenFicha ? 'Ficha de cata' : 'Bolsa de café'))} ${esc(c.nombre)} ${esc(L.variedad)}"
-               width="${L.imagenFicha ? '900' : '430'}" height="${L.imagenFicha ? '1687' : '538'}"
+               width="${L.imagenFicha ? '900' : '800'}" height="${L.imagenFicha ? '1687' : '1000'}"
                loading="lazy" decoding="async">
         </div>
         <div class="shop-info">

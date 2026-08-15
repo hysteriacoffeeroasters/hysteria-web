@@ -34,6 +34,19 @@ Informe legible: https://claude.ai/code/artifact/383339f5-7715-4a4d-94f7-8a87e51
 7. **Nunca escribir secretos en archivos del repo.** Van en variables de
    entorno de Vercel. `lib/` se sirve público (hallazgo 23).
 8. **Verificar en producción tras cada despliegue**, no solo en local.
+9. **Si un commit no aparece en Vercel, mirar el estado del commit en GitHub.**
+   Una regla mal escrita en `vercel.json` se rechaza al VALIDAR, antes de crear
+   la implementación: en el panel de Vercel no sale un despliegue fallido, no
+   sale nada, y es fácil confundirlo con una cuota agotada. El motivo real solo
+   aparece en el estado del commit:
+
+   ```bash
+   curl -s https://api.github.com/repos/hysteriacoffeeroasters/hysteria-web/commits/main/status
+   ```
+
+   Pasó de verdad: `/(LEEME.md|lib/(.*))` —un grupo de captura dentro de una
+   alternancia— tumbó los grupos D y E enteros, que no tenían nada malo. En
+   `source` solo van patrones de un nivel: un literal, o un `(.*)` sin anidar.
 
 ---
 

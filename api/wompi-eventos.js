@@ -19,6 +19,7 @@ import {
   enviarCorreoPedido, enviarCorreoCliente,
   yaAvisado, yaAvisadoProvisional, yaAvisadoCliente,
 } from '../lib/correo-pedido.js';
+import { leerPedido, olvidarPedido, hayGuardado } from '../lib/guardado.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -102,6 +103,13 @@ export default async function handler(req, res) {
 
     const t = ((await r.json()) || {}).data || {};
     if (t.status !== 'APPROVED') {
+      /* Pago muerto: el pedido guardado ya no va a despacharse nunca, y ahí
+         hay nombre, dirección, teléfono y documento. Se borra ya, sin esperar
+         a la purga diaria. PENDING no entra: PSE y efectivo pasan por ahí
+         camino de aprobarse. */
+      if (['DECLINED', 'VOIDED', 'ERROR'].includes(t.status)) {
+        await olvidarPedido(t.reference || id);
+      }
       return res.status(200).json({ recibido: true, estado: t.status || 'DESCONOCIDO' });
     }
 
@@ -134,19 +142,46 @@ export default async function handler(req, res) {
       return res.status(200).json({ recibido: true, avisado: false, duplicado: 'provisional' });
     }
 
-    /* El detalle de productos vive en el navegador del cliente. Este aviso es
-       PROVISIONAL: sale etiquetado aparte, así que no bloquea a la hoja de
-       despacho con detalle si el cliente vuelve un momento después.
+    /* Se busca el pedido que api/wompi.js guardó al crear el pago. Si está,
+       esta hoja de despacho ya es la DEFINITIVA aunque el cliente nunca vuelva
+       a la web: se sabe qué café, en qué molienda y a qué dirección. */
+    const guardado = await leerPedido(referencia);
+    const cuadra = !!(guardado && guardado.pedido &&
+                      Math.round(Number(guardado.pedido.total)) === total);
+    const tieneDetalle = !!(guardado && guardado.pedido &&
+                            Array.isArray(guardado.pedido.lineas) &&
+                            guardado.pedido.lineas.length && cuadra);
+
+    /* La referencia la genera el servidor y es única por intento, así que el
+       guardado y el cobro deberían cuadrar siempre. Si no cuadran, algo no
+       entendemos: mejor no despachar un pedido por un monto distinto al que
+       Wompi cobró de verdad. Se cae al aviso provisional y queda el aviso. */
+    if (guardado && !cuadra) {
+      console.error('PEDIDO_GUARDADO_NO_CUADRA ' + JSON.stringify({
+        referencia, cobradoPorWompi: total,
+        totalGuardado: guardado.pedido && guardado.pedido.total,
+      }));
+    }
+
+    /* Sin detalle guardado (pedidos anteriores a esto, o un fallo del store) se
+       mantiene el aviso PROVISIONAL de siempre: sale etiquetado aparte, así que
+       no bloquea a la hoja con detalle si el cliente vuelve un momento después.
 
        Antes esta línea afirmaba que el cliente no había vuelto a la web, y era
        falso en el caso más común: que el evento simplemente corriera más que
        la redirección del navegador. */
-    const pedidoInterno = {
+    /* Se dice POR QUÉ no hay detalle: cada causa pide una acción distinta de
+       quien lee el correo, y sin esto el fallo del almacén sería invisible. */
+    const porQueSinDetalle = !hayGuardado()
+      ? 'El almacén de pedidos no está conectado en Vercel: el detalle solo llega si el cliente vuelve a la web.'
+      : (guardado && !cuadra)
+        ? 'Hay un pedido guardado pero su total no cuadra con lo cobrado (revisa PEDIDO_GUARDADO_NO_CUADRA en los registros).'
+        : 'No hay pedido guardado con esta referencia: si no llega un segundo correo en unos minutos, confírmalo con el cliente.';
+
+    const pedidoInterno = tieneDetalle ? guardado.pedido : {
       lineas: [{
         id: 'pedido',
-        titulo: `Pago recibido por ${'$' + total.toLocaleString('es-CO')} — el detalle del ` +
-                `pedido llega en un segundo correo con esta misma referencia. Si no llega ` +
-                `en unos minutos, confírmalo con el cliente.`,
+        titulo: `Pago recibido por ${'$' + total.toLocaleString('es-CO')}. ${porQueSinDetalle}`,
         cantidad: 1,
         precio: total,
       }],
@@ -154,6 +189,15 @@ export default async function handler(req, res) {
       costoEnvio: 0,
       total,
     };
+
+    /* Los datos de envío guardados son mejores que los que trae la transacción:
+       llevan las indicaciones de entrega (portería, horario), que Wompi no
+       transporta. Se completan con los de Wompi por si alguno viniera vacío. */
+    if (tieneDetalle && guardado.dest) {
+      for (const k of Object.keys(dest)) {
+        if (guardado.dest[k]) dest[k] = guardado.dest[k];
+      }
+    }
     // El cliente ya sabe qué pidió: su correo solo confirma pago y total
     const pedidoCliente = { lineas: [], subtotal: total, costoEnvio: 0, total };
 
@@ -169,16 +213,26 @@ export default async function handler(req, res) {
         pedido: pedidoInterno, dest,
         pasarela: `Wompi (${t.payment_method_type || 'evento'})`,
         transaccion: id,
-        provisional: true,
+        /* Con detalle NO es provisional: lleva la etiqueta exacta de la
+           referencia, así que si el cliente vuelve después, wompi-confirmar ve
+           yaAvisado() y no manda una segunda hoja igual. */
+        provisional: !tieneDetalle,
       }),
       clienteYaTiene
         ? Promise.resolve(true)
         : enviarCorreoCliente({ referencia, pedido: pedidoCliente, dest, sinDetalle: true }),
     ]);
 
+    /* Ya despachado: se borra el pedido guardado. Ahí hay nombre, dirección,
+       teléfono y documento, y no tiene por qué seguir almacenado una vez que
+       la hoja llegó al correo. Solo se borra si el aviso SALIÓ: si falló, el
+       detalle tiene que sobrevivir para el reintento de Wompi. */
+    if (tieneDetalle && avisado) await olvidarPedido(referencia);
+
     console.log('Wompi · evento procesado', JSON.stringify({
       referencia: t.reference, total, avisado, clienteAvisado,
       metodo: t.payment_method_type,
+      conDetalle: tieneDetalle,
     }));
 
     // Si el aviso al negocio falló, 500: Wompi reintenta hasta 3 veces en 24 h.

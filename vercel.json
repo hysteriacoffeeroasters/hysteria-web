@@ -2,6 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
+  "crons": [
+    { "path": "/api/limpiar-pedidos", "schedule": "0 8 * * *" }
+  ],
   "headers": [
     {
       "source": "/assets/fonts/(.*)",

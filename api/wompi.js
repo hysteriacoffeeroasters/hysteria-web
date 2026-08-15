@@ -25,6 +25,7 @@ import { createHash } from 'node:crypto';
 import {
   construirPedido, leerDestino, validarDestino, nuevaReferencia, SITE_URL,
 } from '../lib/pedido.js';
+import { guardarPedido } from '../lib/guardado.js';
 
 const CHECKOUT = 'https://checkout.wompi.co/p/';
 
@@ -89,12 +90,24 @@ export default async function handler(req, res) {
       .update(`${referencia}${centavos}${moneda}${secreto}`)
       .digest('hex');
 
+    /* Este es el ÚNICO momento en que el servidor conoce el pedido entero: qué
+       café, qué molienda y a dónde va. Si no se guarda aquí y el cliente paga
+       sin volver a la web, el detalle se pierde y al webhook solo le llega el
+       monto — que es exactamente lo que pasó con el pedido del 13 de agosto.
+       El webhook lo recupera por la referencia (lib/guardado.js).
+
+       Se espera el guardado a propósito, en vez de dejarlo suelto: la función
+       puede terminar en cuanto responde, y una promesa sin esperar se quedaría
+       a medias. Nunca lanza, así que un fallo del store no impide pagar. */
+    const guardado = await guardarPedido(referencia, { pedido, dest, idioma });
+
     // Rastro mínimo para cruzar el pago con el despacho. Sin datos personales:
     // nombre, dirección, teléfono, documento y correo NO se registran.
     console.log('Wompi · pedido preparado', JSON.stringify({
       referencia, total: pedido.total, ciudad: dest.ciudad,
       items: pedido.lineas.map(l => `${l.cantidad}x ${l.titulo}`).join(' | '),
       molienda: pedido.moliendas.join(' | '),
+      guardado,
     }));
 
     // El navegador arma un formulario con estos campos y lo envía a Wompi.

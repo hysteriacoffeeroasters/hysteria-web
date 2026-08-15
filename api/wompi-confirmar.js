@@ -15,6 +15,7 @@ import { construirPedido, leerDestino, validarDestino } from '../lib/pedido.js';
 import {
   enviarCorreoPedido, enviarCorreoCliente, yaAvisado, yaAvisadoCliente,
 } from '../lib/correo-pedido.js';
+import { olvidarPedido } from '../lib/guardado.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -99,6 +100,13 @@ export default async function handler(req, res) {
         ? Promise.resolve(true)
         : enviarCorreoCliente({ referencia, pedido, dest }),
     ]);
+
+    /* El pedido guardado ya cumplió: la hoja de despacho salió por esta vía.
+       Se borra porque ahí quedan nombre, dirección, teléfono y documento, y
+       este es el camino más frecuente —el cliente vuelve a la web—, así que sin
+       esto casi ningún pedido llegaría a borrarse nunca. Solo si el aviso SALIÓ:
+       si falló, el detalle tiene que seguir ahí para que lo recoja el webhook. */
+    if (avisado) await olvidarPedido(referencia);
 
     console.log('Wompi · pedido confirmado', JSON.stringify({
       referencia: t.reference, total: pedido.total, ciudad: dest.ciudad,

@@ -348,19 +348,34 @@ Panela, Andrés, Jeisson, Juan, Cédula.
 - No se miró Search Console ni se pasaron las páginas por la prueba oficial de
   resultados enriquecidos.
 
+### Cerrado el 15 de agosto (segunda tanda)
+
+- [x] **La persistencia real de pedidos (hallazgo 01, el fondo).** Andrés creó
+  el store `hysteria-pedidos` (Blob, privado, iad1) y el código quedó
+  desplegado: `api/wompi.js` guarda el pedido completo al crear el pago,
+  `api/wompi-eventos.js` lo recupera y la hoja sale completa aunque el cliente
+  no vuelva. Borrado al despachar, en estados terminales, y purga diaria de
+  huérfanos (`api/limpiar-pedidos.js`, cron 08:00 UTC). Verificado en
+  producción: `guardado:true` en el registro, purga respondiendo, y los tres
+  endpoints vivos. **Primera dependencia del proyecto: `@vercel/blob` 2.8**
+  (sin package-lock: no hay npm en la máquina de trabajo; generarlo cuando
+  lo haya). La revisión adversaria previa al despliegue tumbó tres cosas,
+  documentadas en el commit `759d394`.
+- [x] Llamada a Ginna hecha (pedido `HYS-MSS959YS-D5JA`).
+
 ### Pendientes de Andrés, no del código
 
-- Crear un store en Vercel (Blob o KV) si se quiere persistencia real de
-  pedidos (hallazgo 01).
 - Foto de portada en alta resolución, del archivo original de cámara.
 - Foto de Euforia en grande. La que hay se monta desde un render cuya bolsa
   mide 551 px de alto, frente a los ~3.500 de las otras tres, así que va
   ampliada 1,62 veces y se ve más blanda que sus vecinas.
-- Llamar a Ginna, +57 310 764 0758, por el pedido `HYS-MSS959YS-D5JA`.
 - Pedir indexación de `/en/brewing` y `/en/visit` (se acabó la cuota diaria
   el 14 de agosto; la cuota se renueva a diario).
 - Opcional: configurar «Enviar como» en Gmail con el SMTP de Brevo, para poder
   responder desde `hola@hysteriacoffeeroasters.com`.
+- Opcional: poner `CRON_SECRET` en Vercel para blindar `/api/limpiar-pedidos`
+  (hoy abierto; lo único que puede hacer quien lo llame es adelantar la
+  limpieza que igual iba a pasar).
 
 ### Se cierra solo, con esperar
 
@@ -369,5 +384,9 @@ Panela, Andrés, Jeisson, Juan, Cédula.
   inexistente), pero el archivo se sirve bien —2.239 bytes, `image/vnd.microsoft.icon`—.
   Solo falta que Googlebot-Image lo rastree. NO tocar antes de esa fecha.
 - **El webhook de Wompi.** Lo cierra el primer pedido real que entre por PSE o
-  efectivo.
+  efectivo. Desde el 15 de agosto ese mismo pedido cierra DOS cosas: la
+  aceptación de la firma y la lectura del pedido guardado (la escritura ya está
+  probada en producción; la lectura solo la ejercita un pago aprobado). Si la
+  hoja llega con el detalle completo y sin la frase «Pago recibido por», los
+  dos caminos quedan confirmados de una vez.
 - Llamar a Ginna, +57 310 764 0758, por el pedido `HYS-MSS959YS-D5JA`.

@@ -36,15 +36,46 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Cuerpo no válido' });
   }
 
-  // Si el secreto de eventos está configurado, la firma es obligatoria
+  /* Si el secreto de eventos está configurado, la firma es obligatoria.
+
+     El orden de los campos NO se fija aquí: cada evento trae en
+     `signature.properties` la lista de qué campos se firmaron y en qué orden,
+     y esa lista es la que manda. Antes iba escrito a mano
+     (id + status + amount_in_cents); mientras la verificación estaba apagada
+     daba lo mismo, pero con el secreto puesto un solo campo distinto tiraría
+     TODOS los avisos — y son la red de seguridad de PSE y efectivo, que
+     confirman cuando el cliente ya cerró la pestaña. La lista escrita a mano
+     queda solo de reserva por si algún evento llegara sin `properties`. */
   const secretoEventos = (process.env.WOMPI_EVENTS_SECRET || '').trim();
   if (secretoEventos) {
-    const t = (evento.data && evento.data.transaction) || {};
-    const cadena = `${t.id}${t.status}${t.amount_in_cents}${evento.timestamp}${secretoEventos}`;
+    const firma = evento.signature || {};
+    const campos = Array.isArray(firma.properties) && firma.properties.length
+      ? firma.properties
+      : ['transaction.id', 'transaction.status', 'transaction.amount_in_cents'];
+
+    // 'transaction.amount_in_cents' se resuelve contra evento.data
+    const valorDe = (ruta) => String(ruta).split('.')
+      .reduce((o, k) => (o === null || o === undefined ? undefined : o[k]), evento.data || {});
+
+    const partes = campos.map(valorDe);
+    const cadena = partes.map(v => (v === null || v === undefined ? '' : String(v))).join('')
+                 + String(evento.timestamp === undefined ? '' : evento.timestamp)
+                 + secretoEventos;
     const esperado = createHash('sha256').update(cadena).digest('hex').toUpperCase();
-    const recibido = String((evento.signature || {}).checksum || '').toUpperCase();
+    const recibido = String(firma.checksum || '').toUpperCase();
+
     if (esperado !== recibido) {
-      console.error('Evento de Wompi con firma inválida, descartado');
+      /* Se rechaza, pero no en silencio: queda el id de la transacción para
+         poder recuperarla a mano desde los registros de Vercel, y qué campos
+         se usaron, que es lo que hace falta para saber si el rechazo viene de
+         un evento falso o de que Wompi cambió los campos que firma. */
+      const faltantes = campos.filter((c, i) => partes[i] === undefined);
+      console.error('EVENTO_WOMPI_RECHAZADO ' + JSON.stringify({
+        transaccion: ((evento.data || {}).transaction || {}).id || null,
+        estado: ((evento.data || {}).transaction || {}).status || null,
+        campos,
+        camposSinValor: faltantes,
+      }));
       return res.status(401).json({ error: 'Firma no válida' });
     }
   }

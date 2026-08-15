@@ -273,13 +273,31 @@ idioma en que se escribió no basta.
   debajo, no aportaba nada: se quitó de las 14 páginas.
   **Mejora pendiente de verdad: pasar las fuentes de TTF a woff2.**
 
-### Sigue abierto, y es de Andrés
+### Cerrado el 15 de agosto
 
-- [ ] **ALTO — `WOMPI_EVENTS_SECRET` no está en Vercel.** El webhook acepta
-  eventos SIN firma válida: se comprobó que un POST con checksum inventado
-  devuelve 200 en vez de 401. Lo único que lo contiene es que el código vuelve
-  a preguntarle la transacción a Wompi, así que no se puede falsear un pago,
-  pero la verificación de firma no se está aplicando. Se carga en Vercel.
+- [x] **ALTO — `WOMPI_EVENTS_SECRET`.** Andrés lo cargó en Vercel. Comprobado en
+  producción: un POST con checksum inventado devuelve **401** donde antes
+  devolvía 200.
+- [x] **Y como consecuencia, la firma se arma bien.** Encender el secreto
+  convirtió un riesgo dormido en real: la cadena a firmar iba con un orden
+  ESCRITO A MANO (`id + status + amount_in_cents`), pero cada evento trae en
+  `signature.properties` qué campos se firmaron y en qué orden. Un solo campo
+  distinto habría rechazado TODOS los avisos, que son la red de seguridad de
+  PSE y efectivo. Ahora manda `properties`; la lista a mano queda de reserva.
+  Comprobado que en el caso normal la cadena es **idéntica** a la anterior.
+  El rechazo deja `EVENTO_WOMPI_RECHAZADO` con el id de la transacción, para
+  poder recuperarla desde los registros de Vercel.
+
+### Sigue abierto
+
+- [ ] **Ningún pago real ha pasado por el webhook con la firma encendida.** Se
+  comprobaron todas las vías de RECHAZO (401 sin reventar en los cinco casos
+  probados), pero no la de aceptación: haría falta el secreto para firmar un
+  evento válido, y el secreto no debe salir de Vercel. Lo cierra el primer
+  pedido real. Si algo fallara, el síntoma sería que un pago por PSE o efectivo
+  no genere aviso, y el motivo exacto estaría en `EVENTO_WOMPI_RECHAZADO`.
+- [ ] **Fuentes en TTF.** Pasarlas a woff2 es la mejora de rendimiento que
+  queda; pesan bastante menos y las lee cualquier navegador actual.
 
 ---
 

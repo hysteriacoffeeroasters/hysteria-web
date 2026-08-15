@@ -29,6 +29,12 @@
       ]
     },
     {
+      "source": "/PLAN-AUDITORIA.md",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    },
+    {
       "source": "/lib/(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }

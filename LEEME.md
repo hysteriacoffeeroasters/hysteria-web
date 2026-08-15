@@ -25,9 +25,9 @@ Todo se edita en `assets/js/datos.js` (ábrelo con el Bloc de notas). Estado act
 
 | Colección | Flor | Bolsa | Precio | Taza | Par | Lotes activos |
 |---|---|---|---|---|---|---|
-| 🔴 Pasión | Lirio | 340 g | $39.500 | $11.500 | $17.000 | Colombia · Huila |
-| 🟣 Ilusión | Orquídea | 340 g | $59.500 | $15.800 | $20.800 | Gesha · Huila |
-| 🔵 Deseo | Rosa | 340 g | $75.000 | $17.000 | $22.500 | Borbón Rojo · Huila<br>Ombligón · Tolima |
+| 🔴 Pasión | Lirio | 340 g | $39.500 | $11.500 | $17.000 | Colombia · Huila<br>Caturra · Nariño |
+| 🟣 Ilusión | Orquídea | 340 g | $59.500 | $15.800 | $20.800 | Borbón Rosado · Huila<br>Borbón Amarillo · Nariño |
+| 🔵 Deseo | Rosa | 340 g | $75.000 | $17.000 | $22.500 | Borbón Rojo · Huila |
 | 🟠 Euforia | Loto | 250 g | $75.000 | $17.000 | $22.500 | Borbón Naranja · Huila |
 
 Precios de `menú hysteria final (1).pdf`, fichas de `infografía hysteria final.pdf`.
@@ -36,14 +36,16 @@ Ojo: **Euforia es la única de 250 g**; las otras tres son de 340 g.
 ### Colecciones y lotes
 
 La **colección** define el precio y el gramaje. Dentro puede haber **uno o varios lotes**,
-y cada lote sale como su propia tarjeta. Hoy Deseo tiene dos.
+y cada lote sale como su propia tarjeta. Hoy Pasión e Ilusión tienen dos lotes cada una;
+Deseo y Euforia, uno.
 
-Para agregar un lote, copia un bloque dentro de `lotes` de esa colección:
+Para agregar un lote, copia un bloque dentro de `lotes` de esa colección. Este es
+un ejemplo inventado, no un lote que exista:
 
 ```js
 {
-  id: 'deseo-ombligon',          // único, sin espacios ni tildes
-  imagen:    'assets/products/deseo-ombligon.jpg',
+  id: 'deseo-lote-nuevo',        // único, sin espacios ni tildes
+  imagen:    'assets/products/deseo-lote-nuevo.jpg',
   origen:    'Tolima',
   variedad:  'Ombligón',
   proceso:   'Natural · 72 h de fermentación',
@@ -208,24 +210,50 @@ en silencio. Además, solo se aceptan suscripciones enviadas desde tu propia web
 
 ```
 hysteria-web/
-├── index.html                  Estructura y SEO
+├── index.html                  Portada. Estructura y SEO
+├── tienda.html                 Las cinco secciones tienen su propia página,
+├── cafes.html                  para que cada una comparta con su propio
+├── menu.html                   título, descripción e imagen
+├── preparacion.html
+├── visitanos.html
+├── enlaces.html                Hub para el perfil de Instagram (sin indexar)
 ├── LEEME.md                    Este archivo
+├── PLAN-AUDITORIA.md           Estado de los 25 arreglos de la auditoría
 ├── package.json                Config del proyecto
 ├── vercel.json                 Caché y seguridad (ver nota abajo)
 ├── robots.txt / sitemap.xml    Para Google
 ├── site.webmanifest            Ícono al guardar en el celular
 │
-├── api/
+├── en/                         El sitio en inglés: las mismas 7 páginas.
+│                               NO se traduce a mano, ver assets/js/en.js
+│
+├── lib/                        Compartido entre las funciones del servidor
+│   ├── pedido.js               ← EL PRECIO CON EL QUE SE COBRA DE VERDAD
+│   └── correo-pedido.js        Los correos de pedido, por Brevo
+│
+├── api/                        Funciones que corren en Vercel
+│   ├── wompi.js                Arma la transacción y firma la integridad
+│   ├── wompi-estado.js         Consulta la transacción al volver del pago
+│   ├── wompi-confirmar.js      Manda la hoja de despacho y avisa al cliente
+│   ├── wompi-eventos.js        Webhook: la red de seguridad de PSE y efectivo
+│   ├── boletin.js              Alta en la lista de Brevo
 │   └── crear-preferencia.js    Mercado Pago (en desuso; hoy se cobra con Wompi)
 │
 └── assets/
     ├── css/style.css           Diseño
     ├── js/datos.js             ← TÚ EDITAS AQUÍ
     ├── js/app.js               Carrito y funcionamiento
+    ├── js/landing.js           Cabecera, pie y carrito de las páginas sueltas
+    ├── js/enlaces.js           Solo para el hub de enlaces
+    ├── js/idioma.js            Detecta el idioma y aplica el diccionario
+    ├── js/en.js                Diccionario español → inglés (GENERADO)
     ├── fonts/                  Neuton + Geosans Light (tu marca)
     ├── logo/                   Colibrí, imagotipo, favicons
-    ├── collections/            Lirio, orquídea, rosa
-    └── products/               Tus 3 etiquetas reales
+    ├── collections/            Lirio, orquídea, rosa, loto
+    ├── products/               Las bolsas y las fichas de cata
+    ├── og/                     Tarjetas 1200×630 para compartir
+    ├── equipo/                 Andrés, Jeisson, Juan
+    └── fotos/                  Fotos de barra, grano y preparación
 ```
 
 ---

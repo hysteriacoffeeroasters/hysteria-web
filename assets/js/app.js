@@ -51,7 +51,18 @@
      precio de hoy — que es exactamente lo que hace el servidor. Antes se caía
      al precio guardado, así que pantalla y cobro podían separarse el día que
      se tocaran las presentaciones. */
-  function precioDeCatalogo(hit, gramos, guardado) {
+  function precioDeCatalogo(id, hit, gramos, guardado) {
+    /* El Pasaporte no es lote de ninguna colección, así que buscarLote() le
+       devuelve null y antes caía al precio GUARDADO. Resultado: el día que
+       cambiara PASAPORTE.precio, quien ya lo tuviera en el carrito veía el
+       precio viejo y el servidor le cobraba el nuevo — el mismo divorcio
+       pantalla/cobro que este bloque existe para evitar, y encima cobrando de
+       más. El servidor lo reprecia siempre (CATALOGO['pasaporte'] en
+       lib/pedido.js); aquí también. */
+    if (id === 'pasaporte') {
+      const p = typeof PASAPORTE !== 'undefined' ? Number(PASAPORTE.precio) : NaN;
+      return Number.isFinite(p) && p >= 0 ? p : Math.max(0, Number(guardado) || 0);
+    }
     if (hit) {
       const lista = Array.isArray(hit.col.presentaciones) ? hit.col.presentaciones : [];
       const p = lista.find(x => Number(x.gramos) === Number(gramos));
@@ -115,7 +126,7 @@
         molienda: validas.includes(l.molienda) ? l.molienda : (esCafe ? 'grano' : ''),
         // El precio manda el catálogo actual: si cambió en datos.js, el
         // carrito guardado se actualiza al volver (no se cobra el viejo).
-        precio: precioDeCatalogo(hit, gramos, l.precio),
+        precio: precioDeCatalogo(l.id, hit, gramos, l.precio),
         cant: Math.min(MAX_UNIDADES, Math.max(1, Math.floor(Number(l.cant) || 1))),
       };
     });
@@ -700,6 +711,12 @@
 
   // Texto que ve el cliente y que viaja al pago
   function varianteDe(l) {
+    /* La variante se guarda ya traducida (al agregar), así que para los que no
+       son café se congelaba en el idioma de ese momento: agregar el Pasaporte
+       en español y cambiar a inglés dejaba "Experiencia" en un carrito inglés.
+       El nombre sí se recalculaba (nombreVigente) y el café también; esto era
+       el único hueco. Se recalcula igual que el nombre. */
+    if (l.id === 'pasaporte') return traducir('Experiencia');
     if (!l.esCafe) return l.variante || '';
     const base = traducir('Bolsa') + ' ' + nombreGramos(l.gramos);
     return l.molienda === 'grano'

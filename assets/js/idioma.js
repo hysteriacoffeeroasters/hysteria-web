@@ -219,8 +219,16 @@ var RUTAS_IDIOMA = [
      página en el otro idioma, no a la portada: si estás leyendo la guía del
      V60 en español y cambias a inglés, sigues en la guía del V60. */
   function ponerSelector() {
+    if (document.getElementById('selector-idioma')) return;
+
+    /* Las dos páginas de enlaces son un hub sin barra de navegación, así que
+       aquí se salía sin pintar nada: desde /en/links no había forma de llegar
+       a /enlaces ni al revés, aunque el par sí estuviera en RUTAS_IDIOMA. En
+       ellas el selector va al pie, junto a "Ver el sitio completo", que ya
+       tiene el estilo y los 44 px de toque. */
     var acciones = document.querySelector('.nav-actions');
-    if (!acciones || document.getElementById('selector-idioma')) return;
+    var pie = acciones ? null : document.querySelector('.hub-pie');
+    if (!acciones && !pie) return;
 
     var par = window.parejaIdioma();
     var otro = IDIOMA === 'es' ? 'en' : 'es';
@@ -229,14 +237,21 @@ var RUTAS_IDIOMA = [
 
     var a = document.createElement('a');
     a.id = 'selector-idioma';
-    a.className = 'lang-btn';
     a.href = destino;
     a.hreflang = otro;
     a.setAttribute('aria-label', otro === 'en' ? 'Read this page in English'
                                                : 'Leer esta página en español');
-    a.innerHTML = '<span aria-hidden="true">' + otro.toUpperCase() + '</span>' +
-                  '<span class="lang-btn-largo">' + etiqueta + '</span>';
-    acciones.insertBefore(a, acciones.firstChild);
+
+    if (acciones) {
+      a.className = 'lang-btn';
+      a.innerHTML = '<span aria-hidden="true">' + otro.toUpperCase() + '</span>' +
+                    '<span class="lang-btn-largo">' + etiqueta + '</span>';
+      acciones.insertBefore(a, acciones.firstChild);
+    } else {
+      // En el hub hereda el estilo de .hub-pie a; solo se le da nombre.
+      a.textContent = etiqueta;
+      pie.appendChild(a);
+    }
   }
 
   function arrancar() { asegurarHreflang(); ponerSelector(); }

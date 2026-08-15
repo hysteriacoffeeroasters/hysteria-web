@@ -149,7 +149,7 @@
       <label class="campo">
         <span>${traducir('Dirección')}</span>
         <input type="text" id="env-direccion" name="direccion" autocomplete="street-address"
-               placeholder="Calle 92 #15-62, apto 301" required>
+               placeholder="${traducir('Calle 92 #15-62, apto 301')}" required>
       </label>
 
       <label class="campo">

@@ -62,6 +62,9 @@ var DICCIONARIO_EN = {
   'Indicaciones': 'Delivery notes',
   '(opcional)': '(optional)',
   'Portería, horario, punto de referencia': 'Front desk, hours, landmark',
+  // La calle es la direccion real del local y se deja; lo que se traduce es
+  // 'apto', que es la abreviatura espanola de apartamento.
+  'Calle 92 #15-62, apto 301': 'Calle 92 #15-62, apt 301',
   'Ir a pagar': 'Go to payment',
   'Enviar pedido': 'Send order',
   'Revisa': 'Please check',
@@ -350,7 +353,7 @@ var DICCIONARIO_EN = {
   'Retira del fuego de inmediato y enfría la base bajo el grifo para detener la extracción. Revuelve el café en la jarra y sirve.': 'Take it off the heat immediately and cool the base under the tap to stop the extraction. Stir the coffee in the top chamber and serve.',
   'Olleta Tradicional': 'Olleta (traditional stovetop coffee pot)',
   '4 tazas': '4 cups',
-  '40 g (aprox. 5 cucharadas)': '40 g (approx. 5 tablespoons)',
+  '40 g (4 cucharadas colmadas, una por taza)': '40 g (4 heaped tablespoons, one per cup)',
   '10 minutos': '10 minutes',
   'colador de tela para servir': 'cloth filter for serving',
   'decocción a la antigua': 'old-style decoction',
@@ -386,7 +389,7 @@ var DICCIONARIO_EN = {
   'Cafetera de filtro': 'Filter coffee maker',
   'Cafetera de Filtro': 'Filter coffee maker',
   '1 litro': '1 litre',
-  '60 g por litro (ratio 1:16)': '60 g per litre (ratio 1:16)',
+  '60 g por litro (ratio 1:17)': '60 g per litre (ratio 1:17)',
   '4–6 minutos de ciclo': '4–6 minute brew cycle',
   '1000 ml en el tanque': '1000 ml in the reservoir',
   '1 filtro de papel de canasta': '1 paper basket filter',

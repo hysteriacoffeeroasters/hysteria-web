@@ -229,6 +229,60 @@ son 16,67. Unificar el redondeo.
 
 ---
 
+## Segunda vuelta · lo que encontró la verificación adversaria (15 ago 2026)
+
+Con los 25 marcados como hechos, once agentes verificaron cada uno **contra
+producción**, con un refutador por grupo cuyo trabajo era tumbar las
+afirmaciones del verificador. Encontró que tres de los propios arreglos habían
+roto otra cosa. Lección: marcar un arreglo como hecho tras comprobarlo en el
+idioma en que se escribió no basta.
+
+- [x] **A1 · ALTO — El Pasaporte no se repreciaba.** `precioDeCatalogo()` caía al
+  precio guardado cuando `buscarLote()` devolvía null, y para el Pasaporte
+  devuelve null SIEMPRE (no es lote de ninguna colección; `existeEnCatalogo()`
+  lo aprueba por otra vía). El servidor sí lo reprecia. Comprobado en
+  producción: carrito mostrando $55.000 y Wompi firmando $65.000. El arreglo 11
+  solo había cerrado el camino de los cafés.
+- [x] **A2 · Regresión del 19 y del 20.** Se cambió el texto español
+  (`4 cucharadas`, `ratio 1:17`) sin actualizar la clave de `en.js`, así que
+  `traducir()` no encontraba nada y `/en/brewing` pintaba español crudo. Además
+  el diccionario inglés seguía afirmando el ratio viejo. Se buscó deriva en
+  TODO `datos.js`, no solo en las dos vistas: son las dos únicas.
+- [x] **A3 · Regresión del 14.** `varianteDe()` devolvía la variante guardada
+  tal cual para lo que no es café, y la variante se guarda ya traducida: añadir
+  el Pasaporte en español y cambiar a inglés dejaba "Experiencia".
+- [x] **A4 · MEDIO — `PLAN-AUDITORIA.md` era público e indexable.** Este
+  archivo. Ahora lleva `X-Robots-Tag: noindex` y entrada en `robots.txt`.
+- [x] **A5 — Las dos páginas hub no tenían selector de idioma.** `ponerSelector()`
+  se salía si no había `.nav-actions`, y el hub no tiene barra. Desde
+  `/en/links` no se podía llegar a `/enlaces`. Ahora cae al pie.
+  NO es fallo que no tengan hreflang ni salgan en el sitemap: son `noindex`.
+- [x] **A6 — `apto 301`**, el único marcador del formulario sin traducir.
+- [x] **A7 — `LEEME.md` seguía diciendo que Deseo tiene dos lotes**, con tabla y
+  ejemplo de código incluidos. El arreglo 21 solo tocó `datos.js`. De paso, el
+  árbol de archivos omitía `lib/` entero —justo donde se cobra—, las páginas en
+  inglés y cuatro de los seis JS; y la columna de lotes estaba mal en tres de
+  las cuatro filas.
+- [x] **A8 — No había página 404 propia.** Se reutiliza el diseño del hub, sin
+  una sola regla de CSS nueva. Va en los dos idiomas porque una página estática
+  no puede saber cuál buscaba quien llegó.
+- [x] **A9 — Las fuentes se descargaban dos veces.** Medido con Resource Timing
+  en producción: las dos precargadas daban dos entradas y `Neuton-Bold`, que no
+  se precarga, una sola. La precarga no se reutilizaba pese a tener URL y modo
+  CORS idénticos. Como la hoja de estilos ya bloquea el render y va justo
+  debajo, no aportaba nada: se quitó de las 14 páginas.
+  **Mejora pendiente de verdad: pasar las fuentes de TTF a woff2.**
+
+### Sigue abierto, y es de Andrés
+
+- [ ] **ALTO — `WOMPI_EVENTS_SECRET` no está en Vercel.** El webhook acepta
+  eventos SIN firma válida: se comprobó que un POST con checksum inventado
+  devuelve 200 en vez de 401. Lo único que lo contiene es que el código vuelve
+  a preguntarle la transacción a Wompi, así que no se puede falsear un pago,
+  pero la verificación de firma no se está aplicando. Se carga en Vercel.
+
+---
+
 ## Cómo retomar
 
 1. **Mira las casillas de arriba.** Lo que esté en `[ ]` no está hecho.

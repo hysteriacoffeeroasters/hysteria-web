@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /lib/
+Disallow: /LEEME.md
+Disallow: /PLAN-AUDITORIA.md
 
 Sitemap: https://www.hysteriacoffeeroasters.com/sitemap.xml

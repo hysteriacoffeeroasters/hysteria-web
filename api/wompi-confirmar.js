@@ -61,28 +61,37 @@ export default async function handler(req, res) {
       return res.status(200).json({ estado: t.status || 'DESCONOCIDO', avisado: false });
     }
 
-    // 2. El pedido se reconstruye con nuestros precios, no con los del navegador
-    let pedido = construirPedido(Array.isArray(body.items) ? body.items : [], body.codigo);
     const dest = leerDestino(body.datosEnvio);
-
-    // 3. El carrito tiene que cuadrar con lo que Wompi cobró de verdad
     const cobrado = Number(t.amount_in_cents) || 0;
-    if (!pedido.lineas.length || Math.round(pedido.total) * 100 !== cobrado) {
-      /* Antes de rendirse, se mira el pedido que el servidor guardó al crear
-         el pago (lib/guardado.js): lo escribió este mismo servidor, así que es
-         de fiar. Cubre los casos en que el navegador ya no tiene lo que tenía
-         al pagar: borró el código de descuento, cambió un precio del catálogo
-         entre el pago y el regreso, o se perdió el localStorage. */
-      const g = await leerPedido(t.reference || id);
-      if (g && g.pedido && Array.isArray(g.pedido.lineas) && g.pedido.lineas.length &&
-          Math.round(Number(g.pedido.total)) * 100 === cobrado) {
-        pedido = g.pedido;
-        if (g.dest) {
-          for (const k of Object.keys(dest)) {
-            if (!dest[k] && g.dest[k]) dest[k] = g.dest[k];
-          }
+
+    /* 2. EL PEDIDO GUARDADO MANDA. Lo escribió este mismo servidor al crear el
+       pago, así que es la única fuente de fiar sobre qué se compró y con qué
+       códigos. El carrito del navegador es solo el plan B para los pedidos
+       anteriores al almacén.
+
+       El orden importa y antes estaba al revés: se construía con body.codigo y
+       solo se miraba el guardado si no cuadraba. Como este endpoint únicamente
+       exige un id de transacción —que viaja a la vista en la URL de regreso—,
+       cualquiera podía mandar un carrito inventado que cuadrara con lo cobrado
+       y hacer que se diera por canjeado un código que nadie usó, matándolo para
+       siempre. También servía para reescribir la hoja de despacho. */
+    let pedido = null;
+    const g = await leerPedido(t.reference || id);
+    if (g && g.pedido && Array.isArray(g.pedido.lineas) && g.pedido.lineas.length &&
+        Math.round(Number(g.pedido.total)) * 100 === cobrado) {
+      pedido = g.pedido;
+      if (g.dest) {
+        for (const k of Object.keys(dest)) {
+          if (!dest[k] && g.dest[k]) dest[k] = g.dest[k];
         }
-      } else {
+      }
+    } else {
+      /* Sin guardado: se reconstruye con nuestros precios. Los códigos del
+         navegador NO se aceptan aquí —ese era el agujero—, así que si el
+         pedido llevaba descuento, no cuadrará y no se avisará; el webhook, que
+         sí tiene el guardado, se encarga. */
+      pedido = construirPedido(Array.isArray(body.items) ? body.items : []);
+      if (!pedido.lineas.length || Math.round(pedido.total) * 100 !== cobrado) {
         console.error('El carrito no coincide con lo cobrado', {
           referencia: t.reference, cobrado, carrito: Math.round(pedido.total) * 100,
         });
@@ -129,25 +138,31 @@ export default async function handler(req, res) {
         : enviarCorreoCliente({ referencia, pedido, dest }),
     ]);
 
+    /* Los canjes van ANTES de borrar el pedido guardado: si alguno no se puede
+       anotar, el pedido tiene que sobrevivir para que el webhook lo recoja. Si
+       se borrara primero, un confirm fallido dejaría la reserva sin confirmar,
+       la purga la soltaría a las 72 h con el pedido ya despachado, y el código
+       valdría dos veces sin que nadie hiciera trampa.
+
+       Se usan los códigos del pedido que de VERDAD se cobró, nunca los que
+       mandó el navegador. */
+    let canjesOk = true;
+    for (const usado of (pedido.codigos || []).map(leerCodigo).filter(Boolean)) {
+      if (usado.unicoPorPersona && dest.correo) {
+        await anotarUsoDelCodigo(usado.codigo, dest.correo, referencia);
+      }
+      // La reserva pasa a definitiva: ya nadie la puede liberar ni la purga
+      if (usado.unicoGlobal) {
+        if (!await confirmarCodigoGlobal(usado.codigo, referencia)) canjesOk = false;
+      }
+    }
+
     /* El pedido guardado ya cumplió: la hoja de despacho salió por esta vía.
        Se borra porque ahí quedan nombre, dirección, teléfono y documento, y
        este es el camino más frecuente —el cliente vuelve a la web—, así que sin
-       esto casi ningún pedido llegaría a borrarse nunca. Solo si el aviso SALIÓ:
-       si falló, el detalle tiene que seguir ahí para que lo recoja el webhook. */
-    if (avisado) await olvidarPedido(referencia);
-
-    /* El canje se anota SOLO con el pago ya aprobado, nunca al crear el pago:
-       si se anotara antes, un cliente que abandona el checkout perdería su
-       código sin haber comprado nada. Se usa el código del pedido que de
-       verdad se cobró (pedido.codigo), no el que mandó el navegador. */
-    const usado = leerCodigo(pedido.codigo);
-    if (usado && usado.unicoPorPersona && dest.correo) {
-      await anotarUsoDelCodigo(usado.codigo, dest.correo, referencia);
-    }
-    // La reserva pasa a definitiva: ya nadie la puede liberar ni la purga
-    if (usado && usado.unicoGlobal) {
-      await confirmarCodigoGlobal(usado.codigo, referencia);
-    }
+       esto casi ningún pedido llegaría a borrarse nunca. Solo si el aviso SALIÓ
+       y los canjes quedaron anotados. */
+    if (avisado && canjesOk) await olvidarPedido(referencia);
 
     console.log('Wompi · pedido confirmado', JSON.stringify({
       referencia: t.reference, total: pedido.total, ciudad: dest.ciudad,

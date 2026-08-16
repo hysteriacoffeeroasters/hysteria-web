@@ -14,7 +14,7 @@
    endpoint no revela nada que no pueda leerse ya.
    ========================================================================== */
 
-import { leerCodigo } from '../lib/pedido.js';
+import { leerCodigo, MAX_CODIGOS } from '../lib/pedido.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -33,6 +33,13 @@ export default async function handler(req, res) {
   if (!cupon) {
     // 200 y no 404: que el código no exista es una respuesta, no un error
     return res.status(200).json({ valido: false });
+  }
+
+  /* Los códigos se acumulan, pero con tope. Se comprueba aquí para poder
+     decírselo al cliente en el carrito, antes de que llegue a pagar. */
+  const yaPuestos = Array.isArray(body.yaPuestos) ? body.yaPuestos : [];
+  if (yaPuestos.length >= MAX_CODIGOS && !yaPuestos.includes(cupon.codigo)) {
+    return res.status(200).json({ valido: false, tope: MAX_CODIGOS });
   }
 
   /* No se comprueba aquí si ya se usó: en este momento el cliente todavía no

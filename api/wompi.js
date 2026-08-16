@@ -69,7 +69,7 @@ export default async function handler(req, res) {
 
     // Un código inválido o apagado se ignora: el pedido sale a precio pleno,
     // y la pantalla del checkout de Wompi muestra el monto real antes de pagar.
-    const pedido = construirPedido(entrada, body.codigo);
+    const pedido = construirPedido(entrada, body.codigos || body.codigo);
     if (!pedido.lineas.length) {
       return res.status(400).json({ error: 'No reconocimos ningún producto' });
     }
@@ -81,24 +81,26 @@ export default async function handler(req, res) {
     const problema = validarDestino(dest);
     if (problema) return res.status(400).json({ error: problema });
 
-    /* Se mira el código que de VERDAD se aplicó (pedido.codigo), no el que
-       mandó el navegador: la guarda de no empeorar pudo haberlo descartado por
-       no convenirle al cliente, y un código que no descontó nada no debe
+    /* Se miran los códigos que de VERDAD se aplicaron (pedido.codigos), no los
+       que mandó el navegador: la guarda de no empeorar pudo haberlos descartado
+       por no convenirle al cliente, y un código que no descontó nada no debe
        gastarse ni bloquear nada. */
-    const cupon = leerCodigo(pedido.codigo);
+    const cupones = (pedido.codigos || []).map(leerCodigo).filter(Boolean);
 
     /* Un solo uso POR PERSONA. Este es el PRIMER momento en que se conoce el
-       correo: el carrito valida el código antes de que el cliente lo escriba.
+       correo: el carrito valida los códigos antes de que el cliente lo escriba.
 
        Se AVISA en vez de ignorar el código en silencio. Ignorarlo cobraría más
        de lo que el carrito prometió, que es exactamente lo que este sistema
-       existe para impedir. El 409 lo entiende el navegador, que quita el código
-       y lo explica sin mandar a nadie a WhatsApp. */
-    if (cupon && cupon.unicoPorPersona && await yaUsoElCodigo(cupon.codigo, dest.correo)) {
-      return res.status(409).json({
-        error: 'Ese código es de un solo uso y ya lo usaste con este correo.',
-        codigoGastado: cupon.codigo,
-      });
+       existe para impedir. El 409 lo entiende el navegador, que quita ese
+       código —solo ese— y lo explica sin mandar a nadie a WhatsApp. */
+    for (const c of cupones) {
+      if (c.unicoPorPersona && await yaUsoElCodigo(c.codigo, dest.correo)) {
+        return res.status(409).json({
+          error: 'Ese código es de un solo uso y ya lo usaste con este correo.',
+          codigoGastado: c.codigo,
+        });
+      }
     }
 
     const referencia = nuevaReferencia();
@@ -107,12 +109,22 @@ export default async function handler(req, res) {
        esperara a la aprobación, dos clientes podrían pagar a la vez y los dos
        se llevarían el descuento. La reserva es atómica —gana quien llega
        primero— y nace sin confirmar, así que si el pago muere se libera y si
-       nadie vuelve la suelta la purga a las 72 h. */
-    if (cupon && cupon.unicoGlobal &&
-        !await reservarCodigoGlobal(cupon.codigo, referencia, dest.correo)) {
+       nadie vuelve la suelta la purga a las 72 h.
+
+       Si con varios códigos falla el segundo, hay que SOLTAR los que ya se
+       reservaron: si no, un código ajeno al problema quedaría bloqueado por
+       una compra que nunca ocurrió. */
+    const reservados = [];
+    for (const c of cupones) {
+      if (!c.unicoGlobal) continue;
+      if (await reservarCodigoGlobal(c.codigo, referencia, dest.correo)) {
+        reservados.push(c.codigo);
+        continue;
+      }
+      for (const suelto of reservados) await liberarCodigoGlobal(suelto, referencia);
       return res.status(409).json({
         error: 'Ese código ya se usó. Era válido una sola vez.',
-        codigoGastado: cupon.codigo,
+        codigoGastado: c.codigo,
       });
     }
 
@@ -142,9 +154,10 @@ export default async function handler(req, res) {
        confirmar, así que la reserva quedaría colgada hasta la purga: mejor
        devolverlo ya. Nadie debe perder un código de $41.500 por un fallo del
        almacén que no es suyo. */
-    if (!guardado && cupon && cupon.unicoGlobal) {
-      await liberarCodigoGlobal(cupon.codigo);
-      console.error('Reserva de ' + cupon.codigo + ' liberada: no se pudo guardar el pedido ' + referencia);
+    if (!guardado && reservados.length) {
+      for (const c of reservados) await liberarCodigoGlobal(c, referencia);
+      console.error('Reservas liberadas (' + reservados.join(', ') +
+        '): no se pudo guardar el pedido ' + referencia);
     }
 
     // Rastro mínimo para cruzar el pago con el despacho. Sin datos personales:
@@ -153,7 +166,7 @@ export default async function handler(req, res) {
       referencia, total: pedido.total, ciudad: dest.ciudad,
       items: pedido.lineas.map(l => `${l.cantidad}x ${l.titulo}`).join(' | '),
       molienda: pedido.moliendas.join(' | '),
-      descuento: pedido.codigo ? `${pedido.codigo} (-${pedido.descuento})` : '',
+      descuento: pedido.descuento > 0 ? `${pedido.codigo} (-${pedido.descuento})` : '',
       guardado,
     }));
 

@@ -117,10 +117,11 @@ export default async function handler(req, res) {
            solo uso global, su reserva debe soltarse ya. Un pago rechazado no
            puede matar un código para siempre — el cliente no compró nada. */
         const muerto = await leerPedido(ref);
-        const codigoMuerto = muerto && muerto.pedido && muerto.pedido.codigo;
-        if (codigoMuerto) {
-          const c = leerCodigo(codigoMuerto);
-          if (c && c.unicoGlobal) await liberarCodigoGlobal(c.codigo);
+        const codigosMuertos = (muerto && muerto.pedido && muerto.pedido.codigos) || [];
+        for (const c of codigosMuertos.map(leerCodigo).filter(Boolean)) {
+          // Con la referencia: así solo suelta SU reserva, nunca la de un
+          // reintento posterior del mismo cliente que sí llegó a pagar.
+          if (c.unicoGlobal) await liberarCodigoGlobal(c.codigo, ref);
         }
         await olvidarPedido(ref);
       }
@@ -245,27 +246,36 @@ export default async function handler(req, res) {
        sale el código: si el cliente no vuelve a la web, esta es la ÚNICA vía
        que lo registra. anotarUsoDelCodigo escribe siempre la misma ruta, así
        que un reintento de Wompi no cuenta dos veces. */
+    /* Un canje sin anotar pesa tanto como un correo sin enviar: si la única
+       escritura del confirm falla, la purga soltaría la reserva a las 72 h con
+       el pedido ya despachado, y el código valdría dos veces. Por eso su
+       resultado entra en el código de respuesta y Wompi reintenta. */
+    let canjesOk = true;
     if (tieneDetalle) {
-      const usado = leerCodigo(pedidoInterno.codigo);
-      if (usado && usado.unicoPorPersona && dest.correo) {
-        await anotarUsoDelCodigo(usado.codigo, dest.correo, referencia);
-      }
-      if (usado && usado.unicoGlobal) {
-        await confirmarCodigoGlobal(usado.codigo, referencia);
+      for (const usado of (pedidoInterno.codigos || []).map(leerCodigo).filter(Boolean)) {
+        if (usado.unicoPorPersona && dest.correo) {
+          await anotarUsoDelCodigo(usado.codigo, dest.correo, referencia);
+        }
+        if (usado.unicoGlobal) {
+          if (!await confirmarCodigoGlobal(usado.codigo, referencia)) canjesOk = false;
+        }
       }
     }
 
-    if (tieneDetalle && avisado) await olvidarPedido(referencia);
+    // Si algo quedó sin anotar, NO se borra el pedido: el reintento lo necesita
+    if (tieneDetalle && avisado && canjesOk) await olvidarPedido(referencia);
 
     console.log('Wompi · evento procesado', JSON.stringify({
       referencia: t.reference, total, avisado, clienteAvisado,
       metodo: t.payment_method_type,
-      conDetalle: tieneDetalle,
+      conDetalle: tieneDetalle, canjesOk,
     }));
 
-    // Si el aviso al negocio falló, 500: Wompi reintenta hasta 3 veces en 24 h.
-    // El del cliente no entra en esta decisión, a propósito.
-    return res.status(avisado ? 200 : 500).json({ recibido: true, avisado, clienteAvisado });
+    // 500 si falló el aviso al negocio O si un canje quedó sin anotar: Wompi
+    // reintenta hasta 3 veces en 24 h. El del cliente no entra en esta
+    // decisión, a propósito.
+    return res.status(avisado && canjesOk ? 200 : 500)
+              .json({ recibido: true, avisado, clienteAvisado });
 
   } catch (err) {
     console.error('Error procesando el evento de Wompi:', err);

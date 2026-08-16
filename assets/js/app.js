@@ -159,7 +159,7 @@
       carrito = lineas;
       pintarCarrito();
     } else if (e.key === LLAVE_DESC) {
-      cupon = leerCupon();
+      cupones = leerCupones();
       pintarDescuento();
       pintarCarrito();
     }
@@ -171,8 +171,12 @@
      después de que /api/descuento lo valida, y se revalida al cargar: si el
      código se apagó entre visita y visita, se suelta solo y la pantalla nunca
      promete un precio que el cobro no va a respetar. */
-  const LLAVE_DESC = 'hysteria_descuento_v1';
-  let cupon = null;   // { codigo, tipo, valor } confirmado por el servidor
+  /* v2: antes se guardaba UN cupón; ahora una lista, porque se acumulan.
+     La llave cambia de nombre a propósito — un carrito guardado con el formato
+     viejo se descarta solo en vez de leerse mal. */
+  const LLAVE_DESC = 'hysteria_descuentos_v2';
+  const MAX_CODIGOS = 3;
+  let cupones = [];   // [{ codigo, tipo, valor, unico, unicoGlobal }] validados por el servidor
 
   /* Los cupones existen SOLO con Wompi. Mercado Pago arma su cobro sumando
      los items y un descuento de pedido no cabe en ese formato: si el modo
@@ -182,35 +186,45 @@
   const cuponesDisponibles = () =>
     typeof PAGOS !== 'undefined' && PAGOS.modo === 'wompi';
 
-  function leerCupon() {
+  function leerCupones() {
     try {
-      const c = JSON.parse(localStorage.getItem(LLAVE_DESC) || 'null');
-      return (c && typeof c.codigo === 'string' &&
-              ['porcentaje', 'fijo', 'enviogratis'].includes(c.tipo))
-        ? { codigo: c.codigo, tipo: c.tipo, valor: Math.max(0, Number(c.valor) || 0),
-            unico: !!c.unico, unicoGlobal: !!c.unicoGlobal }
-        : null;
-    } catch (e) { return null; }
+      const lista = JSON.parse(localStorage.getItem(LLAVE_DESC) || '[]');
+      if (!Array.isArray(lista)) return [];
+      const vistos = new Set();
+      return lista
+        .filter(c => c && typeof c.codigo === 'string' &&
+                     ['porcentaje', 'fijo', 'enviogratis'].includes(c.tipo))
+        .filter(c => !vistos.has(c.codigo) && vistos.add(c.codigo))
+        .slice(0, MAX_CODIGOS)
+        .map(c => ({ codigo: c.codigo, tipo: c.tipo,
+                     valor: Math.max(0, Number(c.valor) || 0),
+                     unico: !!c.unico, unicoGlobal: !!c.unicoGlobal }));
+    } catch (e) { return []; }
   }
-  function guardarCupon() {
+  function guardarCupones() {
     try {
-      if (cupon) localStorage.setItem(LLAVE_DESC, JSON.stringify(cupon));
+      if (cupones.length) localStorage.setItem(LLAVE_DESC, JSON.stringify(cupones));
       else localStorage.removeItem(LLAVE_DESC);
     } catch (e) {}
   }
-  cupon = leerCupon();
+  cupones = leerCupones();
 
   const unidades  = () => carrito.reduce((a, l) => a + l.cant, 0);
   const subtotal  = () => carrito.reduce((a, l) => a + l.precio * l.cant, 0);
-  /* Réplica exacta de las reglas del servidor: porcentaje redondeado, fijo
-     acotado al subtotal. Si esto y lib/pedido.js divergen, la pantalla miente. */
-  // Descuento en bruto, antes de comprobar si de verdad conviene
+
+  /* Réplica EXACTA de las reglas del servidor (construirPedido en lib/pedido.js):
+     los porcentajes se suman y se aplican una vez, los fijos se suman, y el
+     total descontado nunca supera el subtotal. Si estas dos reglas divergen,
+     la pantalla miente. */
   const descuentoBruto = () => {
-    if (!cuponesDisponibles() || !cupon || !carrito.length) return 0;
-    if (cupon.tipo === 'porcentaje') return Math.round(subtotal() * cupon.valor / 100);
-    if (cupon.tipo === 'fijo')       return Math.min(cupon.valor, subtotal());
-    return 0;   // 'enviogratis' actúa sobre el envío, no sobre los productos
+    if (!cuponesDisponibles() || !cupones.length || !carrito.length) return 0;
+    const pct  = cupones.filter(c => c.tipo === 'porcentaje').reduce((a, c) => a + c.valor, 0);
+    const fijo = cupones.filter(c => c.tipo === 'fijo').reduce((a, c) => a + c.valor, 0);
+    return Math.min(Math.round(subtotal() * Math.min(pct, 100) / 100) + fijo, subtotal());
   };
+  const hayEnvioGratisPorCupon = () =>
+    cuponesDisponibles() && cupones.some(c => c.tipo === 'enviogratis');
+
   const envioSinCupon = () => {
     if (!carrito.length) return 0;
     const libre = PAGOS.envioGratisDesde > 0 && subtotal() >= PAGOS.envioGratisDesde;
@@ -218,25 +232,27 @@
   };
   const envioConCupon = () => {
     if (!carrito.length) return 0;
-    if (cuponesDisponibles() && cupon && cupon.tipo === 'enviogratis') return 0;
+    if (hayEnvioGratisPorCupon()) return 0;
     // El envío gratis por monto se gana con lo que de verdad se paga
     const libre = PAGOS.envioGratisDesde > 0 &&
                   (subtotal() - descuentoBruto()) >= PAGOS.envioGratisDesde;
     return libre ? 0 : (PAGOS.envio || 0);
   };
 
-  /* Misma guarda de no empeorar que aplica el servidor (construirPedido): si
-     el descuento tira el carrito por debajo del umbral del envío gratis, el
-     total puede SUBIR. En ese caso el cupón no se aplica — ni aquí ni al
-     cobrar. Si estas dos reglas divergen, la pantalla miente. */
+  /* Misma guarda de no empeorar que aplica el servidor: si el descuento tira el
+     carrito por debajo del umbral del envío gratis, el total puede SUBIR. Se
+     compara el conjunto ENTERO contra no usar ninguno, igual que el servidor. */
   const cuponConviene = () => {
-    if (!cuponesDisponibles() || !cupon || !carrito.length) return false;
+    if (!cuponesDisponibles() || !cupones.length || !carrito.length) return false;
     return (subtotal() - descuentoBruto() + envioConCupon()) < (subtotal() + envioSinCupon());
   };
 
   const montoDescuento = () => (cuponConviene() ? descuentoBruto() : 0);
   const envio          = () => (cuponConviene() ? envioConCupon() : envioSinCupon());
   const total          = () => subtotal() - montoDescuento() + envio();
+  /* Los que de verdad se están aplicando. Si el conjunto no conviene, no hay
+     ninguno: así la pantalla nunca nombra un código que no está descontando. */
+  const codigosAplicados = () => (cuponConviene() ? cupones.map(c => c.codigo) : []);
 
   // Mismo tope por línea que aplica el servidor (api/crear-preferencia.js).
   const MAX_UNIDADES = 50;
@@ -882,31 +898,32 @@
   function pintarDescuento() {
     const d = $('#cart-desc');
     if (!d) return;
-    if (cupon) {
-      d.innerHTML = `
+    /* Los códigos puestos se listan, cada uno con SU botón de quitar: con
+       varios acumulados, un único botón dejaría al cliente sin saber cuál se
+       lleva. La caja para escribir sigue debajo mientras quede cupo. */
+    const puestos = cupones.map(c => `
         <div class="cart-desc-ok">
-          <span>✓ ${esc(traducir('Código'))} <strong>${esc(cupon.codigo)}</strong></span>
-          <button type="button" class="cart-desc-quitar" data-quitar-codigo
-                  aria-label="${esc(traducir('Quitar el código'))} ${esc(cupon.codigo)}">${esc(traducir('Quitar'))}</button>
-        </div>
-        ${cupon.unicoGlobal
-          ? `<p class="cart-desc-nota">${esc(traducir('Válido una sola vez'))}</p>`
-          : cupon.unico
-            ? `<p class="cart-desc-nota">${esc(traducir('Válido una vez por persona'))}</p>`
-            : ''}`;
-    } else {
-      d.innerHTML = `
+          <span>✓ ${esc(traducir('Código'))} <strong>${esc(c.codigo)}</strong>${
+            c.unicoGlobal ? ` <em class="cart-desc-nota">${esc(traducir('Válido una sola vez'))}</em>`
+            : c.unico ? ` <em class="cart-desc-nota">${esc(traducir('Válido una vez por persona'))}</em>`
+            : ''}</span>
+          <button type="button" class="cart-desc-quitar" data-quitar-codigo="${esc(c.codigo)}"
+                  aria-label="${esc(traducir('Quitar el código'))} ${esc(c.codigo)}">${esc(traducir('Quitar'))}</button>
+        </div>`).join('');
+
+    const formulario = cupones.length >= MAX_CODIGOS ? '' : `
         <div class="cart-desc-form">
           <label class="cart-desc-campo">
             <span class="sr-only">${esc(traducir('Código de descuento'))}</span>
             <input id="cart-desc-input" type="text" autocomplete="off" spellcheck="false"
                    autocapitalize="characters" maxlength="30"
-                   placeholder="${esc(traducir('¿Tienes un código?'))}">
+                   placeholder="${esc(traducir(cupones.length ? '¿Tienes otro código?' : '¿Tienes un código?'))}">
           </label>
           <button type="button" class="btn btn-ghost btn-sm" data-aplicar-codigo>${esc(traducir('Aplicar'))}</button>
-        </div>
-        <p class="cart-desc-error" id="cart-desc-error" role="alert"></p>`;
-    }
+        </div>`;
+
+    d.innerHTML = puestos + formulario +
+      `<p class="cart-desc-error" id="cart-desc-error" role="alert"></p>`;
   }
 
   async function aplicarCodigo() {
@@ -914,29 +931,43 @@
     const err = $('#cart-desc-error');
     const codigo = ((inp && inp.value) || '').trim().toUpperCase();
     if (!codigo) { if (err) err.textContent = traducir('Escribe un código'); return; }
+    if (cupones.some(c => c.codigo === codigo)) {
+      if (err) err.textContent = traducir('Ese código ya está puesto');
+      return;
+    }
+    if (cupones.length >= MAX_CODIGOS) {
+      if (err) err.textContent = traducir('Ya tienes el máximo de códigos');
+      return;
+    }
     const btn = $('[data-aplicar-codigo]');
     if (btn) btn.disabled = true;
     try {
       const r = await fetch('/api/descuento', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo }),
+        // Se mandan los que ya están para que el servidor aplique el mismo tope
+        body: JSON.stringify({ codigo, yaPuestos: cupones.map(c => c.codigo) }),
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const data = await r.json();
       if (!data.valido) {
-        if (err) err.textContent = traducir('Ese código no existe o ya no está activo');
+        if (err) err.textContent = traducir(data.tope
+          ? 'Ya tienes el máximo de códigos'
+          : 'Ese código no existe o ya no está activo');
         return;
       }
-      cupon = { codigo: data.codigo, tipo: data.tipo, valor: Math.max(0, Number(data.valor) || 0),
-                unico: !!data.unicoPorPersona, unicoGlobal: !!data.unicoGlobal };
-      guardarCupon();
+      cupones.push({ codigo: data.codigo, tipo: data.tipo,
+                     valor: Math.max(0, Number(data.valor) || 0),
+                     unico: !!data.unicoPorPersona, unicoGlobal: !!data.unicoGlobal });
+      guardarCupones();
       pintarDescuento();
       pintarCarrito();
-      // El repintado destruyó el botón que tenía el foco: sin esto, el teclado
-      // cae al <body> y se escapa del diálogo modal del carrito.
-      const q = $('[data-quitar-codigo]');
-      if (q) q.focus();
+      /* El repintado destruyó el control que tenía el foco: sin esto el teclado
+         cae al <body> y se escapa del diálogo. Si aún queda cupo, el foco
+         vuelve a la caja para poder encadenar otro código. */
+      const sigue = $('#cart-desc-input') ||
+                    $(`[data-quitar-codigo="${CSS.escape(data.codigo)}"]`);
+      if (sigue) sigue.focus();
       avisar(traducir('Código aplicado'));
     } catch (e) {
       if (err) err.textContent = traducir('No pudimos comprobar el código. Intenta de nuevo.');
@@ -950,38 +981,44 @@
     }
   }
 
-  function quitarCodigo() {
-    cupon = null;
-    guardarCupon();
+  function quitarCodigo(codigo) {
+    cupones = codigo ? cupones.filter(c => c.codigo !== codigo) : [];
+    guardarCupones();
     pintarDescuento();
     pintarCarrito();
     const i = $('#cart-desc-input');
     if (i) i.focus();
   }
 
-  /* Al cargar, el cupón guardado se revalida contra el servidor: puede haberse
-     apagado desde la última visita. Si la red falla se deja como está — el
-     servidor manda al cobrar, y Wompi muestra el monto real antes de pagar. */
-  async function revalidarCupon() {
-    if (!cupon) return;
-    // Se anota QUÉ se consultó: si mientras la red respondía el cliente quitó
-    // el cupón (o la compra se confirmó y lo limpió), la respuesta tardía ya
-    // no aplica a nada y se descarta en vez de resucitar un estado muerto.
-    const consultado = cupon.codigo;
+  /* Al cargar, los cupones guardados se revalidan contra el servidor: alguno
+     pudo apagarse desde la última visita. Si la red falla se dejan como están —
+     el servidor manda al cobrar, y Wompi muestra el monto real antes de pagar. */
+  async function revalidarCupones() {
+    if (!cupones.length) return;
+    /* Se anota QUÉ se consultó: si mientras la red respondía el cliente quitó
+       alguno (o la compra se confirmó y los limpió), la respuesta tardía ya no
+       aplica y se descarta en vez de resucitar un estado muerto. */
+    const consultados = cupones.map(c => c.codigo);
     try {
-      const r = await fetch('/api/descuento', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo: consultado }),
-      });
-      if (!r.ok) return;
-      const data = await r.json();
-      if (!cupon || cupon.codigo !== consultado) return;
-      cupon = data.valido
-        ? { codigo: data.codigo, tipo: data.tipo, valor: Math.max(0, Number(data.valor) || 0),
-            unico: !!data.unicoPorPersona }
-        : null;
-      guardarCupon();
+      const respuestas = await Promise.all(consultados.map(codigo =>
+        fetch('/api/descuento', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ codigo }),
+        }).then(r => (r.ok ? r.json() : null)).catch(() => null)
+      ));
+      // Si la lista cambió mientras tanto, esta respuesta ya no vale
+      if (cupones.map(c => c.codigo).join('|') !== consultados.join('|')) return;
+      // Una respuesta nula es fallo de red, no un código muerto: se conserva
+      cupones = consultados.map((codigo, i) => {
+        const d = respuestas[i];
+        if (d === null) return cupones[i];
+        if (!d.valido) return null;
+        return { codigo: d.codigo, tipo: d.tipo,
+                 valor: Math.max(0, Number(d.valor) || 0),
+                 unico: !!d.unicoPorPersona, unicoGlobal: !!d.unicoGlobal };
+      }).filter(Boolean);
+      guardarCupones();
       pintarDescuento();
       pintarCarrito();
     } catch (e) { /* sin red no se decide nada */ }
@@ -989,7 +1026,10 @@
 
   document.addEventListener('click', e => {
     if (e.target.closest('[data-aplicar-codigo]')) aplicarCodigo();
-    else if (e.target.closest('[data-quitar-codigo]')) quitarCodigo();
+    else {
+      const q = e.target.closest('[data-quitar-codigo]');
+      if (q) quitarCodigo(q.dataset.quitarCodigo);
+    }
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && e.target && e.target.id === 'cart-desc-input') {
@@ -1096,7 +1136,7 @@
        cupón de envío gratis no falta nada por definición: sin esta guarda se
        pintaban a la vez "Te faltan $80.500 para el envío gratis" y
        "Envío: Gratis", empujando a comprar más para ganar lo ya ganado. */
-    const falta = (cuponesDisponibles() && cupon && cupon.tipo === 'enviogratis' && cuponConviene())
+    const falta = (hayEnvioGratisPorCupon() && cuponConviene())
       ? -1
       : PAGOS.envioGratisDesde > 0
         ? PAGOS.envioGratisDesde - (subtotal() - montoDescuento()) : -1;
@@ -1104,7 +1144,7 @@
       ${falta > 0 ? `<div class="cart-row"><span>${esc(traducir('Te faltan'))} ${money(falta)} ${esc(traducir('para el envío gratis'))}</span></div>` : ''}
       ${falta <= 0 && PAGOS.envioGratisDesde > 0 ? `<div class="cart-envio-libre">✓ ${esc(traducir('Envío gratis aplicado'))}</div>` : ''}
       <div class="cart-row"><span>${esc(traducir('Subtotal'))}</span><span>${money(subtotal())}</span></div>
-      ${montoDescuento() > 0 ? `<div class="cart-row descuento"><span>${esc(traducir('Descuento'))} (${esc(cupon.codigo)})</span><span>−${money(montoDescuento())}</span></div>` : ''}
+      ${montoDescuento() > 0 ? `<div class="cart-row descuento"><span>${esc(traducir('Descuento'))} (${esc(codigosAplicados().join(' + '))})</span><span>−${money(montoDescuento())}</span></div>` : ''}
       <div class="cart-row"><span>${esc(traducir('Envío'))}</span><span>${envio() === 0 ? esc(traducir('Gratis')) : money(envio())}</span></div>
       <div class="cart-row total"><span>${esc(traducir('Total'))}</span><span>${money(total())}</span></div>`;
 
@@ -1219,7 +1259,7 @@
       'Hola Hysteria, quiero hacer un pedido:', '',
       lineas.join('\n'), '',
       `${traducir('Subtotal')}: ${money(subtotal())}`,
-      montoDescuento() > 0 ? `${traducir('Descuento')} (${cupon.codigo}): −${money(montoDescuento())}` : '',
+      montoDescuento() > 0 ? `${traducir('Descuento')} (${codigosAplicados().join(' + ')}): −${money(montoDescuento())}` : '',
       `${traducir('Envío')}: ${envio() === 0 ? traducir('Gratis') : money(envio())}`,
       `Total: ${money(total())}`
     ].filter(Boolean).join('\n');
@@ -1332,8 +1372,8 @@
             molienda: l.esCafe ? l.molienda : ''
           })),
           datosEnvio: datos,
-          // El descuento lo aplica el servidor; aquí solo viaja el código
-          codigo: cupon ? cupon.codigo : '',
+          // El descuento lo aplica el servidor; aquí solo viajan los códigos
+          codigos: cupones.map(c => c.codigo),
           // Para que Wompi devuelva a la portada del idioma en que se compró
           idioma: typeof IDIOMA !== 'undefined' ? IDIOMA : 'es'
         })
@@ -1346,7 +1386,12 @@
          correo se escribe en este paso. */
       if (r.status === 409) {
         const data409 = await r.json().catch(() => ({}));
-        cupon = null; guardarCupon();
+        /* Se quita SOLO el código que el servidor señala: con varios puestos,
+           borrarlos todos castigaría a los que no tienen ningún problema. */
+        cupones = data409.codigoGastado
+          ? cupones.filter(c => c.codigo !== data409.codigoGastado)
+          : [];
+        guardarCupones();
         mostrarPaso('resumen');
         pintarDescuento(); pintarCarrito();
         const err = $('#cart-desc-error');
@@ -1850,7 +1895,7 @@
           })),
           datosEnvio: guardado,
           // El mismo código con el que se pagó: el total tiene que cuadrar
-          codigo: cupon ? cupon.codigo : ''
+          codigos: cupones.map(c => c.codigo)
         })
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -1860,7 +1905,7 @@
       if (estado === 'APPROVED' && avisado) {
         carrito = []; guardarCarrito();
         // El cupón ya cumplió con este pedido; el siguiente empieza limpio
-        cupon = null; guardarCupon(); pintarDescuento();
+        cupones = []; guardarCupones(); pintarDescuento();
         pintarCarrito();
         avisar(num ? traducir('¡Gracias! Tu pedido') + ' ' + num + ' ' + traducir('está confirmado')
                    : traducir('¡Gracias! Recibimos tu pedido'));
@@ -1927,7 +1972,7 @@
     inyectarSchema();
     // Sin await a propósito: si el código guardado se apagó, la pantalla se
     // corrige sola en cuanto responda; mientras tanto nada se bloquea.
-    revalidarCupon();
+    revalidarCupones();
 
     // Mensaje de vuelta desde la pasarela
     const params = new URLSearchParams(location.search);
@@ -1946,7 +1991,7 @@
 
     if (p === 'exito') {
       carrito = []; guardarCarrito();
-      cupon = null; guardarCupon(); pintarDescuento();
+      cupones = []; guardarCupones(); pintarDescuento();
       pintarCarrito();
       avisar(ref ? traducir('¡Gracias! Tu pedido') + ' ' + ref + ' ' + traducir('está confirmado')
                  : traducir('¡Gracias! Recibimos tu pedido'));

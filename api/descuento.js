@@ -45,5 +45,6 @@ export default async function handler(req, res) {
     tipo: cupon.tipo,
     valor: cupon.valor,
     unicoPorPersona: !!cupon.unicoPorPersona,
+    unicoGlobal: !!cupon.unicoGlobal,
   });
 }

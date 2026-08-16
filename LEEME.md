@@ -322,13 +322,34 @@ la variable `CODIGOS_SECRETOS`. Una línea por código:
 NOMBRE:tipo:valor:unico
 ```
 
-El cuarto campo es opcional; `unico` significa **una sola vez por persona**,
-medida por el correo con el que se paga. Varios códigos se separan con coma
-o con salto de línea. Un ejemplo del formato:
+El cuarto campo es opcional y admite dos marcas:
+
+| marca | significa |
+|---|---|
+| *(vacío)* | se puede usar cuantas veces se quiera |
+| `unico` | una vez **por persona**, medida por el correo con el que se paga |
+| `unicoglobal` | una sola vez **en total**: el primero que lo use lo mata |
+
+Varios códigos se separan con coma o con salto de línea. Ejemplos del formato:
 
 ```
 NOMBRE_DEL_CODIGO:porcentaje:10:unico
+OTRO_NOMBRE:fijo:40000:unicoglobal
+UN_TERCERO:enviogratis:0
 ```
+
+**Sobre `unicoglobal`:** el código se **reserva** en cuanto alguien pulsa «Ir a
+pagar», no cuando el pago se aprueba. Es la única forma de que dos personas
+pagando a la vez no se lo lleven las dos. Si el pago se rechaza, la reserva se
+suelta al instante; si el cliente abandona el carrito, la limpieza diaria la
+libera a las 72 horas. Mientras tanto, quien lo intente verá «Ese código ya se
+usó».
+
+La reserva es **reentrante para la misma persona**: si a quien lo reservó le
+rechazan la tarjeta y vuelve a intentarlo, su propia reserva no lo bloquea —
+sería absurdo decirle que su código ya se usó cuando el pago no entró. Solo
+una reserva ya **confirmada** (pago aprobado) cierra el código para todos,
+incluido él.
 
 ⚠️ **No escribas aquí los códigos vivos.** Este archivo se sirve público: un
 código real anotado en esta guía queda a la vista de cualquiera, que es justo

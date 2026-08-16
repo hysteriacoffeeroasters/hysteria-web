@@ -15,7 +15,7 @@ import { construirPedido, leerDestino, validarDestino } from '../lib/pedido.js';
 import {
   enviarCorreoPedido, enviarCorreoCliente, yaAvisado, yaAvisadoCliente,
 } from '../lib/correo-pedido.js';
-import { leerPedido, olvidarPedido, anotarUsoDelCodigo } from '../lib/guardado.js';
+import { leerPedido, olvidarPedido, anotarUsoDelCodigo, confirmarCodigoGlobal } from '../lib/guardado.js';
 import { leerCodigo } from '../lib/pedido.js';
 
 export default async function handler(req, res) {
@@ -143,6 +143,10 @@ export default async function handler(req, res) {
     const usado = leerCodigo(pedido.codigo);
     if (usado && usado.unicoPorPersona && dest.correo) {
       await anotarUsoDelCodigo(usado.codigo, dest.correo, referencia);
+    }
+    // La reserva pasa a definitiva: ya nadie la puede liberar ni la purga
+    if (usado && usado.unicoGlobal) {
+      await confirmarCodigoGlobal(usado.codigo, referencia);
     }
 
     console.log('Wompi · pedido confirmado', JSON.stringify({

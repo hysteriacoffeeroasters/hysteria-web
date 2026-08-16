@@ -19,7 +19,10 @@ import {
   enviarCorreoPedido, enviarCorreoCliente,
   yaAvisado, yaAvisadoProvisional, yaAvisadoCliente,
 } from '../lib/correo-pedido.js';
-import { leerPedido, olvidarPedido, hayGuardado, anotarUsoDelCodigo } from '../lib/guardado.js';
+import {
+  leerPedido, olvidarPedido, hayGuardado, anotarUsoDelCodigo,
+  confirmarCodigoGlobal, liberarCodigoGlobal,
+} from '../lib/guardado.js';
 import { leerCodigo } from '../lib/pedido.js';
 
 export default async function handler(req, res) {
@@ -109,7 +112,17 @@ export default async function handler(req, res) {
          a la purga diaria. PENDING no entra: PSE y efectivo pasan por ahí
          camino de aprobarse. */
       if (['DECLINED', 'VOIDED', 'ERROR'].includes(t.status)) {
-        await olvidarPedido(t.reference || id);
+        const ref = t.reference || id;
+        /* Antes de borrar el pedido hay que sacarle el código: si era de un
+           solo uso global, su reserva debe soltarse ya. Un pago rechazado no
+           puede matar un código para siempre — el cliente no compró nada. */
+        const muerto = await leerPedido(ref);
+        const codigoMuerto = muerto && muerto.pedido && muerto.pedido.codigo;
+        if (codigoMuerto) {
+          const c = leerCodigo(codigoMuerto);
+          if (c && c.unicoGlobal) await liberarCodigoGlobal(c.codigo);
+        }
+        await olvidarPedido(ref);
       }
       return res.status(200).json({ recibido: true, estado: t.status || 'DESCONOCIDO' });
     }
@@ -236,6 +249,9 @@ export default async function handler(req, res) {
       const usado = leerCodigo(pedidoInterno.codigo);
       if (usado && usado.unicoPorPersona && dest.correo) {
         await anotarUsoDelCodigo(usado.codigo, dest.correo, referencia);
+      }
+      if (usado && usado.unicoGlobal) {
+        await confirmarCodigoGlobal(usado.codigo, referencia);
       }
     }
 

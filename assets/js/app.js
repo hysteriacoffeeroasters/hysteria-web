@@ -188,7 +188,7 @@
       return (c && typeof c.codigo === 'string' &&
               ['porcentaje', 'fijo', 'enviogratis'].includes(c.tipo))
         ? { codigo: c.codigo, tipo: c.tipo, valor: Math.max(0, Number(c.valor) || 0),
-            unico: !!c.unico }
+            unico: !!c.unico, unicoGlobal: !!c.unicoGlobal }
         : null;
     } catch (e) { return null; }
   }
@@ -889,7 +889,11 @@
           <button type="button" class="cart-desc-quitar" data-quitar-codigo
                   aria-label="${esc(traducir('Quitar el código'))} ${esc(cupon.codigo)}">${esc(traducir('Quitar'))}</button>
         </div>
-        ${cupon.unico ? `<p class="cart-desc-nota">${esc(traducir('Válido una vez por persona'))}</p>` : ''}`;
+        ${cupon.unicoGlobal
+          ? `<p class="cart-desc-nota">${esc(traducir('Válido una sola vez'))}</p>`
+          : cupon.unico
+            ? `<p class="cart-desc-nota">${esc(traducir('Válido una vez por persona'))}</p>`
+            : ''}`;
     } else {
       d.innerHTML = `
         <div class="cart-desc-form">
@@ -925,7 +929,7 @@
         return;
       }
       cupon = { codigo: data.codigo, tipo: data.tipo, valor: Math.max(0, Number(data.valor) || 0),
-                unico: !!data.unicoPorPersona };
+                unico: !!data.unicoPorPersona, unicoGlobal: !!data.unicoGlobal };
       guardarCupon();
       pintarDescuento();
       pintarCarrito();
@@ -1346,7 +1350,11 @@
         mostrarPaso('resumen');
         pintarDescuento(); pintarCarrito();
         const err = $('#cart-desc-error');
-        const msg = traducir('Ese código es de un solo uso y ya lo usaste con este correo.');
+        /* El servidor distingue dos casos —«ya lo usaste tú» y «ya se usó, era
+           único»— y manda el texto exacto. Se traduce lo que llega; si no
+           llegara nada, se cae al primero, que es el más frecuente. */
+        const msg = traducir(data409.error ||
+          'Ese código es de un solo uso y ya lo usaste con este correo.');
         if (err) err.textContent = msg; else avisar(msg);
         btn.disabled = false;
         btn.textContent = original;

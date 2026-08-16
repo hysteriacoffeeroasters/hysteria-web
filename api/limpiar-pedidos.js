@@ -18,10 +18,11 @@
    limpieza que igual iba a pasar.
    ========================================================================== */
 
-import { list, del } from '@vercel/blob';
+import { list, del, get } from '@vercel/blob';
 import { hayGuardado } from '../lib/guardado.js';
 
 const HORAS_DE_VIDA = 72;
+const CARPETA_USOS = 'usos';
 
 export default async function handler(req, res) {
   const secreto = (process.env.CRON_SECRET || '').trim();
@@ -58,9 +59,43 @@ export default async function handler(req, res) {
       await del(viejos, { abortSignal: AbortSignal.timeout(8000) });
     }
 
-    // Solo la cuenta: nada de referencias ni datos en el registro
-    console.log('Purga de pedidos guardados:', JSON.stringify({ borrados: viejos.length }));
-    return res.status(200).json({ hecho: true, borrados: viejos.length });
+    /* Segunda pasada: reservas de códigos de un solo uso global que nunca
+       llegaron a confirmarse. Se reservan al ir a pagar, así que un carrito
+       abandonado deja el código bloqueado; pasadas 72 h se suelta y vuelve a
+       estar disponible. Las CONFIRMADAS no se tocan jamás: esas son las que
+       de verdad se usaron. Tampoco las huellas por persona, que no caducan. */
+    const liberadas = [];
+    let cursorUsos;
+    do {
+      const pagina = await list({
+        prefix: `${CARPETA_USOS}/`,
+        cursor: cursorUsos,
+        abortSignal: AbortSignal.timeout(8000),
+      });
+      for (const b of pagina.blobs || []) {
+        if (!b.pathname.endsWith('/GLOBAL.json')) continue;   // huellas por persona: intactas
+        if (new Date(b.uploadedAt).getTime() >= limite) continue;
+        try {
+          const r = await get(b.pathname, { access: 'private', abortSignal: AbortSignal.timeout(5000) });
+          if (!r || r.statusCode !== 200 || !r.stream) continue;
+          const datos = JSON.parse(await new Response(r.stream).text());
+          if (datos && datos.confirmado === false) liberadas.push(b.pathname);
+        } catch (e) { /* si no se puede leer, NO se borra: el lado seguro */ }
+      }
+      cursorUsos = pagina.hasMore ? pagina.cursor : undefined;
+    } while (cursorUsos);
+
+    if (liberadas.length) {
+      await del(liberadas, { abortSignal: AbortSignal.timeout(8000) });
+    }
+
+    // Solo cuentas: nada de referencias ni datos en el registro
+    console.log('Purga de pedidos guardados:', JSON.stringify({
+      borrados: viejos.length, reservasLiberadas: liberadas.length,
+    }));
+    return res.status(200).json({
+      hecho: true, borrados: viejos.length, reservasLiberadas: liberadas.length,
+    });
 
   } catch (err) {
     console.error('La purga de pedidos falló:', err && err.message);

@@ -25,7 +25,7 @@ import { createHash } from 'node:crypto';
 import {
   construirPedido, leerDestino, validarDestino, nuevaReferencia, SITE_URL, leerCodigo,
 } from '../lib/pedido.js';
-import { guardarPedido, yaUsoElCodigo } from '../lib/guardado.js';
+import { guardarPedido, yaUsoElCodigo, reservarCodigoGlobal, liberarCodigoGlobal } from '../lib/guardado.js';
 
 const CHECKOUT = 'https://checkout.wompi.co/p/';
 
@@ -81,15 +81,19 @@ export default async function handler(req, res) {
     const problema = validarDestino(dest);
     if (problema) return res.status(400).json({ error: problema });
 
-    /* Códigos de un solo uso por persona. Este es el PRIMER momento en que se
-       conoce el correo del cliente: el carrito valida el código antes de que
-       lo escriba, así que no podía saberlo.
+    /* Se mira el código que de VERDAD se aplicó (pedido.codigo), no el que
+       mandó el navegador: la guarda de no empeorar pudo haberlo descartado por
+       no convenirle al cliente, y un código que no descontó nada no debe
+       gastarse ni bloquear nada. */
+    const cupon = leerCodigo(pedido.codigo);
+
+    /* Un solo uso POR PERSONA. Este es el PRIMER momento en que se conoce el
+       correo: el carrito valida el código antes de que el cliente lo escriba.
 
        Se AVISA en vez de ignorar el código en silencio. Ignorarlo cobraría más
        de lo que el carrito prometió, que es exactamente lo que este sistema
        existe para impedir. El 409 lo entiende el navegador, que quita el código
        y lo explica sin mandar a nadie a WhatsApp. */
-    const cupon = leerCodigo(body.codigo);
     if (cupon && cupon.unicoPorPersona && await yaUsoElCodigo(cupon.codigo, dest.correo)) {
       return res.status(409).json({
         error: 'Ese código es de un solo uso y ya lo usaste con este correo.',
@@ -98,6 +102,20 @@ export default async function handler(req, res) {
     }
 
     const referencia = nuevaReferencia();
+
+    /* Un solo uso EN TOTAL. Se reserva AQUÍ, antes de firmar el cobro: si se
+       esperara a la aprobación, dos clientes podrían pagar a la vez y los dos
+       se llevarían el descuento. La reserva es atómica —gana quien llega
+       primero— y nace sin confirmar, así que si el pago muere se libera y si
+       nadie vuelve la suelta la purga a las 72 h. */
+    if (cupon && cupon.unicoGlobal &&
+        !await reservarCodigoGlobal(cupon.codigo, referencia, dest.correo)) {
+      return res.status(409).json({
+        error: 'Ese código ya se usó. Era válido una sola vez.',
+        codigoGastado: cupon.codigo,
+      });
+    }
+
     const moneda = 'COP';
     // Wompi cobra en centavos y el peso colombiano no usa decimales
     const centavos = Math.round(pedido.total) * 100;
@@ -118,6 +136,16 @@ export default async function handler(req, res) {
        puede terminar en cuanto responde, y una promesa sin esperar se quedaría
        a medias. Nunca lanza, así que un fallo del store no impide pagar. */
     const guardado = await guardarPedido(referencia, { pedido, dest, idioma });
+
+    /* Si el pedido no se pudo guardar y el código es de un solo uso global, se
+       suelta la reserva. Sin pedido guardado el webhook no sabrá qué código
+       confirmar, así que la reserva quedaría colgada hasta la purga: mejor
+       devolverlo ya. Nadie debe perder un código de $41.500 por un fallo del
+       almacén que no es suyo. */
+    if (!guardado && cupon && cupon.unicoGlobal) {
+      await liberarCodigoGlobal(cupon.codigo);
+      console.error('Reserva de ' + cupon.codigo + ' liberada: no se pudo guardar el pedido ' + referencia);
+    }
 
     // Rastro mínimo para cruzar el pago con el despacho. Sin datos personales:
     // nombre, dirección, teléfono, documento y correo NO se registran.

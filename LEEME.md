@@ -356,6 +356,18 @@ suelta al instante; si el cliente abandona el carrito, la limpieza diaria la
 libera a las 72 horas. Mientras tanto, quien lo intente verá «Ese código ya se
 usó».
 
+**¿Y si un código de un solo uso se queda bloqueado?**
+Pasa si alguien lo escribe, va a pagar y abandona: queda reservado hasta que la
+limpieza lo suelta a las 72 horas. Para devolverlo antes:
+
+```bash
+curl -X POST https://www.hysteriacoffeeroasters.com/api/limpiar-pedidos -H "Content-Type: application/json" -d "{\"liberar\":\"NOMBRE_DEL_CODIGO\"}"
+```
+
+Solo suelta reservas **sin confirmar**. Si el código se usó de verdad —pago
+aprobado— no lo resucita, y responde `liberado: false`. Eso es a propósito:
+resucitarlo regalaría el descuento dos veces.
+
 La reserva es **reentrante para la misma persona**: si a quien lo reservó le
 rechazan la tarjeta y vuelve a intentarlo, su propia reserva no lo bloquea —
 sería absurdo decirle que su código ya se usó cuando el pago no entró. Solo

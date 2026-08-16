@@ -19,7 +19,7 @@
    ========================================================================== */
 
 import { list, del, get } from '@vercel/blob';
-import { hayGuardado } from '../lib/guardado.js';
+import { hayGuardado, liberarCodigoGlobal } from '../lib/guardado.js';
 
 const HORAS_DE_VIDA = 72;
 const CARPETA_USOS = 'usos';
@@ -32,6 +32,28 @@ export default async function handler(req, res) {
 
   if (!hayGuardado()) {
     return res.status(200).json({ hecho: false, motivo: 'sin store conectado' });
+  }
+
+  /* Soltar a mano la reserva de un código de un solo uso.
+     Hace falta de verdad: un cliente que abandona el checkout —o una prueba—
+     deja el código bloqueado 72 h, y a veces hay que devolverlo hoy.
+
+     Solo suelta reservas SIN CONFIRMAR: una confirmada significa que ese pago
+     entró, y resucitar el código regalaría el descuento dos veces. Por eso se
+     pasa sin referencia, que liberarCodigoGlobal interpreta como "cualquiera
+     de este código", pero el filtro de confirmado sigue mandando. */
+  let cuerpo = {};
+  try {
+    cuerpo = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+  } catch (e) {}
+  if (cuerpo.liberar) {
+    const codigo = String(cuerpo.liberar).toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 30);
+    const ok = await liberarCodigoGlobal(codigo);
+    console.log('Liberación manual de código:', JSON.stringify({ codigo, ok }));
+    return res.status(200).json({
+      hecho: true, liberado: ok, codigo,
+      motivo: ok ? undefined : 'no existía reserva, o ya estaba confirmada',
+    });
   }
 
   const limite = Date.now() - HORAS_DE_VIDA * 3600 * 1000;

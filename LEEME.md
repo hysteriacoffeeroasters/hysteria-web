@@ -314,6 +314,17 @@ el menú): no pongas ahí un código que deba ser secreto.
 ⚠️ Funcionan solo con Wompi, la pasarela actual. Si algún día vuelves a
 Mercado Pago, la caja del código desaparece sola y ningún cupón se aplica.
 
+**¿Se pueden usar varios códigos a la vez?**
+Sí, hasta **tres**. Los porcentajes se suman entre ellos y se aplican una vez
+sobre el subtotal; los montos fijos se suman; basta un código de envío gratis.
+El descuento nunca supera el valor del carrito, así que el total no puede
+quedar negativo — pero **sí puede quedar en cero**.
+
+Decisión de Andrés (16 ago 2026): **los códigos se acumulan sin restricción**,
+incluido el de regalo. Es deliberado, no un descuido. Si algún día se quiere un
+código que no se combine con ningún otro, hay que añadir una marca nueva; hoy
+no existe a propósito.
+
 **¿Y un código secreto, que no se pueda leer en la web?**
 Ese no va en el archivo: va en Vercel → Settings → Environment Variables, en
 la variable `CODIGOS_SECRETOS`. Una línea por código:
